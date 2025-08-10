@@ -211,7 +211,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                             />
                           ) : (
                             <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
-                              <span className="text-3xl">{getCategoryIcon(item.category)}</span>
+                              <span className="text-2xl">{getCategoryIcon(item.category)}</span>
                             </div>
                           )}
                           <div>
