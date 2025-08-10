@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Edit, Trash2, Mail, Download, Plus, AlertTriangle } from "lucide-react";
+import { Edit, Trash2, Mail, Download, Plus, AlertTriangle, Send, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,37 +58,99 @@ const getStockStatusColor = (item: MedicalItem) => {
   return { color: "bg-green-500", tooltip: "Op voorraad" };
 };
 
-// Component to display last email notification info
-const EmailNotificationInfo = ({ itemId }: { itemId: string }) => {
+// Component voor Aanvulverzoek knop/status
+const SupplyRequestButton = ({ item }: { item: MedicalItem }) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const { data: notification, isLoading } = useQuery({
-    queryKey: ['/api/medical-items', itemId, 'last-email'],
-    queryFn: () => apiRequest(`/api/medical-items/${itemId}/last-email`),
+    queryKey: ['/api/medical-items', item.id, 'last-email'],
+    queryFn: () => apiRequest(`/api/medical-items/${item.id}/last-email`),
   });
 
+  const sendEmailMutation = useMutation({
+    mutationFn: async (emailData: any) => {
+      return apiRequest('/api/send-email', {
+        method: 'POST',
+        body: JSON.stringify(emailData),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Email verzonden",
+        description: "Aanvulverzoek is succesvol verzonden",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/medical-items'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/medical-items', item.id, 'last-email'] });
+    },
+    onError: (error) => {
+      console.error('Email send error:', error);
+      toast({
+        title: "Error",
+        description: "Er is een fout opgetreden bij het verzenden van de email",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSendEmail = () => {
+    const emailData = {
+      itemId: item.id,
+      itemName: item.name,
+      cabinetId: item.cabinetId,
+      drawer: item.drawer,
+      stockStatus: item.stockStatus,
+      department: "Magazijn", // Default department
+      ambulancePost: item.ambulancePost
+    };
+    
+    sendEmailMutation.mutate(emailData);
+  };
+
+  // Toon knop alleen als status "bijna-op" of "niet-meer-aanwezig" is
+  const showButton = item.stockStatus === 'bijna-op' || item.stockStatus === 'niet-meer-aanwezig';
+  
   if (isLoading) {
     return null;
   }
 
-  if (!notification) {
-    return null; // Toon niets als er geen email verzonden is
+  if (!showButton && !notification) {
+    return null; // Toon niets als geen knop nodig en geen email verzonden
   }
 
-  return (
-    <div className="flex items-center space-x-2 text-xs">
-      <Mail className="w-3 h-3 text-blue-500" />
-      <div>
-        <div className="text-slate-900 font-medium">
-          {notification.department}
-        </div>
-        <div className="text-slate-500">
-          {new Date(notification.sentAt).toLocaleDateString('nl-NL', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-          })}
+  if (notification) {
+    // Toon verstuurd icon met datum
+    return (
+      <div className="flex items-center space-x-2 text-xs">
+        <CheckCircle className="w-3 h-3 text-green-500" />
+        <div>
+          <div className="text-slate-900 font-medium">Verstuurd</div>
+          <div className="text-slate-500">
+            {new Date(notification.sentAt).toLocaleDateString('nl-NL', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric'
+            })}
+          </div>
         </div>
       </div>
-    </div>
+    );
+  }
+
+  // Toon verstuur knop
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleSendEmail}
+      disabled={sendEmailMutation.isPending}
+      className="text-xs h-7 px-2"
+      data-testid={`button-send-request-${item.id}`}
+    >
+      <Send className="w-3 h-3 mr-1" />
+      Verstuur
+    </Button>
   );
 };
 
@@ -399,8 +461,8 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                           data-testid={`status-indicator-${item.id}`}
                         />
                       </TableCell>
-                      <TableCell data-testid={`email-notification-${item.id}`}>
-                        <EmailNotificationInfo itemId={item.id} />
+                      <TableCell data-testid={`supply-request-${item.id}`}>
+                        <SupplyRequestButton item={item} />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-1">
