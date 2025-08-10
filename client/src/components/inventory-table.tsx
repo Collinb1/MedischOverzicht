@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import EditItemDialog from "../components/edit-item-dialog";
-import type { MedicalItem, Drawer } from "@shared/schema";
+import type { MedicalItem } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 interface InventoryTableProps {
@@ -48,21 +48,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch drawers to show drawer names
-  const { data: drawers = [] } = useQuery<Drawer[]>({
-    queryKey: ["/api/drawers"],
-    queryFn: async () => {
-      const response = await fetch("/api/drawers");
-      if (!response.ok) throw new Error("Failed to fetch drawers");
-      return response.json();
-    },
-  });
 
-  const getDrawerName = (drawerId: string | null) => {
-    if (!drawerId) return null;
-    const drawer = drawers.find(d => d.id === drawerId);
-    return drawer ? `${drawer.name} - ${drawer.position}` : null;
-  };
 
   const deleteItemMutation = useMutation({
     mutationFn: async (itemId: string) => {
@@ -238,7 +224,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-slate-700" data-testid={`text-drawer-${item.id}`}>
-                        {getDrawerName(item.drawerId) || "-"}
+                        {item.drawer || "-"}
                       </TableCell>
                       <TableCell className="text-sm text-slate-900" data-testid={`text-category-${item.id}`}>
                         {item.category}

@@ -18,7 +18,7 @@ export const medicalItems = pgTable("medical_items", {
   description: text("description"),
   category: text("category").notNull(),
   cabinet: varchar("cabinet", { length: 10 }).notNull(),
-  drawerId: varchar("drawer_id").references(() => drawers.id),
+  drawer: text("drawer"), // Simple text field for drawer location
   ambulancePost: text("ambulance_post").notNull().default("hilversum"), // "hilversum" or "blaricum"
   isLowStock: boolean("is_low_stock").notNull().default(false),
   expiryDate: date("expiry_date"),
