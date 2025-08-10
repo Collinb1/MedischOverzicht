@@ -138,6 +138,11 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount ?? 0) > 0;
   }
 
+  async deleteItemLocationsByItemId(itemId: string): Promise<boolean> {
+    const result = await db.delete(itemLocations).where(eq(itemLocations.itemId, itemId));
+    return (result.rowCount ?? 0) > 0;
+  }
+
   // Cabinet operations
   async getCabinets(): Promise<Cabinet[]> {
     return await db.select().from(cabinets);

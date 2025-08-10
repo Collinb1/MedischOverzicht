@@ -131,54 +131,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update medical item and location
+  // Update medical item and locations
   app.patch("/api/medical-items/:id", async (req, res) => {
     try {
-      const { locationId, ambulancePost, cabinet, drawer, isLowStock, stockStatus, ...itemData } = req.body;
+      const { locations, ...itemData } = req.body;
       
-      // Update the medical item if there's item data to update
-      let updatedItem = null;
-      if (Object.keys(itemData).length > 0) {
-        const partialItemData = insertMedicalItemSchema.partial().parse(itemData);
-        updatedItem = await storage.updateMedicalItem(req.params.id, partialItemData);
-        if (!updatedItem) {
-          return res.status(404).json({ message: "Medical item not found" });
-        }
-      } else {
-        updatedItem = await storage.getMedicalItem(req.params.id);
-        if (!updatedItem) {
-          return res.status(404).json({ message: "Medical item not found" });
-        }
+      // Update the medical item
+      const partialItemData = insertMedicalItemSchema.partial().parse(itemData);
+      const updatedItem = await storage.updateMedicalItem(req.params.id, partialItemData);
+      if (!updatedItem) {
+        return res.status(404).json({ message: "Medical item not found" });
       }
       
-      // Update location if locationId is provided
-      let updatedLocation = null;
-      if (locationId) {
-        const locationUpdateData = {
-          ...(ambulancePost && { ambulancePostId: ambulancePost }),
-          ...(cabinet && { cabinet }),
-          ...(drawer !== undefined && { drawer }),
-          ...(isLowStock !== undefined && { isLowStock }),
-          ...(stockStatus && { stockStatus })
-        };
+      // Handle locations update if provided
+      let updatedLocations = [];
+      if (locations && Array.isArray(locations)) {
+        // Delete existing locations for this item
+        await storage.deleteItemLocationsByItemId(req.params.id);
         
-        if (Object.keys(locationUpdateData).length > 0) {
-          updatedLocation = await storage.updateItemLocation(locationId, locationUpdateData);
-        } else {
-          updatedLocation = await storage.getItemLocation(locationId);
+        // Create new locations
+        for (const locationData of locations) {
+          if (locationData.ambulancePostId && locationData.cabinet) {
+            const newLocationData = {
+              itemId: req.params.id,
+              ambulancePostId: locationData.ambulancePostId,
+              cabinet: locationData.cabinet,
+              drawer: locationData.drawer || null,
+              isLowStock: false,
+              stockStatus: itemData.stockStatus || "op-voorraad"
+            };
+            
+            const validatedLocationData = insertItemLocationSchema.parse(newLocationData);
+            const createdLocation = await storage.createItemLocation(validatedLocationData);
+            updatedLocations.push(createdLocation);
+          }
         }
       }
       
-      // Combine item and location data for response
-      const response = updatedLocation ? {
+      // Return combined data
+      const response = {
         ...updatedItem,
-        locationId: updatedLocation.id,
-        cabinet: updatedLocation.cabinet,
-        drawer: updatedLocation.drawer,
-        isLowStock: updatedLocation.isLowStock,
-        stockStatus: updatedLocation.stockStatus,
-        ambulancePost: updatedLocation.ambulancePostId
-      } : updatedItem;
+        locations: updatedLocations
+      };
       
       res.json(response);
     } catch (error) {
