@@ -34,12 +34,9 @@ export default function LowStockOverview() {
   });
 
   // Filter items die bijna op zijn of niet meer aanwezig
-  const lowStockItems = items.filter((item: MedicalItem) => {
-    console.log('Item:', item.name, 'Status:', item.stockStatus);
-    return item.stockStatus === 'bijna-op' || item.stockStatus === 'niet-meer-aanwezig';
-  });
-
-  console.log('Total items:', items.length, 'Low stock items:', lowStockItems.length);
+  const lowStockItems = items.filter((item: MedicalItem) => 
+    item.stockStatus === 'bijna-op' || item.stockStatus === 'niet-meer-aanwezig'
+  );
 
   const updateStockStatusMutation = useMutation({
     mutationFn: async ({ id, stockStatus }: { id: string; stockStatus: string }) => {
