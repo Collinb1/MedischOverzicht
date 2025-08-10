@@ -81,10 +81,9 @@ export default function Home() {
                     variant="outline" 
                     size="sm"
                     data-testid="button-settings"
+                    className="px-2"
                   >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Instellingen
-                    <ChevronDown className="w-3 h-3 ml-2" />
+                    <Settings className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
