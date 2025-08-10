@@ -330,7 +330,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                 <TableHead>Lade</TableHead>
                 <TableHead>Categorie</TableHead>
                 <TableHead>Voorraad Status</TableHead>
-                <TableHead>Laatste Email</TableHead>
+                <TableHead>Aanvulverzoek</TableHead>
                 <TableHead>Acties</TableHead>
               </TableRow>
             </TableHeader>
