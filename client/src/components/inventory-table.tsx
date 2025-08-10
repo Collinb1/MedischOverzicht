@@ -488,7 +488,25 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                         />
                       </TableCell>
                       <TableCell data-testid={`supply-request-${item.id}`}>
-                        <SupplyRequestButton item={item} onStockStatusChange={handleStockStatusChange} />
+                        <div className="flex items-center space-x-2">
+                          <SupplyRequestButton item={item} onStockStatusChange={handleStockStatusChange} />
+                          {/* Direct reset knop voor alle items met lage voorraad */}
+                          {(item.stockStatus === 'bijna-op' || item.stockStatus === 'niet-meer-aanwezig') && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                console.log("DIRECT reset knop geklikt voor item:", item.id);
+                                handleStockStatusChange(item, 'op-voorraad');
+                              }}
+                              className="h-7 w-7 p-0"
+                              title="Reset naar Op voorraad"
+                              data-testid={`button-direct-reset-${item.id}`}
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-1">
