@@ -68,7 +68,14 @@ const SupplyRequestButton = ({ item, onStockStatusChange }: {
   
   const { data: notification, isLoading } = useQuery<EmailNotification | null>({
     queryKey: ['/api/medical-items', item.id, 'last-email'],
-    queryFn: () => apiRequest(`/api/medical-items/${item.id}/last-email`),
+    queryFn: async () => {
+      try {
+        const result = await apiRequest(`/api/medical-items/${item.id}/last-email`);
+        return result || null;
+      } catch (error) {
+        return null;
+      }
+    },
   });
 
   const sendEmailMutation = useMutation({
