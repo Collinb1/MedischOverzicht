@@ -83,8 +83,7 @@ export class MemStorage implements IStorage {
         description: "Steriel, eenmalig gebruik",
         category: "Spuiten",
         cabinet: "A",
-        quantity: 25,
-        minimumStock: 10,
+        isAvailable: true,
         expiryDate: "2024-12-15"
       },
       {
@@ -92,8 +91,7 @@ export class MemStorage implements IStorage {
         description: "Pijnstillende tabletten",
         category: "Medicijnen",
         cabinet: "B",
-        quantity: 100,
-        minimumStock: 20,
+        isAvailable: true,
         expiryDate: "2025-03-20"
       },
       {
@@ -101,8 +99,7 @@ export class MemStorage implements IStorage {
         description: "Steriel, wegwerpbaar",
         category: "Instrumenten",
         cabinet: "C",
-        quantity: 15,
-        minimumStock: 20,
+        isAvailable: false,
         expiryDate: "2024-08-30"
       },
       {
@@ -110,8 +107,7 @@ export class MemStorage implements IStorage {
         description: "Snelle, nauwkeurige metingen",
         category: "Monitoring",
         cabinet: "D",
-        quantity: 8,
-        minimumStock: 5,
+        isAvailable: true,
         expiryDate: null
       },
       {
@@ -119,8 +115,7 @@ export class MemStorage implements IStorage {
         description: "Hoge filtratie-efficiëntie",
         category: "PBM",
         cabinet: "E",
-        quantity: 50,
-        minimumStock: 25,
+        isAvailable: true,
         expiryDate: "2025-01-15"
       },
       {
@@ -128,8 +123,7 @@ export class MemStorage implements IStorage {
         description: "Latex-vrij, poedervrij",
         category: "PBM",
         cabinet: "A",
-        quantity: 200,
-        minimumStock: 50,
+        isAvailable: true,
         expiryDate: "2024-11-30"
       },
       {
@@ -137,8 +131,7 @@ export class MemStorage implements IStorage {
         description: "Steriel verbandmateriaal",
         category: "Verbandmiddelen",
         cabinet: "A",
-        quantity: 75,
-        minimumStock: 30,
+        isAvailable: false,
         expiryDate: "2025-06-15"
       },
       {
@@ -146,8 +139,7 @@ export class MemStorage implements IStorage {
         description: "Automatische digitale meter",
         category: "Monitoring",
         cabinet: "D",
-        quantity: 3,
-        minimumStock: 2,
+        isAvailable: true,
         expiryDate: null
       }
     ];
@@ -158,8 +150,6 @@ export class MemStorage implements IStorage {
         ...item, 
         id,
         description: item.description || null,
-        quantity: item.quantity ?? 0,
-        minimumStock: item.minimumStock ?? 5,
         expiryDate: item.expiryDate || null
       };
       this.medicalItems.set(id, medicalItem);
@@ -203,8 +193,6 @@ export class MemStorage implements IStorage {
       ...insertItem, 
       id,
       description: insertItem.description || null,
-      quantity: insertItem.quantity ?? 0,
-      minimumStock: insertItem.minimumStock ?? 5,
       expiryDate: insertItem.expiryDate || null
     };
     this.medicalItems.set(id, item);

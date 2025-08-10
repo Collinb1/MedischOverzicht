@@ -36,11 +36,11 @@ const getCategoryIcon = (category: string) => {
   return icons[category as keyof typeof icons] || "📦";
 };
 
-const getStockStatus = (item: MedicalItem) => {
-  if (item.quantity <= item.minimumStock) {
-    return { label: "Lage Voorraad", className: "bg-orange-100 text-orange-800" };
+const getAvailabilityStatus = (item: MedicalItem) => {
+  if (!item.isAvailable) {
+    return { label: "Niet Beschikbaar", className: "bg-red-100 text-red-800" };
   }
-  return { label: "Op Voorraad", className: "bg-medical-green bg-opacity-20 text-medical-green" };
+  return { label: "Beschikbaar", className: "bg-medical-green bg-opacity-20 text-medical-green" };
 };
 
 export default function InventoryTable({ items, isLoading, onRefetch }: InventoryTableProps) {
@@ -137,22 +137,22 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                 <TableHead>Item</TableHead>
                 <TableHead>Kast</TableHead>
                 <TableHead>Categorie</TableHead>
-                <TableHead>Hoeveelheid</TableHead>
+                <TableHead>Beschikbaarheid</TableHead>
                 <TableHead>Vervaldatum</TableHead>
-                <TableHead>Status</TableHead>
+
                 <TableHead>Acties</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                     Geen items gevonden
                   </TableCell>
                 </TableRow>
               ) : (
                 items.map((item) => {
-                  const stockStatus = getStockStatus(item);
+                  const availabilityStatus = getAvailabilityStatus(item);
                   return (
                     <TableRow key={item.id} className="hover:bg-slate-50" data-testid={`row-item-${item.id}`}>
                       <TableCell>
@@ -180,16 +180,13 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                       <TableCell className="text-sm text-slate-900" data-testid={`text-category-${item.id}`}>
                         {item.category}
                       </TableCell>
-                      <TableCell className="text-sm text-slate-900" data-testid={`text-quantity-${item.id}`}>
-                        {item.quantity}
+                      <TableCell>
+                        <Badge className={availabilityStatus.className} data-testid={`badge-availability-${item.id}`}>
+                          {availabilityStatus.label}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-slate-900" data-testid={`text-expiry-${item.id}`}>
                         {item.expiryDate || "N/A"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={stockStatus.className} data-testid={`badge-status-${item.id}`}>
-                          {stockStatus.label}
-                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">

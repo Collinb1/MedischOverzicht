@@ -99,13 +99,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/cabinets/summary", async (req, res) => {
     try {
       const allItems = await storage.getMedicalItems();
-      const cabinets = ['A', 'B', 'C', 'D', 'E'];
+      const cabinets = await storage.getCabinets();
       
-      const summary = cabinets.map(cabinetId => {
-        const cabinetItems = allItems.filter(item => item.cabinet === cabinetId);
+      const summary = cabinets.map(cabinet => {
+        const cabinetItems = allItems.filter(item => item.cabinet === cabinet.id);
         const totalItems = cabinetItems.length;
-        const totalQuantity = cabinetItems.reduce((sum, item) => sum + item.quantity, 0);
-        const lowStockItems = cabinetItems.filter(item => item.quantity <= item.minimumStock).length;
+        const unavailableItems = cabinetItems.filter(item => !item.isAvailable).length;
         
         // Group by category
         const categories = cabinetItems.reduce((acc, item) => {
@@ -114,11 +113,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }, {} as Record<string, number>);
         
         return {
-          id: cabinetId,
-          name: getCabinetName(cabinetId),
+          id: cabinet.id,
+          name: cabinet.name,
           totalItems,
-          totalQuantity,
-          lowStockItems,
+          lowStockItems: unavailableItems, // Items that are not available
           categories
         };
       });
@@ -226,13 +224,4 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
-function getCabinetName(cabinetId: string): string {
-  const names = {
-    'A': 'Spoedhulp Voorraad',
-    'B': 'Medicijnen',
-    'C': 'Chirurgische Instrumenten',
-    'D': 'Monitoring Apparatuur',
-    'E': 'Persoonlijke Beschermingsmiddelen'
-  };
-  return names[cabinetId as keyof typeof names] || `Kast ${cabinetId}`;
-}
+

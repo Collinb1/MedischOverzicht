@@ -64,8 +64,8 @@ export default function CabinetOverview({ onCabinetSelect }: CabinetOverviewProp
                   </div>
                 ))}
                 {cabinet.lowStockItems > 0 && (
-                  <div className="text-orange-600 text-xs font-medium mt-2">
-                    {cabinet.lowStockItems} items met lage voorraad
+                  <div className="text-red-600 text-xs font-medium mt-2">
+                    {cabinet.lowStockItems} items niet beschikbaar
                   </div>
                 )}
               </div>

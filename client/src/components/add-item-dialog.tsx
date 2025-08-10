@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -50,8 +51,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
       description: "",
       category: "Spuiten",
       cabinet: cabinets.length > 0 ? cabinets[0].id : "A",
-      quantity: 0,
-      minimumStock: 5,
+      isAvailable: true,
       expiryDate: null,
     },
   });
@@ -175,49 +175,27 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="quantity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Hoeveelheid</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="0" 
-                        min="0"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        data-testid="input-item-quantity"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="minimumStock"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Minimum Voorraad</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="5" 
-                        min="0"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        data-testid="input-minimum-stock"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="isAvailable"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Beschikbaarheid</FormLabel>
+                    <div className="text-sm text-muted-foreground">
+                      Is dit item momenteel beschikbaar voor gebruik?
+                    </div>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      data-testid="switch-item-availability"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

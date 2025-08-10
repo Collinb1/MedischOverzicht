@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, date } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, date, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -8,9 +8,8 @@ export const medicalItems = pgTable("medical_items", {
   name: text("name").notNull(),
   description: text("description"),
   category: text("category").notNull(),
-  cabinet: varchar("cabinet", { length: 1 }).notNull(),
-  quantity: integer("quantity").notNull().default(0),
-  minimumStock: integer("minimum_stock").notNull().default(5),
+  cabinet: varchar("cabinet", { length: 10 }).notNull(),
+  isAvailable: boolean("is_available").notNull().default(true),
   expiryDate: date("expiry_date"),
 });
 
