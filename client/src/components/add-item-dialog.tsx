@@ -323,7 +323,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
 
             {/* Locatie Tabel - Ambulancepost, Kast en Lade */}
             <div className="space-y-4">
-              <FormLabel className="text-base font-medium">Locatie Details</FormLabel>
+              <FormLabel className="text-base font-medium">Locatie Item per post</FormLabel>
               <div className="border rounded-md p-4 bg-slate-50">
                 <Table>
                   <TableHeader>
