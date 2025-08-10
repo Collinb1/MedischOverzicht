@@ -36,11 +36,11 @@ const getCategoryIcon = (category: string) => {
   return icons[category as keyof typeof icons] || "📦";
 };
 
-const getAvailabilityStatus = (item: MedicalItem) => {
-  if (!item.isAvailable) {
-    return { label: "Niet Beschikbaar", className: "bg-red-100 text-red-800" };
+const getStockStatus = (item: MedicalItem) => {
+  if (item.isLowStock) {
+    return { label: "Bijna Op", className: "bg-orange-100 text-orange-800" };
   }
-  return { label: "Beschikbaar", className: "bg-medical-green bg-opacity-20 text-medical-green" };
+  return { label: "Voldoende", className: "bg-medical-green bg-opacity-20 text-medical-green" };
 };
 
 export default function InventoryTable({ items, isLoading, onRefetch }: InventoryTableProps) {
@@ -137,7 +137,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                 <TableHead>Item</TableHead>
                 <TableHead>Kast</TableHead>
                 <TableHead>Categorie</TableHead>
-                <TableHead>Beschikbaarheid</TableHead>
+                <TableHead>Voorraad Status</TableHead>
                 <TableHead>Vervaldatum</TableHead>
 
                 <TableHead>Acties</TableHead>
@@ -152,7 +152,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                 </TableRow>
               ) : (
                 items.map((item) => {
-                  const availabilityStatus = getAvailabilityStatus(item);
+                  const stockStatus = getStockStatus(item);
                   return (
                     <TableRow key={item.id} className="hover:bg-slate-50" data-testid={`row-item-${item.id}`}>
                       <TableCell>
@@ -181,8 +181,8 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                         {item.category}
                       </TableCell>
                       <TableCell>
-                        <Badge className={availabilityStatus.className} data-testid={`badge-availability-${item.id}`}>
-                          {availabilityStatus.label}
+                        <Badge className={stockStatus.className} data-testid={`badge-stock-status-${item.id}`}>
+                          {stockStatus.label}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-slate-900" data-testid={`text-expiry-${item.id}`}>

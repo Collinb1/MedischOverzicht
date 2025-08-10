@@ -51,7 +51,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
       description: "",
       category: "Spuiten",
       cabinet: cabinets.length > 0 ? cabinets[0].id : "A",
-      isAvailable: true,
+      isLowStock: false,
       expiryDate: null,
     },
   });
@@ -177,20 +177,20 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
 
             <FormField
               control={form.control}
-              name="isAvailable"
+              name="isLowStock"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Beschikbaarheid</FormLabel>
+                    <FormLabel className="text-base">Voorraad Status</FormLabel>
                     <div className="text-sm text-muted-foreground">
-                      Is dit item momenteel beschikbaar voor gebruik?
+                      Is dit item bijna op/uitgeput?
                     </div>
                   </div>
                   <FormControl>
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      data-testid="switch-item-availability"
+                      data-testid="switch-item-low-stock"
                     />
                   </FormControl>
                 </FormItem>

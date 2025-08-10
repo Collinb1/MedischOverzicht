@@ -9,7 +9,7 @@ export const medicalItems = pgTable("medical_items", {
   description: text("description"),
   category: text("category").notNull(),
   cabinet: varchar("cabinet", { length: 10 }).notNull(),
-  isAvailable: boolean("is_available").notNull().default(true),
+  isLowStock: boolean("is_low_stock").notNull().default(false),
   expiryDate: date("expiry_date"),
 });
 

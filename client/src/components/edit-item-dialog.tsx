@@ -48,7 +48,7 @@ export default function EditItemDialog({ item, open, onOpenChange, onSuccess }: 
       description: item.description || "",
       category: item.category,
       cabinet: item.cabinet,
-      isAvailable: item.isAvailable,
+      isLowStock: item.isLowStock,
       expiryDate: item.expiryDate,
     },
   });
@@ -156,20 +156,20 @@ export default function EditItemDialog({ item, open, onOpenChange, onSuccess }: 
 
             <FormField
               control={form.control}
-              name="isAvailable"
+              name="isLowStock"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Beschikbaarheid</FormLabel>
+                    <FormLabel className="text-base">Voorraad Status</FormLabel>
                     <div className="text-sm text-muted-foreground">
-                      Is dit item momenteel beschikbaar voor gebruik?
+                      Is dit item bijna op/uitgeput?
                     </div>
                   </div>
                   <FormControl>
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      data-testid="switch-edit-availability"
+                      data-testid="switch-edit-low-stock"
                     />
                   </FormControl>
                 </FormItem>

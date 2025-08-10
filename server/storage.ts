@@ -83,7 +83,7 @@ export class MemStorage implements IStorage {
         description: "Steriel, eenmalig gebruik",
         category: "Spuiten",
         cabinet: "A",
-        isAvailable: true,
+        isLowStock: false,
         expiryDate: "2024-12-15"
       },
       {
@@ -91,7 +91,7 @@ export class MemStorage implements IStorage {
         description: "Pijnstillende tabletten",
         category: "Medicijnen",
         cabinet: "B",
-        isAvailable: true,
+        isLowStock: false,
         expiryDate: "2025-03-20"
       },
       {
@@ -99,7 +99,7 @@ export class MemStorage implements IStorage {
         description: "Steriel, wegwerpbaar",
         category: "Instrumenten",
         cabinet: "C",
-        isAvailable: false,
+        isLowStock: true,
         expiryDate: "2024-08-30"
       },
       {
@@ -107,7 +107,7 @@ export class MemStorage implements IStorage {
         description: "Snelle, nauwkeurige metingen",
         category: "Monitoring",
         cabinet: "D",
-        isAvailable: true,
+        isLowStock: false,
         expiryDate: null
       },
       {
@@ -115,7 +115,7 @@ export class MemStorage implements IStorage {
         description: "Hoge filtratie-efficiëntie",
         category: "PBM",
         cabinet: "E",
-        isAvailable: true,
+        isLowStock: false,
         expiryDate: "2025-01-15"
       },
       {
@@ -123,7 +123,7 @@ export class MemStorage implements IStorage {
         description: "Latex-vrij, poedervrij",
         category: "PBM",
         cabinet: "A",
-        isAvailable: true,
+        isLowStock: true,
         expiryDate: "2024-11-30"
       },
       {
@@ -131,7 +131,7 @@ export class MemStorage implements IStorage {
         description: "Steriel verbandmateriaal",
         category: "Verbandmiddelen",
         cabinet: "A",
-        isAvailable: false,
+        isLowStock: true,
         expiryDate: "2025-06-15"
       },
       {
@@ -139,7 +139,7 @@ export class MemStorage implements IStorage {
         description: "Automatische digitale meter",
         category: "Monitoring",
         cabinet: "D",
-        isAvailable: true,
+        isLowStock: false,
         expiryDate: null
       }
     ];

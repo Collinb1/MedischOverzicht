@@ -104,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const summary = cabinets.map(cabinet => {
         const cabinetItems = allItems.filter(item => item.cabinet === cabinet.id);
         const totalItems = cabinetItems.length;
-        const unavailableItems = cabinetItems.filter(item => !item.isAvailable).length;
+        const lowStockItems = cabinetItems.filter(item => item.isLowStock).length;
         
         // Group by category
         const categories = cabinetItems.reduce((acc, item) => {
@@ -116,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: cabinet.id,
           name: cabinet.name,
           totalItems,
-          lowStockItems: unavailableItems, // Items that are not available
+          lowStockItems: lowStockItems, // Items that are low stock
           categories
         };
       });
