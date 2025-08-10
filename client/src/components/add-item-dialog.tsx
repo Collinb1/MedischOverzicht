@@ -778,7 +778,13 @@ function PostManagementTable({ onSuccess, onCancel }: {
 
   const handleEdit = (post: AmbulancePost) => {
     setEditingPost(post);
-    postForm.reset(post);
+    postForm.reset({
+      id: post.id,
+      name: post.name,
+      location: post.location || '',
+      description: post.description || '',
+      isActive: post.isActive,
+    });
   };
 
   const onSubmit = (data: any) => {
@@ -976,7 +982,7 @@ function PostManagementTable({ onSuccess, onCancel }: {
                           variant="outline"
                           size="sm"
                           onClick={() => handleEdit(post)}
-                          disabled={isAddFormOpen || editingPost}
+                          disabled={isAddFormOpen || !!editingPost}
                           data-testid={`button-edit-post-${post.id}`}
                         >
                           <Pencil className="w-4 h-4" />
@@ -985,7 +991,7 @@ function PostManagementTable({ onSuccess, onCancel }: {
                           variant="outline"
                           size="sm"
                           onClick={() => deletePostMutation.mutate(post.id)}
-                          disabled={deletePostMutation.isPending}
+                          disabled={deletePostMutation.isPending || isAddFormOpen || !!editingPost}
                           data-testid={`button-delete-post-${post.id}`}
                         >
                           <Trash2 className="w-4 h-4" />
