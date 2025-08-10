@@ -492,19 +492,19 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                       <TableCell data-testid={`supply-request-${item.id}`}>
                         <div className="flex items-center space-x-2">
                           <SupplyRequestButton item={item} onStockStatusChange={handleStockStatusChange} />
-                          {/* Test knop - altijd zichtbaar voor debugging */}
+                          {/* Test knop - maakt item lage voorraad voor reset testing */}
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              console.log("TEST KNOP GEKLIKT! Item:", item.id, "Status:", item.stockStatus);
-                              alert("Test knop werkt! Item: " + item.name);
+                              console.log("TEST: Zet item naar bijna-op voor reset test");
+                              handleStockStatusChange(item, 'bijna-op');
                             }}
-                            className="h-7 w-7 p-0 bg-yellow-100"
-                            title="Test knop"
-                            data-testid={`button-test-${item.id}`}
+                            className="h-7 w-7 p-0 bg-orange-200"
+                            title="Test: Zet naar Bijna op"
+                            data-testid={`button-test-low-${item.id}`}
                           >
-                            T
+                            ↓
                           </Button>
                           {/* Direct reset knop voor alle items met lage voorraad */}
                           {(item.stockStatus === 'bijna-op' || item.stockStatus === 'niet-meer-aanwezig') && (
