@@ -147,7 +147,10 @@ const SupplyRequestButton = ({ item, onStockStatusChange }: {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => onStockStatusChange(item, 'op-voorraad')}
+          onClick={() => {
+            console.log("Reset knop geklikt voor item:", item.id, "van", item.stockStatus, "naar op-voorraad");
+            onStockStatusChange(item, 'op-voorraad');
+          }}
           className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600"
           title="Aangevuld - zet terug naar Op voorraad"
           data-testid={`button-reset-${item.id}`}
