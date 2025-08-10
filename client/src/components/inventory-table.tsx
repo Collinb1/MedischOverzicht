@@ -330,8 +330,8 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                 <TableHead>Lade</TableHead>
                 <TableHead>Categorie</TableHead>
                 <TableHead>Voorraad Status</TableHead>
-                <TableHead>Acties</TableHead>
                 <TableHead>Laatste Email</TableHead>
+                <TableHead>Acties</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -399,6 +399,9 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                           data-testid={`status-indicator-${item.id}`}
                         />
                       </TableCell>
+                      <TableCell data-testid={`email-notification-${item.id}`}>
+                        <EmailNotificationInfo itemId={item.id} />
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-1">
                           {/* Stock Status Dropdown */}
@@ -436,9 +439,6 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                      </TableCell>
-                      <TableCell data-testid={`email-notification-${item.id}`}>
-                        <EmailNotificationInfo itemId={item.id} />
                       </TableCell>
                     </TableRow>
                   );
