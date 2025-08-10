@@ -112,14 +112,6 @@ export default function Home() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link href="/post-cabinet-overview" data-testid="menu-post-cabinet-overview">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        Locatie Overzicht
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
                     <Link href="/voorraad-overzicht" data-testid="menu-stock-overview">
                       <div className="flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4" />
