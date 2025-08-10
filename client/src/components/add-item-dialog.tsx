@@ -10,11 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet, type AmbulancePost } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, UserPlus, Camera, X } from "lucide-react";
+import { Plus, UserPlus, Camera, X, Building2, Pencil, Trash2 } from "lucide-react";
 import AddCabinetDialog from "../components/add-cabinet-dialog";
 import { ObjectUploader } from "../components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
@@ -650,11 +651,11 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
 
         {/* Add Post Dialog */}
         <Dialog open={isAddPostOpen} onOpenChange={setIsAddPostOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Nieuwe Ambulancepost Toevoegen</DialogTitle>
+              <DialogTitle>Ambulanceposten Beheren</DialogTitle>
             </DialogHeader>
-            <AddPostForm onSuccess={handleAddPost} onCancel={() => setIsAddPostOpen(false)} />
+            <PostManagementTable onSuccess={handleAddPost} onCancel={() => setIsAddPostOpen(false)} />
           </DialogContent>
         </Dialog>
       </DialogContent>
@@ -662,13 +663,19 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
   );
 }
 
-// Simple inline form component for adding ambulance posts
-function AddPostForm({ onSuccess, onCancel }: { 
+// Post Management Table component - similar to the one in ambulance-posts.tsx
+function PostManagementTable({ onSuccess, onCancel }: { 
   onSuccess: (post: AmbulancePost) => void;
   onCancel: () => void;
 }) {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
+  const [editingPost, setEditingPost] = useState<AmbulancePost | null>(null);
+  const [isAddFormOpen, setIsAddFormOpen] = useState(false);
+
+  const { data: posts = [], isLoading } = useQuery<AmbulancePost[]>({
+    queryKey: ['/api/ambulance-posts'],
+  });
 
   const postForm = useForm({
     resolver: zodResolver(z.object({
@@ -676,125 +683,339 @@ function AddPostForm({ onSuccess, onCancel }: {
       name: z.string().min(1, "Naam is verplicht"),
       location: z.string().optional(),
       description: z.string().optional(),
+      isActive: z.boolean().default(true),
     })),
     defaultValues: {
       id: '',
       name: '',
       location: '',
       description: '',
+      isActive: true,
     },
   });
 
-  const onSubmit = async (data: any) => {
-    setIsSubmitting(true);
-    try {
+  const createPostMutation = useMutation({
+    mutationFn: async (data: any) => {
       const response = await fetch('/api/ambulance-posts', {
         method: 'POST',
-        body: JSON.stringify({ ...data, isActive: true }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
       });
-      
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Fout bij aanmaken ambulancepost');
       }
-      
-      const newPost = await response.json();
+      return response.json();
+    },
+    onSuccess: (newPost) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ambulance-posts'] });
+      setIsAddFormOpen(false);
+      postForm.reset();
       onSuccess(newPost);
-      onCancel();
-      
       toast({
         title: "Succes",
         description: "Ambulancepost succesvol aangemaakt",
       });
-    } catch (error) {
+    },
+    onError: (error) => {
       toast({
         title: "Fout",
         description: error instanceof Error ? error.message : "Er is een fout opgetreden",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
+    },
+  });
+
+  const updatePostMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch(`/api/ambulance-posts/${data.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) throw new Error('Fout bij bijwerken ambulancepost');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ambulance-posts'] });
+      setEditingPost(null);
+      toast({
+        title: "Succes",
+        description: "Ambulancepost succesvol bijgewerkt",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Fout",
+        description: error instanceof Error ? error.message : "Er is een fout opgetreden",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deletePostMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/ambulance-posts/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Fout bij verwijderen ambulancepost');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ambulance-posts'] });
+      toast({
+        title: "Succes",
+        description: "Ambulancepost succesvol verwijderd",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Fout",
+        description: error instanceof Error ? error.message : "Er is een fout opgetreden",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEdit = (post: AmbulancePost) => {
+    setEditingPost(post);
+    postForm.reset(post);
+  };
+
+  const onSubmit = (data: any) => {
+    if (editingPost) {
+      updatePostMutation.mutate(data);
+    } else {
+      createPostMutation.mutate(data);
     }
   };
 
+  if (isLoading) {
+    return <div className="text-center py-4">Laden...</div>;
+  }
+
   return (
-    <Form {...postForm}>
-      <form onSubmit={postForm.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={postForm.control}
-          name="id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Post ID</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="bijv. amsterdam-oost" 
-                  {...field} 
-                  data-testid="input-post-id"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <div className="space-y-6">
+      {/* Add/Edit Form */}
+      {(isAddFormOpen || editingPost) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {editingPost ? 'Ambulancepost Bewerken' : 'Nieuwe Ambulancepost Toevoegen'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...postForm}>
+              <form onSubmit={postForm.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={postForm.control}
+                    name="id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Post ID</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="bijv. amsterdam-oost" 
+                            {...field} 
+                            disabled={!!editingPost}
+                            data-testid="input-post-id"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-        <FormField
-          control={postForm.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Naam</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="bijv. Post Amsterdam Oost" 
-                  {...field} 
-                  data-testid="input-post-name"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  <FormField
+                    control={postForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Naam</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="bijv. Post Amsterdam Oost" 
+                            {...field} 
+                            data-testid="input-post-name"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-        <FormField
-          control={postForm.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Locatie (optioneel)</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="bijv. Oosterpark 1, Amsterdam" 
-                  {...field} 
-                  data-testid="input-post-location"
+                <FormField
+                  control={postForm.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Locatie</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="bijv. Oosterpark 1, Amsterdam" 
+                          {...field} 
+                          data-testid="input-post-location"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
-        <div className="flex justify-end space-x-3 pt-4">
+                <FormField
+                  control={postForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Beschrijving</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Optionele beschrijving"
+                          {...field} 
+                          data-testid="input-post-description"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={postForm.control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>Actief</FormLabel>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="switch-post-active"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end space-x-3">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsAddFormOpen(false);
+                      setEditingPost(null);
+                      postForm.reset();
+                    }}
+                    data-testid="button-cancel-post-form"
+                  >
+                    Annuleren
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createPostMutation.isPending || updatePostMutation.isPending}
+                    data-testid="button-submit-post-form"
+                  >
+                    {(createPostMutation.isPending || updatePostMutation.isPending) ? "Bezig..." : (editingPost ? "Bijwerken" : "Toevoegen")}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Posts Table */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="w-5 h-5" />
+            Ambulanceposten
+          </CardTitle>
           <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onCancel}
-            data-testid="button-cancel-post"
+            onClick={() => setIsAddFormOpen(true)}
+            disabled={isAddFormOpen || editingPost}
+            data-testid="button-add-new-post"
           >
-            Annuleren
+            <Plus className="w-4 h-4 mr-2" />
+            Nieuwe Post
           </Button>
-          <Button 
-            type="submit" 
-            disabled={isSubmitting}
-            data-testid="button-submit-post"
-          >
-            {isSubmitting ? "Bezig..." : "Post Toevoegen"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Naam</TableHead>
+                  <TableHead>Locatie</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Acties</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {posts.map((post) => (
+                  <TableRow key={post.id}>
+                    <TableCell className="font-mono">{post.id}</TableCell>
+                    <TableCell className="font-medium">{post.name}</TableCell>
+                    <TableCell>{post.location || '-'}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        post.isActive 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {post.isActive ? 'Actief' : 'Inactief'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(post)}
+                          disabled={isAddFormOpen || editingPost}
+                          data-testid={`button-edit-post-${post.id}`}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deletePostMutation.mutate(post.id)}
+                          disabled={deletePostMutation.isPending}
+                          data-testid={`button-delete-post-${post.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {posts.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                      Geen ambulanceposten gevonden
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button 
+          variant="outline" 
+          onClick={onCancel}
+          data-testid="button-close-post-management"
+        >
+          Sluiten
+        </Button>
+      </div>
+    </div>
   );
 }
