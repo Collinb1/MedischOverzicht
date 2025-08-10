@@ -41,3 +41,5 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-01-10: Gescheiden inventaris per ambulancepost - elke post heeft eigen items en kasten indeling
 - 2025-01-10: Kastenbeheer verplaatst naar Instellingen dropdown - gebruikers openen kastenbeheer via Instellingen knop in header
 - 2025-01-10: Reset functionaliteit succesvol geïmplementeerd - items kunnen teruggezet worden naar "Op voorraad" status via Voorraad Overzicht in Instellingen
+- 2025-01-10: Postenbeheer functionaliteit toegevoegd - gebruikers kunnen ambulanceposten toevoegen, bewerken en beheren via Instellingen → Posten Beheer
+- 2025-01-10: Dynamische ambulancepost selectie - header dropdown toont nu werkelijke posten uit database in plaats van hardcoded opties

@@ -12,19 +12,21 @@ import CabinetOverview from "../components/cabinet-overview";
 import InventoryTable from "../components/inventory-table";
 import AddItemDialog from "../components/add-item-dialog";
 import CabinetManagement from "../components/cabinet-management";
-import type { MedicalItem } from "@shared/schema";
+import type { MedicalItem, AmbulancePost } from "@shared/schema";
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCabinet, setSelectedCabinet] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [selectedPost, setSelectedPost] = useState<string>("hilversum");
+  const [selectedPost, setSelectedPost] = useState<string>("");
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
 
   const { data: items = [], isLoading, refetch } = useQuery<MedicalItem[]>({
     queryKey: ["/api/medical-items", selectedCabinet, selectedCategory, searchTerm, selectedPost],
     queryFn: async () => {
+      if (!selectedPost) return [];
+      
       const params = new URLSearchParams();
       if (selectedCabinet && selectedCabinet !== "all") params.append("cabinet", selectedCabinet);
       if (selectedCategory && selectedCategory !== "all") params.append("category", selectedCategory);
@@ -35,7 +37,23 @@ export default function Home() {
       if (!response.ok) throw new Error("Failed to fetch medical items");
       return response.json();
     },
+    enabled: !!selectedPost,
   });
+
+  const { data: ambulancePosts = [] } = useQuery({
+    queryKey: ["/api/ambulance-posts"],
+    queryFn: async () => {
+      const response = await fetch("/api/ambulance-posts");
+      if (!response.ok) throw new Error("Failed to fetch ambulance posts");
+      return response.json();
+    },
+  });
+
+  // Auto-select first active post if none selected
+  const activePosts = ambulancePosts.filter((post: any) => post.isActive);
+  if (!selectedPost && activePosts.length > 0) {
+    setSelectedPost(activePosts[0].id);
+  }
 
   const categories = Array.from(new Set(items.map(item => item.category)));
 
@@ -60,11 +78,16 @@ export default function Home() {
               <div className="hidden sm:flex items-center space-x-2 text-sm text-slate-600">
                 <Select value={selectedPost} onValueChange={setSelectedPost}>
                   <SelectTrigger className="w-40 h-8 text-xs">
-                    <SelectValue />
+                    <SelectValue placeholder="Selecteer post" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hilversum">Post Hilversum</SelectItem>
-                    <SelectItem value="blaricum">Post Blaricum</SelectItem>
+                    {ambulancePosts
+                      .filter((post: any) => post.isActive)
+                      .map((post: any) => (
+                        <SelectItem key={post.id} value={post.id}>
+                          {post.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
