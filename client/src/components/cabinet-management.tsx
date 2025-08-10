@@ -80,7 +80,7 @@ export default function CabinetManagement() {
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-lg bg-medical-blue bg-opacity-20 text-medical-blue border-2 border-medical-blue flex items-center justify-center font-bold text-xl">
+                  <div className={`w-12 h-12 rounded-lg ${cabinet.color || 'bg-slate-200'} text-white border-2 border-current flex items-center justify-center font-bold text-xl`}>
                     {cabinet.abbreviation}
                   </div>
                   <div>
