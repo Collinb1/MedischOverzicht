@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet } from "@shared/schema";
+import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet, type Drawer } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, UserPlus, Camera, X } from "lucide-react";
 import AddCabinetDialog from "../components/add-cabinet-dialog";
@@ -60,6 +60,15 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
     },
   });
 
+  const { data: drawers = [] } = useQuery<Drawer[]>({
+    queryKey: ["/api/drawers"],
+    queryFn: async () => {
+      const response = await fetch("/api/drawers");
+      if (!response.ok) throw new Error("Failed to fetch drawers");
+      return response.json();
+    },
+  });
+
   const form = useForm<InsertMedicalItem>({
     resolver: zodResolver(insertMedicalItemSchema),
     defaultValues: {
@@ -67,6 +76,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
       description: "",
       category: "Spuiten",
       cabinet: cabinets.length > 0 ? cabinets[0].id : "A",
+      drawerId: null,
       isLowStock: false,
       expiryDate: null,
       alertEmail: "spoedhulp@ziekenhuis.nl",
@@ -80,9 +90,25 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
     form.setValue("photoUrl", photoUrl);
   }, [photoUrl, form]);
 
+  // Filter drawers based on selected cabinet
+  const selectedCabinet = form.watch("cabinet");
+  const availableDrawers = drawers.filter(drawer => drawer.cabinetId === selectedCabinet);
+
   const handleAddCabinet = (newCabinet: Cabinet) => {
     form.setValue("cabinet", newCabinet.id);
+    form.setValue("drawerId", null); // Reset drawer selection
   };
+
+  // Reset drawer selection when cabinet changes
+  useEffect(() => {
+    if (selectedCabinet) {
+      const currentDrawerId = form.getValues("drawerId");
+      const isDrawerInCabinet = drawers.find(d => d.id === currentDrawerId && d.cabinetId === selectedCabinet);
+      if (!isDrawerInCabinet) {
+        form.setValue("drawerId", null);
+      }
+    }
+  }, [selectedCabinet, drawers, form]);
 
   // Photo upload functions
   const handleGetUploadParameters = async () => {
@@ -331,6 +357,34 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
                       <Plus className="w-4 h-4" />
                     </Button>
                   </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Lade Selectie */}
+            <FormField
+              control={form.control}
+              name="drawerId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lade (optioneel)</FormLabel>
+                  <FormControl>
+                    <Select value={field.value || "none"} onValueChange={(value) => field.onChange(value === "none" ? null : value)} data-testid="select-drawer">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecteer een lade..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Geen specifieke lade</SelectItem>
+                        {availableDrawers.map(drawer => (
+                          <SelectItem key={drawer.id} value={drawer.id}>
+                            {drawer.name} - {drawer.position} (#{drawer.drawerNumber})
+                            {drawer.description && ` - ${drawer.description}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

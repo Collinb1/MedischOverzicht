@@ -203,6 +203,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Drawer management routes
+  app.get("/api/drawers", async (req, res) => {
+    try {
+      const drawers = await storage.getDrawers();
+      res.json(drawers);
+    } catch (error) {
+      console.error("Error fetching drawers:", error);
+      res.status(500).json({ error: "Failed to fetch drawers" });
+    }
+  });
+
+  // Get drawers by cabinet
+  app.get("/api/cabinets/:cabinetId/drawers", async (req, res) => {
+    try {
+      const { cabinetId } = req.params;
+      const drawers = await storage.getDrawersByCabinet(cabinetId);
+      res.json(drawers);
+    } catch (error) {
+      console.error("Error fetching drawers by cabinet:", error);
+      res.status(500).json({ error: "Failed to fetch drawers" });
+    }
+  });
+
   // Send email notification
   app.post("/api/notifications/email", async (req, res) => {
     try {

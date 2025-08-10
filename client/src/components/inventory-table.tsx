@@ -5,9 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import EditItemDialog from "../components/edit-item-dialog";
-import type { MedicalItem } from "@shared/schema";
+import type { MedicalItem, Drawer } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 interface InventoryTableProps {
@@ -47,6 +47,22 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
   const [editingItem, setEditingItem] = useState<MedicalItem | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch drawers to show drawer names
+  const { data: drawers = [] } = useQuery<Drawer[]>({
+    queryKey: ["/api/drawers"],
+    queryFn: async () => {
+      const response = await fetch("/api/drawers");
+      if (!response.ok) throw new Error("Failed to fetch drawers");
+      return response.json();
+    },
+  });
+
+  const getDrawerName = (drawerId: string | null) => {
+    if (!drawerId) return null;
+    const drawer = drawers.find(d => d.id === drawerId);
+    return drawer ? `${drawer.name} - ${drawer.position}` : null;
+  };
 
   const deleteItemMutation = useMutation({
     mutationFn: async (itemId: string) => {
@@ -161,6 +177,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                 <TableHead>Item</TableHead>
                 <TableHead></TableHead>
                 <TableHead>Kast</TableHead>
+                <TableHead>Lade</TableHead>
                 <TableHead>Categorie</TableHead>
                 <TableHead>Voorraad Status</TableHead>
                 <TableHead>Vervaldatum</TableHead>
@@ -171,7 +188,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={9} className="text-center py-8 text-slate-500">
                     Geen items gevonden
                   </TableCell>
                 </TableRow>
@@ -219,6 +236,9 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                         <Badge className={cabinetColors[item.cabinet as keyof typeof cabinetColors]} data-testid={`badge-cabinet-${item.id}`}>
                           Kast {item.cabinet}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-700" data-testid={`text-drawer-${item.id}`}>
+                        {getDrawerName(item.drawerId) || "-"}
                       </TableCell>
                       <TableCell className="text-sm text-slate-900" data-testid={`text-category-${item.id}`}>
                         {item.category}

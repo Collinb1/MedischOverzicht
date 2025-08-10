@@ -3,12 +3,22 @@ import { pgTable, text, varchar, integer, date, boolean } from "drizzle-orm/pg-c
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export const drawers = pgTable("drawers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  cabinetId: varchar("cabinet_id", { length: 10 }).notNull(),
+  name: text("name").notNull(),
+  position: text("position").notNull(), // "boven", "onder", "links", "rechts", "midden"
+  drawerNumber: integer("drawer_number").notNull(),
+  description: text("description"),
+});
+
 export const medicalItems = pgTable("medical_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description"),
   category: text("category").notNull(),
   cabinet: varchar("cabinet", { length: 10 }).notNull(),
+  drawerId: varchar("drawer_id").references(() => drawers.id),
   ambulancePost: text("ambulance_post").notNull().default("hilversum"), // "hilversum" or "blaricum"
   isLowStock: boolean("is_low_stock").notNull().default(false),
   expiryDate: date("expiry_date"),
@@ -36,6 +46,10 @@ export const insertMedicalItemSchema = createInsertSchema(medicalItems).omit({
 
 export const insertCabinetSchema = createInsertSchema(cabinets);
 
+export const insertDrawerSchema = createInsertSchema(drawers).omit({
+  id: true,
+});
+
 export const insertEmailNotificationSchema = createInsertSchema(emailNotifications).omit({
   id: true,
   sentAt: true,
@@ -45,6 +59,8 @@ export type InsertMedicalItem = z.infer<typeof insertMedicalItemSchema>;
 export type MedicalItem = typeof medicalItems.$inferSelect;
 export type InsertCabinet = z.infer<typeof insertCabinetSchema>;
 export type Cabinet = typeof cabinets.$inferSelect;
+export type InsertDrawer = z.infer<typeof insertDrawerSchema>;
+export type Drawer = typeof drawers.$inferSelect;
 export type InsertEmailNotification = z.infer<typeof insertEmailNotificationSchema>;
 export type EmailNotification = typeof emailNotifications.$inferSelect;
 
