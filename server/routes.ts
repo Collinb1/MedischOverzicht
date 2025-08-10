@@ -774,6 +774,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all item locations
+  app.get("/api/item-locations", async (req, res) => {
+    try {
+      const locations = await storage.getItemLocations();
+      res.json(locations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch item locations" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
