@@ -28,6 +28,16 @@ const categories = [
   "Verbandmiddelen"
 ];
 
+const emailOptions = [
+  { value: "spoedhulp@ziekenhuis.nl", label: "Spoedhulp Afdeling" },
+  { value: "apotheek@ziekenhuis.nl", label: "Apotheek" },
+  { value: "chirurgie@ziekenhuis.nl", label: "Chirurgie" },
+  { value: "monitoring@ziekenhuis.nl", label: "Monitoring & Diagnostiek" },
+  { value: "preventie@ziekenhuis.nl", label: "Preventie & PBM" },
+  { value: "verpleging@ziekenhuis.nl", label: "Verpleging" },
+  { value: "magazijn@ziekenhuis.nl", label: "Magazijn & Inkoop" }
+];
+
 export default function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItemDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -50,6 +60,7 @@ export default function EditItemDialog({ item, open, onOpenChange, onSuccess }: 
       cabinet: item.cabinet,
       isLowStock: item.isLowStock,
       expiryDate: item.expiryDate,
+      alertEmail: item.alertEmail || "spoedhulp@ziekenhuis.nl",
     },
   });
 
@@ -172,6 +183,34 @@ export default function EditItemDialog({ item, open, onOpenChange, onSuccess }: 
                       data-testid="switch-edit-low-stock"
                     />
                   </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="alertEmail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Waarschuwing Email</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-edit-alert-email">
+                        <SelectValue placeholder="Selecteer naar wie de melding moet" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {emailOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="text-sm text-muted-foreground">
+                    Wie moet een email krijgen bij voorraad aanvulling?
+                  </div>
+                  <FormMessage />
                 </FormItem>
               )}
             />

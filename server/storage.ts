@@ -84,7 +84,8 @@ export class MemStorage implements IStorage {
         category: "Spuiten",
         cabinet: "A",
         isLowStock: false,
-        expiryDate: "2024-12-15"
+        expiryDate: "2024-12-15",
+        alertEmail: "spoedhulp@ziekenhuis.nl"
       },
       {
         name: "Paracetamol 500mg",
@@ -92,7 +93,8 @@ export class MemStorage implements IStorage {
         category: "Medicijnen",
         cabinet: "B",
         isLowStock: false,
-        expiryDate: "2025-03-20"
+        expiryDate: "2025-03-20",
+        alertEmail: "apotheek@ziekenhuis.nl"
       },
       {
         name: "Chirurgisch Scalpel #10",
@@ -100,7 +102,8 @@ export class MemStorage implements IStorage {
         category: "Instrumenten",
         cabinet: "C",
         isLowStock: true,
-        expiryDate: "2024-08-30"
+        expiryDate: "2024-08-30",
+        alertEmail: "chirurgie@ziekenhuis.nl"
       },
       {
         name: "Digitale Thermometer",
@@ -108,7 +111,8 @@ export class MemStorage implements IStorage {
         category: "Monitoring",
         cabinet: "D",
         isLowStock: false,
-        expiryDate: null
+        expiryDate: null,
+        alertEmail: "monitoring@ziekenhuis.nl"
       },
       {
         name: "N95 Gezichtsmaskers",
@@ -116,7 +120,8 @@ export class MemStorage implements IStorage {
         category: "PBM",
         cabinet: "E",
         isLowStock: false,
-        expiryDate: "2025-01-15"
+        expiryDate: "2025-01-15",
+        alertEmail: "preventie@ziekenhuis.nl"
       },
       {
         name: "Steriele Handschoenen",
@@ -124,7 +129,8 @@ export class MemStorage implements IStorage {
         category: "PBM",
         cabinet: "A",
         isLowStock: true,
-        expiryDate: "2024-11-30"
+        expiryDate: "2024-11-30",
+        alertEmail: "spoedhulp@ziekenhuis.nl"
       },
       {
         name: "Verbandgaas 10x10cm",
@@ -132,7 +138,8 @@ export class MemStorage implements IStorage {
         category: "Verbandmiddelen",
         cabinet: "A",
         isLowStock: true,
-        expiryDate: "2025-06-15"
+        expiryDate: "2025-06-15",
+        alertEmail: "verpleging@ziekenhuis.nl"
       },
       {
         name: "Bloeddrukmeters",
@@ -140,7 +147,8 @@ export class MemStorage implements IStorage {
         category: "Monitoring",
         cabinet: "D",
         isLowStock: false,
-        expiryDate: null
+        expiryDate: null,
+        alertEmail: "monitoring@ziekenhuis.nl"
       }
     ];
 

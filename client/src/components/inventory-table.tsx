@@ -139,7 +139,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                 <TableHead>Categorie</TableHead>
                 <TableHead>Voorraad Status</TableHead>
                 <TableHead>Vervaldatum</TableHead>
-
+                <TableHead>Alert Email</TableHead>
                 <TableHead>Acties</TableHead>
               </TableRow>
             </TableHeader>
@@ -187,6 +187,9 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                       </TableCell>
                       <TableCell className="text-sm text-slate-900" data-testid={`text-expiry-${item.id}`}>
                         {item.expiryDate || "N/A"}
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-600" data-testid={`text-alert-email-${item.id}`}>
+                        {item.alertEmail || "Niet ingesteld"}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
