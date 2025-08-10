@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Plus, UserRound } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -51,11 +51,7 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="hidden sm:flex items-center space-x-4 text-sm text-slate-600">
-                <div className="flex items-center space-x-2">
-                  <UserRound className="w-4 h-4" />
-                  <span>Dr. Sarah Johnson</span>
-                </div>
+              <div className="hidden sm:flex items-center space-x-2 text-sm text-slate-600">
                 <Select value={selectedPost} onValueChange={setSelectedPost}>
                   <SelectTrigger className="w-40 h-8 text-xs">
                     <SelectValue />

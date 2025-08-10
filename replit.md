@@ -37,4 +37,4 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-01-10: Custom email persoon toevoegen - gebruikers kunnen nu eigen email adressen invoeren naast voorgedefinieerde opties
 - 2025-01-10: Object storage en foto functionaliteit geïmplementeerd - gebruikers kunnen nu foto's uploaden bij medische items
 - 2025-01-10: Foto upload prioriteit - foto sectie staat bovenaan in formulier en items met foto's verschijnen eerst in inventaris
-- 2025-01-10: Ambulancepost selectie toegevoegd - Dr. Sarah Johnson kan kiezen tussen Post Hilversum en Post Blaricum
+- 2025-01-10: Ambulancepost selectie toegevoegd - gebruiker kan kiezen tussen Post Hilversum en Post Blaricum
