@@ -176,7 +176,13 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                   </TableCell>
                 </TableRow>
               ) : (
-                items.map((item) => {
+                // Sort items: first items with photos, then items without photos
+                [...items].sort((a, b) => {
+                  // Items with photos come first
+                  if (a.photoUrl && !b.photoUrl) return -1;
+                  if (!a.photoUrl && b.photoUrl) return 1;
+                  return 0;
+                }).map((item) => {
                   const stockStatus = getStockStatus(item);
                   return (
                     <TableRow key={item.id} className="hover:bg-slate-50" data-testid={`row-item-${item.id}`}>
@@ -186,12 +192,12 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                             <img 
                               src={item.photoUrl} 
                               alt={`Foto van ${item.name}`} 
-                              className="w-12 h-12 object-cover rounded-lg mr-3"
+                              className="w-14 h-14 object-cover rounded-lg mr-3 border-2 border-medical-blue"
                               data-testid={`img-item-photo-${item.id}`}
                             />
                           ) : (
-                            <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
-                              <span className="text-sm">{getCategoryIcon(item.category)}</span>
+                            <div className="w-14 h-14 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
+                              <span className="text-lg">{getCategoryIcon(item.category)}</span>
                             </div>
                           )}
                           <div>

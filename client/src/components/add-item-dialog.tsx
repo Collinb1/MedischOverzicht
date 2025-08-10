@@ -144,6 +144,55 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Photo Upload Section - Moved to top */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium">Foto van het Item (Optioneel)</h4>
+                {photoUrl && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={removePhoto}
+                    data-testid="button-remove-photo"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Verwijderen
+                  </Button>
+                )}
+              </div>
+              
+              {photoUrl ? (
+                <div className="border rounded-lg p-3">
+                  <div className="flex items-center space-x-3">
+                    <img 
+                      src={photoUrl} 
+                      alt="Item foto" 
+                      className="w-16 h-16 object-cover rounded-lg"
+                      data-testid="img-uploaded-photo"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-green-600">Foto geüpload</p>
+                      <p className="text-sm text-muted-foreground">De foto wordt toegevoegd aan het item</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5242880} // 5MB
+                  onGetUploadParameters={handleGetUploadParameters}
+                  onComplete={handlePhotoUploadComplete}
+                  buttonClassName="w-full"
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <Camera className="w-4 h-4" />
+                    <span>Foto Toevoegen</span>
+                  </div>
+                </ObjectUploader>
+              )}
+            </div>
+
             <FormField
               control={form.control}
               name="name"
@@ -309,54 +358,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
               )}
             />
 
-            {/* Photo Upload Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">Foto van het Item (Optioneel)</h4>
-                {photoUrl && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={removePhoto}
-                    data-testid="button-remove-photo"
-                  >
-                    <X className="w-4 h-4 mr-1" />
-                    Verwijderen
-                  </Button>
-                )}
-              </div>
-              
-              {photoUrl ? (
-                <div className="border rounded-lg p-3">
-                  <div className="flex items-center space-x-3">
-                    <img 
-                      src={photoUrl} 
-                      alt="Item foto" 
-                      className="w-16 h-16 object-cover rounded-lg"
-                      data-testid="img-uploaded-photo"
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-green-600">Foto geüpload</p>
-                      <p className="text-sm text-muted-foreground">De foto wordt toegevoegd aan het item</p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <ObjectUploader
-                  maxNumberOfFiles={1}
-                  maxFileSize={5242880} // 5MB
-                  onGetUploadParameters={handleGetUploadParameters}
-                  onComplete={handlePhotoUploadComplete}
-                  buttonClassName="w-full"
-                >
-                  <div className="flex items-center justify-center space-x-2">
-                    <Camera className="w-4 h-4" />
-                    <span>Foto Toevoegen</span>
-                  </div>
-                </ObjectUploader>
-              )}
-            </div>
+
 
             <FormField
               control={form.control}
