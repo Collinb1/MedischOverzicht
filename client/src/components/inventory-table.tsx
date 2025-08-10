@@ -347,9 +347,11 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
   // New mutation for updating stock status
   const updateStockStatusMutation = useMutation({
     mutationFn: async ({ itemId, newStatus }: { itemId: string, newStatus: string }) => {
+      console.log("Making PATCH request to:", `/api/medical-items/${itemId}`, "with data:", { stockStatus: newStatus });
       const response = await apiRequest("PATCH", `/api/medical-items/${itemId}`, {
         stockStatus: newStatus
       });
+      console.log("PATCH response received:", response);
       return response;
     },
     onSuccess: (data: any, variables) => {
@@ -490,6 +492,20 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                       <TableCell data-testid={`supply-request-${item.id}`}>
                         <div className="flex items-center space-x-2">
                           <SupplyRequestButton item={item} onStockStatusChange={handleStockStatusChange} />
+                          {/* Test knop - altijd zichtbaar voor debugging */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              console.log("TEST KNOP GEKLIKT! Item:", item.id, "Status:", item.stockStatus);
+                              alert("Test knop werkt! Item: " + item.name);
+                            }}
+                            className="h-7 w-7 p-0 bg-yellow-100"
+                            title="Test knop"
+                            data-testid={`button-test-${item.id}`}
+                          >
+                            T
+                          </Button>
                           {/* Direct reset knop voor alle items met lage voorraad */}
                           {(item.stockStatus === 'bijna-op' || item.stockStatus === 'niet-meer-aanwezig') && (
                             <Button
