@@ -21,6 +21,7 @@ interface AddItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  selectedPost: string;
 }
 
 const categories = [
@@ -42,7 +43,7 @@ const emailOptions = [
   { value: "magazijn@ziekenhuis.nl", label: "Magazijn & Inkoop" }
 ];
 
-export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogProps) {
+export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedPost }: AddItemDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddCabinetOpen, setIsAddCabinetOpen] = useState(false);
@@ -70,6 +71,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
       expiryDate: null,
       alertEmail: "spoedhulp@ziekenhuis.nl",
       photoUrl: null,
+      ambulancePost: selectedPost,
     },
   });
 
@@ -107,7 +109,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
 
   const addItemMutation = useMutation({
     mutationFn: async (data: InsertMedicalItem) => {
-      const itemData = { ...data, photoUrl };
+      const itemData = { ...data, photoUrl, ambulancePost: selectedPost };
       await apiRequest("POST", "/api/medical-items", itemData);
     },
     onSuccess: () => {

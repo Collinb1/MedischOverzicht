@@ -18,12 +18,13 @@ export default function Home() {
   const [selectedPost, setSelectedPost] = useState<string>("hilversum");
 
   const { data: items = [], isLoading, refetch } = useQuery<MedicalItem[]>({
-    queryKey: ["/api/medical-items", selectedCabinet, selectedCategory, searchTerm],
+    queryKey: ["/api/medical-items", selectedCabinet, selectedCategory, searchTerm, selectedPost],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedCabinet && selectedCabinet !== "all") params.append("cabinet", selectedCabinet);
       if (selectedCategory && selectedCategory !== "all") params.append("category", selectedCategory);
       if (searchTerm) params.append("search", searchTerm);
+      params.append("ambulancePost", selectedPost);
       
       const response = await fetch(`/api/medical-items?${params}`);
       if (!response.ok) throw new Error("Failed to fetch medical items");
@@ -140,6 +141,7 @@ export default function Home() {
           open={isAddDialogOpen} 
           onOpenChange={setIsAddDialogOpen}
           onSuccess={refetch}
+          selectedPost={selectedPost}
         />
       </main>
     </div>

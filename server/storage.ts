@@ -80,11 +80,13 @@ export class MemStorage implements IStorage {
       this.cabinets.set(cabinet.id, cabinet);
     });
     const sampleItems: InsertMedicalItem[] = [
+      // Post Hilversum items
       {
         name: "Insuline Spuiten 1ml",
         description: "Steriel, eenmalig gebruik",
         category: "Spuiten",
         cabinet: "A",
+        ambulancePost: "hilversum",
         isLowStock: false,
         expiryDate: "2024-12-15",
         alertEmail: "spoedhulp@ziekenhuis.nl"
@@ -94,6 +96,7 @@ export class MemStorage implements IStorage {
         description: "Pijnstillende tabletten",
         category: "Medicijnen",
         cabinet: "B",
+        ambulancePost: "hilversum",
         isLowStock: false,
         expiryDate: "2025-03-20",
         alertEmail: "apotheek@ziekenhuis.nl"
@@ -103,6 +106,7 @@ export class MemStorage implements IStorage {
         description: "Steriel, wegwerpbaar",
         category: "Instrumenten",
         cabinet: "C",
+        ambulancePost: "hilversum",
         isLowStock: true,
         expiryDate: "2024-08-30",
         alertEmail: "chirurgie@ziekenhuis.nl"
@@ -112,15 +116,18 @@ export class MemStorage implements IStorage {
         description: "Snelle, nauwkeurige metingen",
         category: "Monitoring",
         cabinet: "D",
+        ambulancePost: "hilversum",
         isLowStock: false,
         expiryDate: null,
         alertEmail: "monitoring@ziekenhuis.nl"
       },
+      // Post Blaricum items
       {
         name: "N95 Gezichtsmaskers",
         description: "Hoge filtratie-efficiëntie",
         category: "PBM",
         cabinet: "E",
+        ambulancePost: "blaricum",
         isLowStock: false,
         expiryDate: "2025-01-15",
         alertEmail: "preventie@ziekenhuis.nl"
@@ -130,6 +137,7 @@ export class MemStorage implements IStorage {
         description: "Latex-vrij, poedervrij",
         category: "PBM",
         cabinet: "A",
+        ambulancePost: "blaricum",
         isLowStock: true,
         expiryDate: "2024-11-30",
         alertEmail: "spoedhulp@ziekenhuis.nl"
@@ -139,6 +147,7 @@ export class MemStorage implements IStorage {
         description: "Steriel verbandmateriaal",
         category: "Verbandmiddelen",
         cabinet: "A",
+        ambulancePost: "blaricum",
         isLowStock: true,
         expiryDate: "2025-06-15",
         alertEmail: "verpleging@ziekenhuis.nl"
@@ -148,6 +157,7 @@ export class MemStorage implements IStorage {
         description: "Automatische digitale meter",
         category: "Monitoring",
         cabinet: "D",
+        ambulancePost: "blaricum",
         isLowStock: false,
         expiryDate: null,
         alertEmail: "monitoring@ziekenhuis.nl"
@@ -160,7 +170,11 @@ export class MemStorage implements IStorage {
         ...item, 
         id,
         description: item.description || null,
-        expiryDate: item.expiryDate || null
+        expiryDate: item.expiryDate || null,
+        ambulancePost: (item as any).ambulancePost || "hilversum",
+        alertEmail: (item as any).alertEmail || null,
+        photoUrl: null,
+        isLowStock: (item as any).isLowStock || false
       };
       this.medicalItems.set(id, medicalItem);
     });
@@ -203,6 +217,10 @@ export class MemStorage implements IStorage {
       ...insertItem, 
       id,
       description: insertItem.description || null,
+      ambulancePost: insertItem.ambulancePost || "hilversum",
+      alertEmail: insertItem.alertEmail || null,
+      photoUrl: insertItem.photoUrl || null,
+      isLowStock: insertItem.isLowStock || false,
       expiryDate: insertItem.expiryDate || null
     };
     this.medicalItems.set(id, item);

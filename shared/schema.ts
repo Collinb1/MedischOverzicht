@@ -9,6 +9,7 @@ export const medicalItems = pgTable("medical_items", {
   description: text("description"),
   category: text("category").notNull(),
   cabinet: varchar("cabinet", { length: 10 }).notNull(),
+  ambulancePost: text("ambulance_post").notNull().default("hilversum"), // "hilversum" or "blaricum"
   isLowStock: boolean("is_low_stock").notNull().default(false),
   expiryDate: date("expiry_date"),
   alertEmail: text("alert_email"),

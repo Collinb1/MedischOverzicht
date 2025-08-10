@@ -9,8 +9,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all medical items
   app.get("/api/medical-items", async (req, res) => {
     try {
-      const { cabinet, category, search } = req.query;
+      const { cabinet, category, search, ambulancePost } = req.query;
       let items = await storage.getMedicalItems();
+      
+      // Filter by ambulance post (most important filter)
+      if (ambulancePost && typeof ambulancePost === 'string') {
+        items = items.filter(item => item.ambulancePost === ambulancePost);
+      }
       
       // Filter by cabinet if specified
       if (cabinet && typeof cabinet === 'string') {
