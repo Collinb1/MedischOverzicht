@@ -296,7 +296,6 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                 <TableHead>Lade</TableHead>
                 <TableHead>Categorie</TableHead>
                 <TableHead>Voorraad Status</TableHead>
-                <TableHead>Vervaldatum</TableHead>
                 <TableHead>Alert Email</TableHead>
                 <TableHead>Acties</TableHead>
               </TableRow>
@@ -304,7 +303,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                     Geen items gevonden
                   </TableCell>
                 </TableRow>
@@ -365,9 +364,6 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                           title={stockStatusColor.tooltip}
                           data-testid={`status-indicator-${item.id}`}
                         />
-                      </TableCell>
-                      <TableCell className="text-xs text-slate-900" data-testid={`text-expiry-${item.id}`}>
-                        {item.expiryDate || "N/A"}
                       </TableCell>
                       <TableCell className="text-xs text-slate-600" data-testid={`text-alert-email-${item.id}`}>
                         {item.alertEmail || "Niet ingesteld"}
