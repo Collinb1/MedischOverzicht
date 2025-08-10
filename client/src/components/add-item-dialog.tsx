@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet, type AmbulancePost } from "@shared/schema";
 import { z } from "zod";
@@ -320,87 +321,108 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="ambulancePost"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ambulancepost</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-ambulance-post">
-                        <SelectValue placeholder="Selecteer ambulancepost" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {ambulancePosts.map(post => (
-                        <SelectItem key={post.id} value={post.id}>
-                          {post.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="cabinet"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Kast</FormLabel>
-                  <div className="flex gap-2">
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-item-cabinet" className="flex-1">
-                          <SelectValue placeholder="Selecteer kast" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {cabinets.map(cabinet => (
-                          <SelectItem key={cabinet.id} value={cabinet.id}>
-                            Kast {cabinet.id} - {cabinet.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsAddCabinetOpen(true)}
-                      className="px-3"
-                      data-testid="button-add-cabinet"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Lade Invoer */}
-            <FormField
-              control={form.control}
-              name="drawer"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lade (optioneel)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Bijv. Boven, Onder, Links, Rechts, Midden"
-                      data-testid="input-drawer"
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Locatie Tabel - Ambulancepost, Kast en Lade */}
+            <div className="space-y-4">
+              <FormLabel className="text-base font-medium">Locatie Details</FormLabel>
+              <div className="border rounded-md p-4 bg-slate-50">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[200px]">Ambulancepost</TableHead>
+                      <TableHead className="w-[150px]">Kast</TableHead>
+                      <TableHead>Lade (optioneel)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>
+                        <FormField
+                          control={form.control}
+                          name="ambulancePost"
+                          render={({ field }) => (
+                            <FormItem>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger data-testid="select-ambulance-post" className="w-full">
+                                    <SelectValue placeholder="Selecteer post" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {ambulancePosts
+                                    .filter(post => post.isActive)
+                                    .map(post => (
+                                      <SelectItem key={post.id} value={post.id}>
+                                        {post.name}
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <FormField
+                          control={form.control}
+                          name="cabinet"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex gap-2">
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger data-testid="select-item-cabinet" className="flex-1">
+                                      <SelectValue placeholder="Kast" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {cabinets.map(cabinet => (
+                                      <SelectItem key={cabinet.id} value={cabinet.id}>
+                                        {cabinet.id} - {cabinet.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setIsAddCabinetOpen(true)}
+                                  className="px-3"
+                                  data-testid="button-add-cabinet"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <FormField
+                          control={form.control}
+                          name="drawer"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  placeholder="Bijv. Boven, Links"
+                                  data-testid="input-drawer"
+                                  {...field}
+                                  value={field.value || ""}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
 
             {/* Stock Status */}
             <FormField
