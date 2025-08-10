@@ -12,8 +12,10 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, UserPlus } from "lucide-react";
+import { Plus, UserPlus, Camera, X } from "lucide-react";
 import AddCabinetDialog from "../components/add-cabinet-dialog";
+import { ObjectUploader } from "../components/ObjectUploader";
+import type { UploadResult } from "@uppy/core";
 
 interface AddItemDialogProps {
   open: boolean;
@@ -45,6 +47,8 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
   const queryClient = useQueryClient();
   const [isAddCabinetOpen, setIsAddCabinetOpen] = useState(false);
   const [isCustomEmail, setIsCustomEmail] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const { data: cabinets = [] } = useQuery<Cabinet[]>({
     queryKey: ["/api/cabinets"],
@@ -65,6 +69,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
       isLowStock: false,
       expiryDate: null,
       alertEmail: "spoedhulp@ziekenhuis.nl",
+      photoUrl: null,
     },
   });
 
@@ -72,9 +77,38 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
     form.setValue("cabinet", newCabinet.id);
   };
 
+  // Photo upload functions
+  const handleGetUploadParameters = async () => {
+    const response = await fetch("/api/objects/upload", { method: "POST" });
+    if (!response.ok) throw new Error("Failed to get upload URL");
+    const data = await response.json();
+    return {
+      method: "PUT" as const,
+      url: data.uploadURL,
+    };
+  };
+
+  const handlePhotoUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    if (result.successful && result.successful.length > 0) {
+      const uploadedFile = result.successful[0];
+      setPhotoUrl(uploadedFile.uploadURL as string);
+      setIsUploadingPhoto(false);
+      
+      toast({
+        title: "Foto geüpload",
+        description: "De foto is succesvol geüpload en wordt toegevoegd aan het item.",
+      });
+    }
+  };
+
+  const removePhoto = () => {
+    setPhotoUrl(null);
+  };
+
   const addItemMutation = useMutation({
     mutationFn: async (data: InsertMedicalItem) => {
-      await apiRequest("POST", "/api/medical-items", data);
+      const itemData = { ...data, photoUrl };
+      await apiRequest("POST", "/api/medical-items", itemData);
     },
     onSuccess: () => {
       toast({
@@ -84,6 +118,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
       queryClient.invalidateQueries({ queryKey: ["/api/medical-items"] });
       queryClient.invalidateQueries({ queryKey: ["/api/cabinets/summary"] });
       form.reset();
+      setPhotoUrl(null);
       onSuccess();
       onOpenChange(false);
     },
@@ -273,6 +308,55 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
                 </FormItem>
               )}
             />
+
+            {/* Photo Upload Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium">Foto van het Item (Optioneel)</h4>
+                {photoUrl && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={removePhoto}
+                    data-testid="button-remove-photo"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Verwijderen
+                  </Button>
+                )}
+              </div>
+              
+              {photoUrl ? (
+                <div className="border rounded-lg p-3">
+                  <div className="flex items-center space-x-3">
+                    <img 
+                      src={photoUrl} 
+                      alt="Item foto" 
+                      className="w-16 h-16 object-cover rounded-lg"
+                      data-testid="img-uploaded-photo"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-green-600">Foto geüpload</p>
+                      <p className="text-sm text-muted-foreground">De foto wordt toegevoegd aan het item</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5242880} // 5MB
+                  onGetUploadParameters={handleGetUploadParameters}
+                  onComplete={handlePhotoUploadComplete}
+                  buttonClassName="w-full"
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <Camera className="w-4 h-4" />
+                    <span>Foto Toevoegen</span>
+                  </div>
+                </ObjectUploader>
+              )}
+            </div>
 
             <FormField
               control={form.control}

@@ -12,6 +12,7 @@ export const medicalItems = pgTable("medical_items", {
   isLowStock: boolean("is_low_stock").notNull().default(false),
   expiryDate: date("expiry_date"),
   alertEmail: text("alert_email"),
+  photoUrl: text("photo_url"),
 });
 
 export const cabinets = pgTable("cabinets", {

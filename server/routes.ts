@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema } from "@shared/schema";
 import { sendEmail, generateRestockEmailHTML } from "./email";
+import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all medical items
@@ -270,6 +271,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Email send error:", error);
       res.status(500).json({ message: "Fout bij het verzenden van waarschuwing email" });
+    }
+  });
+
+  // Object Storage Routes for Photo Upload
+  
+  // Serve public objects (photos)
+  app.get("/objects/:objectPath(*)", async (req, res) => {
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error serving object:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
+  // Get upload URL for photos
+  app.post("/api/objects/upload", async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
+  // Update item photo after upload
+  app.put("/api/medical-items/:id/photo", async (req, res) => {
+    if (!req.body.photoURL) {
+      return res.status(400).json({ error: "photoURL is required" });
+    }
+
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(req.body.photoURL);
+
+      // Update the medical item with the photo URL
+      const updatedItem = await storage.updateMedicalItem(req.params.id, {
+        photoUrl: normalizedPath
+      });
+
+      if (!updatedItem) {
+        return res.status(404).json({ error: "Medical item not found" });
+      }
+
+      res.json({
+        success: true,
+        item: updatedItem,
+        photoUrl: normalizedPath
+      });
+    } catch (error) {
+      console.error("Error updating item photo:", error);
+      res.status(500).json({ error: "Failed to update item photo" });
     }
   });
 

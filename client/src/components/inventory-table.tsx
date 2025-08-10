@@ -159,6 +159,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
             <TableHeader>
               <TableRow className="bg-slate-50">
                 <TableHead>Item</TableHead>
+                <TableHead>Foto</TableHead>
                 <TableHead>Kast</TableHead>
                 <TableHead>Categorie</TableHead>
                 <TableHead>Voorraad Status</TableHead>
@@ -170,7 +171,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                     Geen items gevonden
                   </TableCell>
                 </TableRow>
@@ -195,6 +196,20 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                             )}
                           </div>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {item.photoUrl ? (
+                          <img 
+                            src={item.photoUrl} 
+                            alt={`Foto van ${item.name}`} 
+                            className="w-12 h-12 object-cover rounded-lg"
+                            data-testid={`img-item-photo-${item.id}`}
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-slate-200 rounded-lg flex items-center justify-center">
+                            <span className="text-slate-400 text-xs">Geen foto</span>
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge className={cabinetColors[item.cabinet as keyof typeof cabinetColors]} data-testid={`badge-cabinet-${item.id}`}>

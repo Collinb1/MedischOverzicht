@@ -1,4 +1,6 @@
-import { type User, type InsertUser, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet } from "@shared/schema";
+import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, emailNotifications, users, type User, type InsertUser } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -285,4 +287,96 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database Storage Implementation
+export class DatabaseStorage implements IStorage {
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async getMedicalItems(): Promise<MedicalItem[]> {
+    return await db.select().from(medicalItems);
+  }
+
+  async getMedicalItem(id: string): Promise<MedicalItem | undefined> {
+    const [item] = await db.select().from(medicalItems).where(eq(medicalItems.id, id));
+    return item || undefined;
+  }
+
+  async getMedicalItemsByCabinet(cabinet: string): Promise<MedicalItem[]> {
+    return await db.select().from(medicalItems).where(eq(medicalItems.cabinet, cabinet));
+  }
+
+  async createMedicalItem(insertItem: InsertMedicalItem): Promise<MedicalItem> {
+    const [item] = await db.insert(medicalItems).values(insertItem).returning();
+    return item;
+  }
+
+  async updateMedicalItem(id: string, updateData: Partial<InsertMedicalItem>): Promise<MedicalItem | undefined> {
+    const [item] = await db
+      .update(medicalItems)
+      .set(updateData)
+      .where(eq(medicalItems.id, id))
+      .returning();
+    return item || undefined;
+  }
+
+  async deleteMedicalItem(id: string): Promise<boolean> {
+    const result = await db.delete(medicalItems).where(eq(medicalItems.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getCabinets(): Promise<Cabinet[]> {
+    return await db.select().from(cabinets);
+  }
+
+  async getCabinet(id: string): Promise<Cabinet | undefined> {
+    const [cabinet] = await db.select().from(cabinets).where(eq(cabinets.id, id));
+    return cabinet || undefined;
+  }
+
+  async createCabinet(insertCabinet: InsertCabinet): Promise<Cabinet> {
+    const [cabinet] = await db.insert(cabinets).values(insertCabinet).returning();
+    return cabinet;
+  }
+
+  async updateCabinet(id: string, updateData: Partial<InsertCabinet>): Promise<Cabinet | undefined> {
+    const [cabinet] = await db
+      .update(cabinets)
+      .set(updateData)
+      .where(eq(cabinets.id, id))
+      .returning();
+    return cabinet || undefined;
+  }
+
+  async deleteCabinet(id: string): Promise<boolean> {
+    // Check if any items are in this cabinet before deleting
+    const itemsInCabinet = await this.getMedicalItemsByCabinet(id);
+    if (itemsInCabinet.length > 0) {
+      throw new Error("Cannot delete cabinet with items in it");
+    }
+    const result = await db.delete(cabinets).where(eq(cabinets.id, id));
+    return result.rowCount > 0;
+  }
+
+  async createEmailNotification(insertNotification: InsertEmailNotification): Promise<EmailNotification> {
+    const [notification] = await db.insert(emailNotifications).values(insertNotification).returning();
+    return notification;
+  }
+
+  async getEmailNotifications(): Promise<EmailNotification[]> {
+    return await db.select().from(emailNotifications);
+  }
+}
+
+export const storage = new DatabaseStorage();
