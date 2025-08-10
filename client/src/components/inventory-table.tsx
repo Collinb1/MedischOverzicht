@@ -159,7 +159,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
             <TableHeader>
               <TableRow className="bg-slate-50">
                 <TableHead>Item</TableHead>
-                <TableHead>Foto</TableHead>
+                <TableHead></TableHead>
                 <TableHead>Kast</TableHead>
                 <TableHead>Categorie</TableHead>
                 <TableHead>Voorraad Status</TableHead>
@@ -182,9 +182,18 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                     <TableRow key={item.id} className="hover:bg-slate-50" data-testid={`row-item-${item.id}`}>
                       <TableCell>
                         <div className="flex items-center">
-                          <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
-                            <span className="text-sm">{getCategoryIcon(item.category)}</span>
-                          </div>
+                          {item.photoUrl ? (
+                            <img 
+                              src={item.photoUrl} 
+                              alt={`Foto van ${item.name}`} 
+                              className="w-12 h-12 object-cover rounded-lg mr-3"
+                              data-testid={`img-item-photo-${item.id}`}
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
+                              <span className="text-sm">{getCategoryIcon(item.category)}</span>
+                            </div>
+                          )}
                           <div>
                             <div className="text-sm font-medium text-slate-900" data-testid={`text-item-name-${item.id}`}>
                               {item.name}
@@ -198,18 +207,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                         </div>
                       </TableCell>
                       <TableCell>
-                        {item.photoUrl ? (
-                          <img 
-                            src={item.photoUrl} 
-                            alt={`Foto van ${item.name}`} 
-                            className="w-12 h-12 object-cover rounded-lg"
-                            data-testid={`img-item-photo-${item.id}`}
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-slate-200 rounded-lg flex items-center justify-center">
-                            <span className="text-slate-400 text-xs">Geen foto</span>
-                          </div>
-                        )}
+                        {/* Dit wordt nu leeg gelaten omdat de foto bij de item naam staat */}
                       </TableCell>
                       <TableCell>
                         <Badge className={cabinetColors[item.cabinet as keyof typeof cabinetColors]} data-testid={`badge-cabinet-${item.id}`}>
