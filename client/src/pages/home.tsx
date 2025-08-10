@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Package, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CabinetOverview from "../components/cabinet-overview";
 import InventoryTable from "../components/inventory-table";
 import AddItemDialog from "../components/add-item-dialog";
+import CabinetManagement from "../components/cabinet-management";
 import type { MedicalItem } from "@shared/schema";
 
 export default function Home() {
@@ -16,6 +18,7 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<string>("hilversum");
+  const [activeTab, setActiveTab] = useState("inventory");
 
   const { data: items = [], isLoading, refetch } = useQuery<MedicalItem[]>({
     queryKey: ["/api/medical-items", selectedCabinet, selectedCategory, searchTerm, selectedPost],
@@ -77,72 +80,91 @@ export default function Home() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search and Filters */}
-        <div className="mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="flex-1 max-w-md">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                    <Input
-                      type="text"
-                      placeholder="Zoek medische voorraad..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                      data-testid="input-search"
-                    />
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="inventory" className="flex items-center space-x-2">
+              <Package className="w-4 h-4" />
+              <span>Inventaris</span>
+            </TabsTrigger>
+            <TabsTrigger value="cabinets" className="flex items-center space-x-2">
+              <Settings className="w-4 h-4" />
+              <span>Kasten Beheren</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="inventory" className="space-y-8">
+            {/* Search and Filters */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="flex-1 max-w-md">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                      <Input
+                        type="text"
+                        placeholder="Zoek medische voorraad..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                        data-testid="input-search"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Select value={selectedCabinet} onValueChange={setSelectedCabinet}>
+                      <SelectTrigger className="w-40" data-testid="select-cabinet">
+                        <SelectValue placeholder="Alle Kasten" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle Kasten</SelectItem>
+                        <SelectItem value="A">Kast A</SelectItem>
+                        <SelectItem value="B">Kast B</SelectItem>
+                        <SelectItem value="C">Kast C</SelectItem>
+                        <SelectItem value="D">Kast D</SelectItem>
+                        <SelectItem value="E">Kast E</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger className="w-40" data-testid="select-category">
+                        <SelectValue placeholder="Alle Categorieën" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle Categorieën</SelectItem>
+                        {categories.map(category => (
+                          <SelectItem key={category} value={category}>{category}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Select value={selectedCabinet} onValueChange={setSelectedCabinet}>
-                    <SelectTrigger className="w-40" data-testid="select-cabinet">
-                      <SelectValue placeholder="Alle Kasten" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Alle Kasten</SelectItem>
-                      <SelectItem value="A">Kast A</SelectItem>
-                      <SelectItem value="B">Kast B</SelectItem>
-                      <SelectItem value="C">Kast C</SelectItem>
-                      <SelectItem value="D">Kast D</SelectItem>
-                      <SelectItem value="E">Kast E</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-40" data-testid="select-category">
-                      <SelectValue placeholder="Alle Categorieën" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Alle Categorieën</SelectItem>
-                      {categories.map(category => (
-                        <SelectItem key={category} value={category}>{category}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
 
-        {/* Cabinet Overview */}
-        <CabinetOverview onCabinetSelect={setSelectedCabinet} />
+            {/* Cabinet Overview */}
+            <CabinetOverview onCabinetSelect={setSelectedCabinet} />
 
-        {/* Detailed Inventory */}
-        <InventoryTable 
-          items={items} 
-          isLoading={isLoading} 
-          onRefetch={refetch}
-        />
+            {/* Detailed Inventory */}
+            <InventoryTable 
+              items={items} 
+              isLoading={isLoading} 
+              onRefetch={refetch}
+            />
+          </TabsContent>
 
-        {/* Add Item Dialog */}
-        <AddItemDialog 
-          open={isAddDialogOpen} 
-          onOpenChange={setIsAddDialogOpen}
-          onSuccess={refetch}
-          selectedPost={selectedPost}
-        />
+          <TabsContent value="cabinets">
+            <CabinetManagement />
+          </TabsContent>
+        </Tabs>
+
+        {/* Add Item Dialog - only show on inventory tab */}
+        {activeTab === "inventory" && (
+          <AddItemDialog 
+            open={isAddDialogOpen} 
+            onOpenChange={setIsAddDialogOpen}
+            onSuccess={refetch}
+            selectedPost={selectedPost}
+          />
+        )}
       </main>
     </div>
   );
