@@ -48,6 +48,17 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Get cabinet data to access abbreviations
+  const { data: cabinets = [] } = useQuery({
+    queryKey: ["/api/cabinets"],
+  });
+
+  // Helper function to get cabinet abbreviation
+  const getCabinetAbbreviation = (cabinetId: string): string => {
+    const cabinet = cabinets.find((c: any) => c.id === cabinetId);
+    return cabinet?.abbreviation || cabinetId.substring(0, 3);
+  };
+
 
 
   const deleteItemMutation = useMutation({
@@ -220,7 +231,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                       </TableCell>
                       <TableCell>
                         <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg font-bold text-2xl ${cabinetColors[item.cabinet as keyof typeof cabinetColors] || "bg-slate-200 bg-opacity-30 text-slate-700 border-2 border-slate-400"}`} data-testid={`badge-cabinet-${item.id}`}>
-                          {item.cabinet.substring(0, 3)}
+                          {getCabinetAbbreviation(item.cabinet)}
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-slate-700" data-testid={`text-drawer-${item.id}`}>

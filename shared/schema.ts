@@ -29,6 +29,7 @@ export const medicalItems = pgTable("medical_items", {
 export const cabinets = pgTable("cabinets", {
   id: varchar("id", { length: 10 }).primaryKey(),
   name: text("name").notNull(),
+  abbreviation: varchar("abbreviation", { length: 3 }).notNull(), // Max 3 letters
   description: text("description"),
   location: text("location"),
 });

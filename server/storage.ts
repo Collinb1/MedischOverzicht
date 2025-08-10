@@ -56,30 +56,35 @@ export class MemStorage implements IStorage {
       {
         id: "A",
         name: "Spoedhulp Voorraad",
+        abbreviation: "SPO",
         description: "Eerste hulp en spoedvoorraad",
         location: "Gang 1 - Links"
       },
       {
         id: "B", 
         name: "Medicijnen",
+        abbreviation: "MED",
         description: "Algemene medicatie en pillen",
         location: "Gang 1 - Midden"
       },
       {
         id: "C",
         name: "Chirurgische Instrumenten", 
+        abbreviation: "CHI",
         description: "Operatie instrumenten en steriele materialen",
         location: "Gang 1 - Rechts"
       },
       {
         id: "D",
         name: "Monitoring Apparatuur",
+        abbreviation: "MON",
         description: "Meet- en monitoringapparatuur", 
         location: "Gang 2 - Links"
       },
       {
         id: "E",
         name: "Persoonlijke Beschermingsmiddelen",
+        abbreviation: "PBM",
         description: "PBM en hygiënematerialen",
         location: "Gang 2 - Rechts"
       }

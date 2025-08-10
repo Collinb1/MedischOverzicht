@@ -25,6 +25,7 @@ export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddC
     defaultValues: {
       id: "",
       name: "",
+      abbreviation: "",
       description: "",
       location: "",
     },
@@ -98,6 +99,26 @@ export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddC
                       placeholder="Voer kastnaam in" 
                       {...field} 
                       data-testid="input-cabinet-name"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="abbreviation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Afkorting (Max 3 letters)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Bijv. SPO, MED, CHI" 
+                      {...field} 
+                      data-testid="input-cabinet-abbreviation"
+                      maxLength={3}
+                      onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                     />
                   </FormControl>
                   <FormMessage />
