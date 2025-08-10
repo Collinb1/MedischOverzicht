@@ -12,19 +12,29 @@ export const drawers = pgTable("drawers", {
   description: text("description"),
 });
 
+// Item locations table - tracks where items are stored at each post
+export const itemLocations = pgTable("item_locations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  itemId: varchar("item_id").notNull().references(() => medicalItems.id, { onDelete: "cascade" }),
+  ambulancePostId: varchar("ambulance_post_id").notNull().references(() => ambulancePosts.id),
+  cabinet: varchar("cabinet", { length: 10 }).notNull(),
+  drawer: text("drawer"),
+  isLowStock: boolean("is_low_stock").notNull().default(false),
+  stockStatus: text("stock_status").notNull().default("op-voorraad"), // "op-voorraad", "bijna-op", "niet-meer-aanwezig"
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const medicalItems = pgTable("medical_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description"),
   category: text("category").notNull(),
-  cabinet: varchar("cabinet", { length: 10 }).notNull(),
-  drawer: text("drawer"), // Simple text field for drawer location
-  ambulancePost: text("ambulance_post").notNull().default("hilversum"), // "hilversum" or "blaricum"
-  isLowStock: boolean("is_low_stock").notNull().default(false),
-  stockStatus: text("stock_status").notNull().default("op-voorraad"), // "op-voorraad", "bijna-op", "niet-meer-aanwezig"
   expiryDate: date("expiry_date"),
   alertEmail: text("alert_email"),
   photoUrl: text("photo_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const cabinets = pgTable("cabinets", {
@@ -46,6 +56,14 @@ export const emailNotifications = pgTable("email_notifications", {
 
 export const insertMedicalItemSchema = createInsertSchema(medicalItems).omit({
   id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertItemLocationSchema = createInsertSchema(itemLocations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertCabinetSchema = createInsertSchema(cabinets);
@@ -61,6 +79,8 @@ export const insertEmailNotificationSchema = createInsertSchema(emailNotificatio
 
 export type InsertMedicalItem = z.infer<typeof insertMedicalItemSchema>;
 export type MedicalItem = typeof medicalItems.$inferSelect;
+export type InsertItemLocation = z.infer<typeof insertItemLocationSchema>;
+export type ItemLocation = typeof itemLocations.$inferSelect;
 export type InsertCabinet = z.infer<typeof insertCabinetSchema>;
 export type Cabinet = typeof cabinets.$inferSelect;
 export type InsertDrawer = z.infer<typeof insertDrawerSchema>;

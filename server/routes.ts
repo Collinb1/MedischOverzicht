@@ -1,44 +1,65 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema, insertEmailConfigSchema, insertAmbulancePostSchema } from "@shared/schema";
+import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema, insertEmailConfigSchema, insertAmbulancePostSchema, insertItemLocationSchema } from "@shared/schema";
 import { sendEmail, generateRestockEmailHTML } from "./email";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Get all medical items
+  // Get all medical items with locations
   app.get("/api/medical-items", async (req, res) => {
     try {
       const { cabinet, category, search, ambulancePost } = req.query;
-      let items = await storage.getMedicalItems();
       
-      // Filter by ambulance post (most important filter)
-      if (ambulancePost && typeof ambulancePost === 'string') {
-        items = items.filter(item => item.ambulancePost === ambulancePost);
+      if (!ambulancePost || typeof ambulancePost !== 'string') {
+        return res.status(400).json({ message: "ambulancePost parameter is required" });
       }
+      
+      // Get item locations for the specific ambulance post
+      const itemLocations = await storage.getItemLocationsByPost(ambulancePost);
+      
+      // Get all medical items and join with locations
+      const allItems = await storage.getMedicalItems();
+      const itemsWithLocations = itemLocations.map(location => {
+        const item = allItems.find(item => item.id === location.itemId);
+        if (!item) return null;
+        
+        return {
+          ...item,
+          locationId: location.id,
+          cabinet: location.cabinet,
+          drawer: location.drawer,
+          isLowStock: location.isLowStock,
+          stockStatus: location.stockStatus,
+          ambulancePost: location.ambulancePostId
+        };
+      }).filter(Boolean);
+      
+      let filteredItems = itemsWithLocations;
       
       // Filter by cabinet if specified
       if (cabinet && typeof cabinet === 'string') {
-        items = items.filter(item => item.cabinet === cabinet);
+        filteredItems = filteredItems.filter(item => item.cabinet === cabinet);
       }
       
       // Filter by category if specified
       if (category && typeof category === 'string') {
-        items = items.filter(item => item.category.toLowerCase() === category.toLowerCase());
+        filteredItems = filteredItems.filter(item => item.category.toLowerCase() === category.toLowerCase());
       }
       
       // Search filter
       if (search && typeof search === 'string') {
         const searchLower = search.toLowerCase();
-        items = items.filter(item => 
+        filteredItems = filteredItems.filter(item => 
           item.name.toLowerCase().includes(searchLower) ||
           item.description?.toLowerCase().includes(searchLower) ||
           item.category.toLowerCase().includes(searchLower)
         );
       }
       
-      res.json(items);
+      res.json(filteredItems);
     } catch (error) {
+      console.error("Error fetching medical items:", error);
       res.status(500).json({ message: "Failed to fetch medical items" });
     }
   });
@@ -56,13 +77,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create medical item
+  // Create medical item with location
   app.post("/api/medical-items", async (req, res) => {
     try {
-      const validatedData = insertMedicalItemSchema.parse(req.body);
-      const item = await storage.createMedicalItem(validatedData);
-      res.status(201).json(item);
+      const { ambulancePost, cabinet, drawer, isLowStock, stockStatus, ...itemData } = req.body;
+      
+      // Validate medical item data
+      const validatedItemData = insertMedicalItemSchema.parse(itemData);
+      
+      // Create the medical item first
+      const item = await storage.createMedicalItem(validatedItemData);
+      
+      // Create location record
+      const locationData = {
+        itemId: item.id,
+        ambulancePostId: ambulancePost,
+        cabinet: cabinet || "A",
+        drawer: drawer || null,
+        isLowStock: isLowStock || false,
+        stockStatus: stockStatus || "op-voorraad"
+      };
+      
+      const validatedLocationData = insertItemLocationSchema.parse(locationData);
+      const location = await storage.createItemLocation(validatedLocationData);
+      
+      // Return combined data
+      const response = {
+        ...item,
+        locationId: location.id,
+        cabinet: location.cabinet,
+        drawer: location.drawer,
+        isLowStock: location.isLowStock,
+        stockStatus: location.stockStatus,
+        ambulancePost: location.ambulancePostId
+      };
+      
+      res.status(201).json(response);
     } catch (error) {
+      console.error("Error creating medical item:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {
@@ -71,16 +123,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update medical item
+  // Update medical item and location
   app.patch("/api/medical-items/:id", async (req, res) => {
     try {
-      const partialData = insertMedicalItemSchema.partial().parse(req.body);
-      const item = await storage.updateMedicalItem(req.params.id, partialData);
-      if (!item) {
-        return res.status(404).json({ message: "Medical item not found" });
+      const { locationId, ambulancePost, cabinet, drawer, isLowStock, stockStatus, ...itemData } = req.body;
+      
+      // Update the medical item if there's item data to update
+      let updatedItem = null;
+      if (Object.keys(itemData).length > 0) {
+        const partialItemData = insertMedicalItemSchema.partial().parse(itemData);
+        updatedItem = await storage.updateMedicalItem(req.params.id, partialItemData);
+        if (!updatedItem) {
+          return res.status(404).json({ message: "Medical item not found" });
+        }
+      } else {
+        updatedItem = await storage.getMedicalItem(req.params.id);
+        if (!updatedItem) {
+          return res.status(404).json({ message: "Medical item not found" });
+        }
       }
-      res.json(item);
+      
+      // Update location if locationId is provided
+      let updatedLocation = null;
+      if (locationId) {
+        const locationUpdateData = {
+          ...(ambulancePost && { ambulancePostId: ambulancePost }),
+          ...(cabinet && { cabinet }),
+          ...(drawer !== undefined && { drawer }),
+          ...(isLowStock !== undefined && { isLowStock }),
+          ...(stockStatus && { stockStatus })
+        };
+        
+        if (Object.keys(locationUpdateData).length > 0) {
+          updatedLocation = await storage.updateItemLocation(locationId, locationUpdateData);
+        } else {
+          updatedLocation = await storage.getItemLocation(locationId);
+        }
+      }
+      
+      // Combine item and location data for response
+      const response = updatedLocation ? {
+        ...updatedItem,
+        locationId: updatedLocation.id,
+        cabinet: updatedLocation.cabinet,
+        drawer: updatedLocation.drawer,
+        isLowStock: updatedLocation.isLowStock,
+        stockStatus: updatedLocation.stockStatus,
+        ambulancePost: updatedLocation.ambulancePostId
+      } : updatedItem;
+      
+      res.json(response);
     } catch (error) {
+      console.error("Error updating medical item:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {

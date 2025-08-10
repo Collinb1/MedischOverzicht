@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet } from "@shared/schema";
+import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet, type AmbulancePost } from "@shared/schema";
+import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, UserPlus, Camera, X } from "lucide-react";
 import AddCabinetDialog from "../components/add-cabinet-dialog";
@@ -60,14 +61,30 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
     },
   });
 
+  const { data: ambulancePosts = [] } = useQuery<AmbulancePost[]>({
+    queryKey: ["/api/ambulance-posts"],
+    queryFn: async () => {
+      const response = await fetch("/api/ambulance-posts");
+      if (!response.ok) throw new Error("Failed to fetch ambulance posts");
+      return response.json();
+    },
+  });
 
 
-  const form = useForm<InsertMedicalItem>({
-    resolver: zodResolver(insertMedicalItemSchema),
+
+  const form = useForm<InsertMedicalItem & { ambulancePost: string; cabinet: string; drawer: string; isLowStock: boolean; stockStatus: string }>({
+    resolver: zodResolver(insertMedicalItemSchema.extend({
+      ambulancePost: z.string().min(1, "Ambulancepost is verplicht"),
+      cabinet: z.string().min(1, "Kast is verplicht"),
+      drawer: z.string().optional(),
+      isLowStock: z.boolean().optional(),
+      stockStatus: z.string().optional(),
+    })),
     defaultValues: {
       name: "",
       description: "",
       category: "Spuiten",
+      ambulancePost: selectedPost,
       cabinet: cabinets.length > 0 ? cabinets[0].id : "A",
       drawer: "",
       isLowStock: false,
@@ -75,7 +92,6 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
       expiryDate: null,
       alertEmail: "spoedhulp@ziekenhuis.nl",
       photoUrl: photoUrl,
-      ambulancePost: selectedPost,
     },
   });
 
@@ -143,8 +159,8 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
   };
 
   const addItemMutation = useMutation({
-    mutationFn: async (data: InsertMedicalItem) => {
-      const itemData = { ...data, photoUrl, ambulancePost: selectedPost };
+    mutationFn: async (data: InsertMedicalItem & { ambulancePost: string; cabinet: string; drawer: string; isLowStock: boolean; stockStatus: string }) => {
+      const itemData = { ...data, photoUrl };
       await apiRequest("POST", "/api/medical-items", itemData);
     },
     onSuccess: () => {
@@ -169,7 +185,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
     },
   });
 
-  const onSubmit = async (data: InsertMedicalItem) => {
+  const onSubmit = async (data: InsertMedicalItem & { ambulancePost: string; cabinet: string; drawer: string; isLowStock: boolean; stockStatus: string }) => {
     console.log("Form submitted with data:", data);
     console.log("Photo URL:", photoUrl);
     console.log("Form errors:", form.formState.errors);
@@ -306,6 +322,31 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
 
             <FormField
               control={form.control}
+              name="ambulancePost"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ambulancepost</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-ambulance-post">
+                        <SelectValue placeholder="Selecteer ambulancepost" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {ambulancePosts.map(post => (
+                        <SelectItem key={post.id} value={post.id}>
+                          {post.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="cabinet"
               render={({ field }) => (
                 <FormItem>
@@ -354,6 +395,55 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
                       data-testid="input-drawer"
                       {...field}
                       value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Stock Status */}
+            <FormField
+              control={form.control}
+              name="stockStatus"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Voorraad Status</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-stock-status">
+                        <SelectValue placeholder="Selecteer voorraad status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="op-voorraad">Op voorraad</SelectItem>
+                      <SelectItem value="laag">Laag</SelectItem>
+                      <SelectItem value="bijna-op">Bijna op</SelectItem>
+                      <SelectItem value="op">Op</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Low Stock Toggle */}
+            <FormField
+              control={form.control}
+              name="isLowStock"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Bijna op markering</FormLabel>
+                    <div className="text-sm text-muted-foreground">
+                      Markeer dit item als bijna op voor notificaties
+                    </div>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      data-testid="switch-is-low-stock"
                     />
                   </FormControl>
                   <FormMessage />
