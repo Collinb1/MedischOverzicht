@@ -192,6 +192,8 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
 
 
 
+
+
   const deleteItemMutation = useMutation({
     mutationFn: async (itemId: string) => {
       await apiRequest("DELETE", `/api/medical-items/${itemId}`);
