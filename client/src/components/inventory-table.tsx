@@ -16,12 +16,13 @@ interface InventoryTableProps {
   onRefetch: () => void;
 }
 
-const cabinetColors = {
-  A: "bg-cabinet-a text-white border-2 border-cabinet-a",
-  B: "bg-cabinet-b text-white border-2 border-cabinet-b", 
-  C: "bg-cabinet-c text-white border-2 border-cabinet-c",
-  D: "bg-cabinet-d text-white border-2 border-cabinet-d",
-  E: "bg-cabinet-e text-white border-2 border-cabinet-e"
+// Helper function to get cabinet color from cabinet data
+const getCabinetColor = (cabinetId: string, cabinets: any[]): string => {
+  const cabinet = cabinets.find((c: any) => c.id === cabinetId);
+  if (cabinet?.color) {
+    return `${cabinet.color} text-white border-2 border-current`;
+  }
+  return "bg-slate-200 text-slate-700 border-2 border-slate-400";
 };
 
 const getCategoryIcon = (category: string) => {
@@ -230,7 +231,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                         {/* Dit wordt nu leeg gelaten omdat de foto bij de item naam staat */}
                       </TableCell>
                       <TableCell>
-                        <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg font-bold text-xl ${cabinetColors[item.cabinet as keyof typeof cabinetColors] || "bg-slate-200 text-slate-700 border-2 border-slate-400"}`} data-testid={`badge-cabinet-${item.id}`}>
+                        <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg font-bold text-xl ${getCabinetColor(item.cabinet, cabinets)}`} data-testid={`badge-cabinet-${item.id}`}>
                           {getCabinetAbbreviation(item.cabinet)}
                         </div>
                       </TableCell>

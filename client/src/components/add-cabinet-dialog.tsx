@@ -28,6 +28,7 @@ export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddC
       abbreviation: "",
       description: "",
       location: "",
+      color: "bg-slate-500",
     },
   });
 
@@ -159,6 +160,55 @@ export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddC
                       value={field.value || ""}
                       data-testid="textarea-cabinet-description"
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Kastkleur</FormLabel>
+                  <FormControl>
+                    <div className="grid grid-cols-6 gap-2">
+                      {[
+                        { name: "Rood", value: "bg-red-500", preview: "bg-red-500" },
+                        { name: "Blauw", value: "bg-blue-500", preview: "bg-blue-500" },
+                        { name: "Groen", value: "bg-green-500", preview: "bg-green-500" },
+                        { name: "Geel", value: "bg-yellow-500", preview: "bg-yellow-500" },
+                        { name: "Paars", value: "bg-purple-500", preview: "bg-purple-500" },
+                        { name: "Oranje", value: "bg-orange-500", preview: "bg-orange-500" },
+                        { name: "Roze", value: "bg-pink-500", preview: "bg-pink-500" },
+                        { name: "Indigo", value: "bg-indigo-500", preview: "bg-indigo-500" },
+                        { name: "Turkoois", value: "bg-teal-500", preview: "bg-teal-500" },
+                        { name: "Lime", value: "bg-lime-500", preview: "bg-lime-500" },
+                        { name: "Grijs", value: "bg-slate-500", preview: "bg-slate-500" },
+                        { name: "Donkergrijs", value: "bg-gray-700", preview: "bg-gray-700" },
+                      ].map((color) => {
+                        const isSelected = field.value === color.value;
+                        return (
+                          <button
+                            key={color.value}
+                            type="button"
+                            onClick={() => field.onChange(color.value)}
+                            className={`w-10 h-10 rounded-lg ${color.preview} border-2 transition-all ${
+                              isSelected ? "border-slate-900 ring-2 ring-slate-300" : "border-slate-300 hover:border-slate-400"
+                            }`}
+                            title={color.name}
+                            data-testid={`button-color-${color.value}`}
+                          >
+                            {isSelected && (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <div className="w-2 h-2 bg-white rounded-full shadow-sm"></div>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

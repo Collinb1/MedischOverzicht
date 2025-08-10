@@ -32,6 +32,7 @@ export const cabinets = pgTable("cabinets", {
   abbreviation: varchar("abbreviation", { length: 3 }).notNull(), // Max 3 letters
   description: text("description"),
   location: text("location"),
+  color: varchar("color", { length: 20 }).default("bg-slate-200"),
 });
 
 export const emailNotifications = pgTable("email_notifications", {

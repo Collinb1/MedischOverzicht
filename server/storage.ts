@@ -58,35 +58,40 @@ export class MemStorage implements IStorage {
         name: "Spoedhulp Voorraad",
         abbreviation: "SPO",
         description: "Eerste hulp en spoedvoorraad",
-        location: "Gang 1 - Links"
+        location: "Gang 1 - Links",
+        color: "bg-red-500"
       },
       {
         id: "B", 
         name: "Medicijnen",
         abbreviation: "MED",
         description: "Algemene medicatie en pillen",
-        location: "Gang 1 - Midden"
+        location: "Gang 1 - Midden",
+        color: "bg-blue-500"
       },
       {
         id: "C",
         name: "Chirurgische Instrumenten", 
         abbreviation: "CHI",
         description: "Operatie instrumenten en steriele materialen",
-        location: "Gang 1 - Rechts"
+        location: "Gang 1 - Rechts",
+        color: "bg-green-500"
       },
       {
         id: "D",
         name: "Monitoring Apparatuur",
         abbreviation: "MON",
         description: "Meet- en monitoringapparatuur", 
-        location: "Gang 2 - Links"
+        location: "Gang 2 - Links",
+        color: "bg-yellow-500"
       },
       {
         id: "E",
         name: "Persoonlijke Beschermingsmiddelen",
         abbreviation: "PBM",
         description: "PBM en hygiënematerialen",
-        location: "Gang 2 - Rechts"
+        location: "Gang 2 - Rechts",
+        color: "bg-purple-500"
       }
     ];
 
@@ -132,7 +137,7 @@ export class MemStorage implements IStorage {
         description: "Steriel, eenmalig gebruik",
         category: "Spuiten",
         cabinet: "A",
-        drawerId: "A-1",
+        drawer: "Boven",
         ambulancePost: "hilversum",
         isLowStock: false,
         expiryDate: "2024-12-15",
@@ -143,7 +148,7 @@ export class MemStorage implements IStorage {
         description: "Pijnstillende tabletten",
         category: "Medicijnen",
         cabinet: "B",
-        drawerId: "B-1",
+        drawer: "Onder",
         ambulancePost: "hilversum",
         isLowStock: false,
         expiryDate: "2025-03-20",
@@ -154,7 +159,7 @@ export class MemStorage implements IStorage {
         description: "Steriel, wegwerpbaar",
         category: "Instrumenten",
         cabinet: "C",
-        drawerId: "C-1",
+        drawer: "Midden",
         ambulancePost: "hilversum",
         isLowStock: true,
         expiryDate: "2024-08-30",
@@ -165,7 +170,7 @@ export class MemStorage implements IStorage {
         description: "Snelle, nauwkeurige metingen",
         category: "Monitoring",
         cabinet: "D",
-        drawerId: "D-1",
+        drawer: "Links",
         ambulancePost: "hilversum",
         isLowStock: false,
         expiryDate: null,
@@ -177,7 +182,7 @@ export class MemStorage implements IStorage {
         description: "Hoge filtratie-efficiëntie",
         category: "PBM",
         cabinet: "E",
-        drawerId: "E-1",
+        drawer: "Rechts",
         ambulancePost: "blaricum",
         isLowStock: false,
         expiryDate: "2025-01-15",
@@ -188,7 +193,7 @@ export class MemStorage implements IStorage {
         description: "Latex-vrij, poedervrij",
         category: "PBM",
         cabinet: "A",
-        drawerId: "A-3",
+        drawer: "Boven",
         ambulancePost: "blaricum",
         isLowStock: true,
         expiryDate: "2024-11-30",
@@ -199,7 +204,7 @@ export class MemStorage implements IStorage {
         description: "Steriel verbandmateriaal",
         category: "Verbandmiddelen",
         cabinet: "A",
-        drawerId: "A-2",
+        drawer: "Boven",
         ambulancePost: "blaricum",
         isLowStock: true,
         expiryDate: "2025-06-15",
@@ -210,7 +215,7 @@ export class MemStorage implements IStorage {
         description: "Automatische digitale meter",
         category: "Monitoring",
         cabinet: "D",
-        drawerId: "D-2",
+        drawer: "Links",
         ambulancePost: "blaricum",
         isLowStock: false,
         expiryDate: null,
@@ -224,6 +229,7 @@ export class MemStorage implements IStorage {
         ...item, 
         id,
         description: item.description || null,
+        drawer: item.drawer || null,
         expiryDate: item.expiryDate || null,
         ambulancePost: (item as any).ambulancePost || "hilversum",
         alertEmail: (item as any).alertEmail || null,
@@ -271,6 +277,7 @@ export class MemStorage implements IStorage {
       ...insertItem, 
       id,
       description: insertItem.description || null,
+      drawer: insertItem.drawer || null,
       ambulancePost: insertItem.ambulancePost || "hilversum",
       alertEmail: insertItem.alertEmail || null,
       photoUrl: insertItem.photoUrl || null,
@@ -327,7 +334,8 @@ export class MemStorage implements IStorage {
     const cabinet: Cabinet = {
       ...insertCabinet,
       description: insertCabinet.description || null,
-      location: insertCabinet.location || null
+      location: insertCabinet.location || null,
+      color: insertCabinet.color || null
     };
     this.cabinets.set(cabinet.id, cabinet);
     return cabinet;
@@ -343,7 +351,8 @@ export class MemStorage implements IStorage {
       ...existingCabinet, 
       ...updateData,
       description: updateData.description !== undefined ? updateData.description || null : existingCabinet.description,
-      location: updateData.location !== undefined ? updateData.location || null : existingCabinet.location
+      location: updateData.location !== undefined ? updateData.location || null : existingCabinet.location,
+      color: updateData.color !== undefined ? updateData.color || null : existingCabinet.color
     };
     this.cabinets.set(id, updatedCabinet);
     return updatedCabinet;
@@ -372,7 +381,11 @@ export class MemStorage implements IStorage {
 
   async createDrawer(insertDrawer: InsertDrawer): Promise<Drawer> {
     const id = randomUUID();
-    const drawer: Drawer = { ...insertDrawer, id };
+    const drawer: Drawer = { 
+      ...insertDrawer, 
+      id,
+      description: insertDrawer.description || null
+    };
     this.drawers.set(id, drawer);
     return drawer;
   }
@@ -439,7 +452,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMedicalItem(id: string): Promise<boolean> {
     const result = await db.delete(medicalItems).where(eq(medicalItems.id, id));
-    return result.rowCount > 0;
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   async getCabinets(): Promise<Cabinet[]> {
@@ -472,7 +485,7 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Cannot delete cabinet with items in it");
     }
     const result = await db.delete(cabinets).where(eq(cabinets.id, id));
-    return result.rowCount > 0;
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   async createEmailNotification(insertNotification: InsertEmailNotification): Promise<EmailNotification> {
@@ -514,7 +527,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteDrawer(id: string): Promise<boolean> {
     const result = await db.delete(drawers).where(eq(drawers.id, id));
-    return result.rowCount > 0;
+    return result.rowCount !== null && result.rowCount > 0;
   }
 }
 
