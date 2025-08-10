@@ -49,6 +49,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddCabinetOpen, setIsAddCabinetOpen] = useState(false);
+  const [isAddPostOpen, setIsAddPostOpen] = useState(false);
   const [isCustomEmail, setIsCustomEmail] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -104,6 +105,11 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
   const handleAddCabinet = (newCabinet: Cabinet) => {
     form.setValue("cabinet", newCabinet.id);
     form.setValue("drawer", ""); // Reset drawer selection
+  };
+
+  const handleAddPost = (newPost: AmbulancePost) => {
+    form.setValue("ambulancePost", newPost.id);
+    queryClient.invalidateQueries({ queryKey: ["/api/ambulance-posts"] });
   };
 
   // Photo upload functions
@@ -323,7 +329,20 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
 
             {/* Locatie Tabel - Ambulancepost, Kast en Lade */}
             <div className="space-y-4">
-              <FormLabel className="text-base font-medium">Locatie Item per post</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel className="text-base font-medium">Locatie Item per post</FormLabel>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddPostOpen(true)}
+                  className="flex items-center gap-2"
+                  data-testid="button-add-post"
+                >
+                  <Plus className="w-4 h-4" />
+                  Post toevoegen
+                </Button>
+              </div>
               <div className="border rounded-md p-4 bg-slate-50">
                 <Table>
                   <TableHeader>
@@ -628,7 +647,154 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
           onOpenChange={setIsAddCabinetOpen}
           onSuccess={handleAddCabinet}
         />
+
+        {/* Add Post Dialog */}
+        <Dialog open={isAddPostOpen} onOpenChange={setIsAddPostOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Nieuwe Ambulancepost Toevoegen</DialogTitle>
+            </DialogHeader>
+            <AddPostForm onSuccess={handleAddPost} onCancel={() => setIsAddPostOpen(false)} />
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// Simple inline form component for adding ambulance posts
+function AddPostForm({ onSuccess, onCancel }: { 
+  onSuccess: (post: AmbulancePost) => void;
+  onCancel: () => void;
+}) {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const postForm = useForm({
+    resolver: zodResolver(z.object({
+      id: z.string().min(1, "ID is verplicht").regex(/^[a-z0-9-]+$/, "ID mag alleen kleine letters, cijfers en streepjes bevatten"),
+      name: z.string().min(1, "Naam is verplicht"),
+      location: z.string().optional(),
+      description: z.string().optional(),
+    })),
+    defaultValues: {
+      id: '',
+      name: '',
+      location: '',
+      description: '',
+    },
+  });
+
+  const onSubmit = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/ambulance-posts', {
+        method: 'POST',
+        body: JSON.stringify({ ...data, isActive: true }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Fout bij aanmaken ambulancepost');
+      }
+      
+      const newPost = await response.json();
+      onSuccess(newPost);
+      onCancel();
+      
+      toast({
+        title: "Succes",
+        description: "Ambulancepost succesvol aangemaakt",
+      });
+    } catch (error) {
+      toast({
+        title: "Fout",
+        description: error instanceof Error ? error.message : "Er is een fout opgetreden",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Form {...postForm}>
+      <form onSubmit={postForm.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={postForm.control}
+          name="id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Post ID</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="bijv. amsterdam-oost" 
+                  {...field} 
+                  data-testid="input-post-id"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={postForm.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Naam</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="bijv. Post Amsterdam Oost" 
+                  {...field} 
+                  data-testid="input-post-name"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={postForm.control}
+          name="location"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Locatie (optioneel)</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="bijv. Oosterpark 1, Amsterdam" 
+                  {...field} 
+                  data-testid="input-post-location"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end space-x-3 pt-4">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            data-testid="button-cancel-post"
+          >
+            Annuleren
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            data-testid="button-submit-post"
+          >
+            {isSubmitting ? "Bezig..." : "Post Toevoegen"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
