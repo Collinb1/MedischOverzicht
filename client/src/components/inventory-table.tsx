@@ -66,24 +66,27 @@ const EmailNotificationInfo = ({ itemId }: { itemId: string }) => {
   });
 
   if (isLoading) {
-    return <div className="text-xs text-slate-400">Laden...</div>;
+    return null;
   }
 
   if (!notification) {
-    return <div className="text-xs text-slate-600">Geen email verzonden</div>;
+    return null; // Toon niets als er geen email verzonden is
   }
 
   return (
-    <div className="text-xs">
-      <div className="text-slate-900 font-medium">
-        {notification.department}
-      </div>
-      <div className="text-slate-500">
-        {new Date(notification.sentAt).toLocaleDateString('nl-NL', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        })}
+    <div className="flex items-center space-x-2 text-xs">
+      <Mail className="w-3 h-3 text-blue-500" />
+      <div>
+        <div className="text-slate-900 font-medium">
+          {notification.department}
+        </div>
+        <div className="text-slate-500">
+          {new Date(notification.sentAt).toLocaleDateString('nl-NL', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          })}
+        </div>
       </div>
     </div>
   );
@@ -327,8 +330,8 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                 <TableHead>Lade</TableHead>
                 <TableHead>Categorie</TableHead>
                 <TableHead>Voorraad Status</TableHead>
-                <TableHead>Laatste Email</TableHead>
                 <TableHead>Acties</TableHead>
+                <TableHead>Laatste Email</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -396,9 +399,6 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                           data-testid={`status-indicator-${item.id}`}
                         />
                       </TableCell>
-                      <TableCell data-testid={`email-notification-${item.id}`}>
-                        <EmailNotificationInfo itemId={item.id} />
-                      </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-1">
                           {/* Stock Status Dropdown */}
@@ -436,6 +436,9 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
+                      </TableCell>
+                      <TableCell data-testid={`email-notification-${item.id}`}>
+                        <EmailNotificationInfo itemId={item.id} />
                       </TableCell>
                     </TableRow>
                   );
