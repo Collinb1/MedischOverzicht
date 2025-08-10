@@ -17,11 +17,11 @@ interface InventoryTableProps {
 }
 
 const cabinetColors = {
-  A: "bg-cabinet-a bg-opacity-20 text-cabinet-a",
-  B: "bg-cabinet-b bg-opacity-20 text-cabinet-b", 
-  C: "bg-cabinet-c bg-opacity-20 text-cabinet-c",
-  D: "bg-cabinet-d bg-opacity-20 text-cabinet-d",
-  E: "bg-cabinet-e bg-opacity-20 text-cabinet-e"
+  A: "bg-cabinet-a bg-opacity-30 text-cabinet-a border-2 border-cabinet-a",
+  B: "bg-cabinet-b bg-opacity-30 text-cabinet-b border-2 border-cabinet-b", 
+  C: "bg-cabinet-c bg-opacity-30 text-cabinet-c border-2 border-cabinet-c",
+  D: "bg-cabinet-d bg-opacity-30 text-cabinet-d border-2 border-cabinet-d",
+  E: "bg-cabinet-e bg-opacity-30 text-cabinet-e border-2 border-cabinet-e"
 };
 
 const getCategoryIcon = (category: string) => {
@@ -219,9 +219,9 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                         {/* Dit wordt nu leeg gelaten omdat de foto bij de item naam staat */}
                       </TableCell>
                       <TableCell>
-                        <Badge className={cabinetColors[item.cabinet as keyof typeof cabinetColors]} data-testid={`badge-cabinet-${item.id}`}>
-                          Kast {item.cabinet}
-                        </Badge>
+                        <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg font-bold text-2xl ${cabinetColors[item.cabinet as keyof typeof cabinetColors] || "bg-slate-200 bg-opacity-30 text-slate-700 border-2 border-slate-400"}`} data-testid={`badge-cabinet-${item.id}`}>
+                          {item.cabinet.substring(0, 3)}
+                        </div>
                       </TableCell>
                       <TableCell className="text-sm text-slate-700" data-testid={`text-drawer-${item.id}`}>
                         {item.drawer || "-"}
