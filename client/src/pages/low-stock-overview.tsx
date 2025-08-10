@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, Package, Send, CheckCircle, RotateCcw, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -13,10 +14,18 @@ import type { MedicalItem, EmailNotification } from "@shared/schema";
 export default function LowStockOverview() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedPost, setSelectedPost] = useState<string>("hilversum");
 
   const { data: items = [], isLoading } = useQuery<MedicalItem[]>({
-    queryKey: ['/api/medical-items'],
-    queryFn: () => apiRequest('/api/medical-items'),
+    queryKey: ['/api/medical-items', selectedPost],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append("ambulancePost", selectedPost);
+      
+      const response = await fetch(`/api/medical-items?${params}`);
+      if (!response.ok) throw new Error("Failed to fetch medical items");
+      return response.json();
+    },
   });
 
   const { data: cabinets = [] } = useQuery<any[]>({
@@ -143,9 +152,20 @@ export default function LowStockOverview() {
                 Terug naar Inventaris
               </Button>
             </Link>
-            <div>
+            <div className="flex-1">
               <h1 className="text-xl font-semibold text-slate-900">Voorraad Overzicht</h1>
               <p className="text-sm text-slate-500">Items die bijna op zijn of niet meer aanwezig</p>
+            </div>
+            <div className="flex items-center space-x-2 text-sm text-slate-600">
+              <Select value={selectedPost} onValueChange={setSelectedPost}>
+                <SelectTrigger className="w-40 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hilversum">Post Hilversum</SelectItem>
+                  <SelectItem value="blaricum">Post Blaricum</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
