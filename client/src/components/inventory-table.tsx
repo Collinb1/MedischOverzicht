@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Edit, Trash2, Mail, Download, Plus } from "lucide-react";
+import { Edit, Trash2, Mail, Download, Plus, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -102,6 +102,30 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
     emailNotificationMutation.mutate(item.id);
   };
 
+  const sendWarningEmailMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      const response = await apiRequest("POST", `/api/send-warning-email/${itemId}`, {});
+      return response;
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Waarschuwing verzonden",
+        description: data.message,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Fout bij verzenden",
+        description: error.message || "Er is een fout opgetreden bij het verzenden van de waarschuwing.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSendWarningEmail = (item: MedicalItem) => {
+    sendWarningEmailMutation.mutate(item.id);
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -193,6 +217,19 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
+                          {item.isLowStock && item.alertEmail && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleSendWarningEmail(item)}
+                              disabled={sendWarningEmailMutation.isPending}
+                              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                              data-testid={`button-warning-${item.id}`}
+                              title={`Stuur waarschuwing naar ${item.alertEmail}`}
+                            >
+                              <AlertTriangle className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"

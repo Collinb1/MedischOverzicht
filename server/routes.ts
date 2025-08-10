@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema } from "@shared/schema";
+import { sendEmail, generateRestockEmailHTML } from "./email";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all medical items
@@ -217,6 +218,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ message: "Failed to send email notification" });
       }
+    }
+  });
+
+  // Send warning email for low stock item
+  app.post("/api/send-warning-email/:itemId", async (req, res) => {
+    try {
+      const { itemId } = req.params;
+      const item = await storage.getMedicalItem(itemId);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+
+      if (!item.alertEmail) {
+        return res.status(400).json({ message: "Geen email adres ingesteld voor dit item" });
+      }
+
+      // Get cabinet name
+      const cabinet = await storage.getCabinet(item.cabinet);
+      const cabinetName = cabinet ? cabinet.name : `Kast ${item.cabinet}`;
+
+      // Generate email HTML
+      const emailHTML = generateRestockEmailHTML(item, cabinetName);
+
+      // Send email
+      const success = await sendEmail({
+        to: item.alertEmail,
+        from: "inventaris@ziekenhuis.nl", // Default sender
+        subject: `🚨 Voorraad Waarschuwing: ${item.name} - Bijna Uitgeput`,
+        html: emailHTML
+      });
+
+      if (success) {
+        // Record the email notification
+        await storage.createEmailNotification({
+          itemId: item.id,
+          recipientEmail: item.alertEmail
+        });
+        
+        res.json({ 
+          success: true, 
+          message: `Waarschuwing email verzonden naar ${item.alertEmail}` 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Fout bij het verzenden van de email" 
+        });
+      }
+    } catch (error) {
+      console.error("Email send error:", error);
+      res.status(500).json({ message: "Fout bij het verzenden van waarschuwing email" });
     }
   });
 

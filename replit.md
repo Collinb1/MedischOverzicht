@@ -8,13 +8,14 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - **Backend**: Express.js API
 - **Storage**: In-memory storage (MemStorage)
 - **Styling**: Tailwind CSS met shadcn/ui
-- **Email**: Nodemailer voor email notificaties
+- **Email**: SendGrid voor email notificaties
 
 ## Functionaliteiten
 - Overzicht van alle medische items per kast
 - "Bijna op" status tracking (geen exacte aantallen)
 - Nieuwe kasten aanmaken tijdens item toevoeging
-- Email notificatie knop voor aanvulling
+- Email keuzemenu voor verschillende afdelingen
+- Waarschuwing email functionaliteit voor items die bijna op zijn
 - Nederlandse interface
 
 ## Data Model
@@ -31,3 +32,5 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-01-10: Project initialisatie - Nederlandse medische inventarisatie app met 5 kasten systeem
 - 2025-01-10: Uitgebreid met mogelijkheid om nieuwe kasten aan te maken tijdens item toevoeging
 - 2025-01-10: Vereenvoudigd naar "bijna op" model - geen exacte voorraadaantallen, alleen status of items bijna op zijn
+- 2025-01-10: Email keuzemenu toegevoegd met voorgedefinieerde afdelingen
+- 2025-01-10: Waarschuwing email functionaliteit - speciale knop voor items die bijna op zijn
