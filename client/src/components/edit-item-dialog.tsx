@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { insertMedicalItemSchema, type InsertMedicalItem, type MedicalItem } from "@shared/schema";
+import { insertMedicalItemSchema, type InsertMedicalItem, type MedicalItem, type Cabinet } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 interface EditItemDialogProps {
@@ -27,17 +27,18 @@ const categories = [
   "Verbandmiddelen"
 ];
 
-const cabinets = [
-  { value: "A", label: "Kast A - Spoedhulp Voorraad" },
-  { value: "B", label: "Kast B - Medicijnen" },
-  { value: "C", label: "Kast C - Chirurgische Instrumenten" },
-  { value: "D", label: "Kast D - Monitoring Apparatuur" },
-  { value: "E", label: "Kast E - Persoonlijke Beschermingsmiddelen" }
-];
-
 export default function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItemDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: cabinets = [] } = useQuery<Cabinet[]>({
+    queryKey: ["/api/cabinets"],
+    queryFn: async () => {
+      const response = await fetch("/api/cabinets");
+      if (!response.ok) throw new Error("Failed to fetch cabinets");
+      return response.json();
+    },
+  });
 
   const form = useForm<InsertMedicalItem>({
     resolver: zodResolver(insertMedicalItemSchema),
@@ -142,8 +143,8 @@ export default function EditItemDialog({ item, open, onOpenChange, onSuccess }: 
                     </FormControl>
                     <SelectContent>
                       {cabinets.map(cabinet => (
-                        <SelectItem key={cabinet.value} value={cabinet.value}>
-                          {cabinet.label}
+                        <SelectItem key={cabinet.id} value={cabinet.id}>
+                          Kast {cabinet.id} - {cabinet.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

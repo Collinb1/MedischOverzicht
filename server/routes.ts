@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertMedicalItemSchema, insertEmailNotificationSchema } from "@shared/schema";
+import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all medical items
@@ -126,6 +126,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(summary);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch cabinet summary" });
+    }
+  });
+
+  // Cabinet management routes
+  app.get("/api/cabinets", async (req, res) => {
+    try {
+      const cabinets = await storage.getCabinets();
+      res.json(cabinets);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch cabinets" });
+    }
+  });
+
+  app.get("/api/cabinets/:id", async (req, res) => {
+    try {
+      const cabinet = await storage.getCabinet(req.params.id);
+      if (!cabinet) {
+        return res.status(404).json({ message: "Cabinet not found" });
+      }
+      res.json(cabinet);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch cabinet" });
+    }
+  });
+
+  app.post("/api/cabinets", async (req, res) => {
+    try {
+      const validatedData = insertCabinetSchema.parse(req.body);
+      const cabinet = await storage.createCabinet(validatedData);
+      res.status(201).json(cabinet);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Failed to create cabinet" });
+      }
+    }
+  });
+
+  app.patch("/api/cabinets/:id", async (req, res) => {
+    try {
+      const partialData = insertCabinetSchema.partial().parse(req.body);
+      const cabinet = await storage.updateCabinet(req.params.id, partialData);
+      if (!cabinet) {
+        return res.status(404).json({ message: "Cabinet not found" });
+      }
+      res.json(cabinet);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Failed to update cabinet" });
+      }
+    }
+  });
+
+  app.delete("/api/cabinets/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteCabinet(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Cabinet not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Failed to delete cabinet" });
+      }
     }
   });
 

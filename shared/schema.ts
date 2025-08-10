@@ -14,6 +14,13 @@ export const medicalItems = pgTable("medical_items", {
   expiryDate: date("expiry_date"),
 });
 
+export const cabinets = pgTable("cabinets", {
+  id: varchar("id", { length: 10 }).primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  location: text("location"),
+});
+
 export const emailNotifications = pgTable("email_notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   itemId: varchar("item_id").notNull().references(() => medicalItems.id),
@@ -25,6 +32,8 @@ export const insertMedicalItemSchema = createInsertSchema(medicalItems).omit({
   id: true,
 });
 
+export const insertCabinetSchema = createInsertSchema(cabinets);
+
 export const insertEmailNotificationSchema = createInsertSchema(emailNotifications).omit({
   id: true,
   sentAt: true,
@@ -32,6 +41,8 @@ export const insertEmailNotificationSchema = createInsertSchema(emailNotificatio
 
 export type InsertMedicalItem = z.infer<typeof insertMedicalItemSchema>;
 export type MedicalItem = typeof medicalItems.$inferSelect;
+export type InsertCabinet = z.infer<typeof insertCabinetSchema>;
+export type Cabinet = typeof cabinets.$inferSelect;
 export type InsertEmailNotification = z.infer<typeof insertEmailNotificationSchema>;
 export type EmailNotification = typeof emailNotifications.$inferSelect;
 

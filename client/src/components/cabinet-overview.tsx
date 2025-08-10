@@ -14,12 +14,15 @@ interface CabinetOverviewProps {
   onCabinetSelect: (cabinet: string) => void;
 }
 
-const cabinetColors = {
-  A: "bg-cabinet-a",
-  B: "bg-cabinet-b", 
-  C: "bg-cabinet-c",
-  D: "bg-cabinet-d",
-  E: "bg-cabinet-e"
+const getCabinetColor = (cabinetId: string) => {
+  const colors = {
+    A: "bg-cabinet-a",
+    B: "bg-cabinet-b", 
+    C: "bg-cabinet-c",
+    D: "bg-cabinet-d",
+    E: "bg-cabinet-e"
+  };
+  return colors[cabinetId as keyof typeof colors] || "bg-slate-500";
 };
 
 export default function CabinetOverview({ onCabinetSelect }: CabinetOverviewProps) {
@@ -40,7 +43,7 @@ export default function CabinetOverview({ onCabinetSelect }: CabinetOverviewProp
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className={`w-12 h-12 ${cabinetColors[cabinet.id as keyof typeof cabinetColors]} rounded-lg flex items-center justify-center`}>
+                <div className={`w-12 h-12 ${getCabinetColor(cabinet.id)} rounded-lg flex items-center justify-center`}>
                   <span className="text-white font-bold text-xl">{cabinet.id}</span>
                 </div>
                 <div className="text-right">

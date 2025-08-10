@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { insertMedicalItemSchema, type InsertMedicalItem } from "@shared/schema";
+import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { Plus } from "lucide-react";
+import AddCabinetDialog from "../components/add-cabinet-dialog";
 
 interface AddItemDialogProps {
   open: boolean;
@@ -27,17 +29,19 @@ const categories = [
   "Verbandmiddelen"
 ];
 
-const cabinets = [
-  { value: "A", label: "Kast A - Spoedhulp Voorraad" },
-  { value: "B", label: "Kast B - Medicijnen" },
-  { value: "C", label: "Kast C - Chirurgische Instrumenten" },
-  { value: "D", label: "Kast D - Monitoring Apparatuur" },
-  { value: "E", label: "Kast E - Persoonlijke Beschermingsmiddelen" }
-];
-
 export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isAddCabinetOpen, setIsAddCabinetOpen] = useState(false);
+
+  const { data: cabinets = [] } = useQuery<Cabinet[]>({
+    queryKey: ["/api/cabinets"],
+    queryFn: async () => {
+      const response = await fetch("/api/cabinets");
+      if (!response.ok) throw new Error("Failed to fetch cabinets");
+      return response.json();
+    },
+  });
 
   const form = useForm<InsertMedicalItem>({
     resolver: zodResolver(insertMedicalItemSchema),
@@ -45,12 +49,16 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
       name: "",
       description: "",
       category: "Spuiten",
-      cabinet: "A",
+      cabinet: cabinets.length > 0 ? cabinets[0].id : "A",
       quantity: 0,
       minimumStock: 5,
       expiryDate: null,
     },
   });
+
+  const handleAddCabinet = (newCabinet: Cabinet) => {
+    form.setValue("cabinet", newCabinet.id);
+  };
 
   const addItemMutation = useMutation({
     mutationFn: async (data: InsertMedicalItem) => {
@@ -136,20 +144,32 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Kast</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-item-cabinet">
-                        <SelectValue placeholder="Selecteer kast" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {cabinets.map(cabinet => (
-                        <SelectItem key={cabinet.value} value={cabinet.value}>
-                          {cabinet.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-item-cabinet" className="flex-1">
+                          <SelectValue placeholder="Selecteer kast" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {cabinets.map(cabinet => (
+                          <SelectItem key={cabinet.id} value={cabinet.id}>
+                            Kast {cabinet.id} - {cabinet.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAddCabinetOpen(true)}
+                      className="px-3"
+                      data-testid="button-add-cabinet"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -258,6 +278,13 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
             </div>
           </form>
         </Form>
+
+        {/* Add Cabinet Dialog */}
+        <AddCabinetDialog 
+          open={isAddCabinetOpen}
+          onOpenChange={setIsAddCabinetOpen}
+          onSuccess={handleAddCabinet}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification } from "@shared/schema";
+import { type User, type InsertUser, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -13,6 +13,12 @@ export interface IStorage {
   updateMedicalItem(id: string, item: Partial<InsertMedicalItem>): Promise<MedicalItem | undefined>;
   deleteMedicalItem(id: string): Promise<boolean>;
   
+  getCabinets(): Promise<Cabinet[]>;
+  getCabinet(id: string): Promise<Cabinet | undefined>;
+  createCabinet(cabinet: InsertCabinet): Promise<Cabinet>;
+  updateCabinet(id: string, cabinet: Partial<InsertCabinet>): Promise<Cabinet | undefined>;
+  deleteCabinet(id: string): Promise<boolean>;
+  
   createEmailNotification(notification: InsertEmailNotification): Promise<EmailNotification>;
   getEmailNotifications(): Promise<EmailNotification[]>;
 }
@@ -21,17 +27,56 @@ export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private medicalItems: Map<string, MedicalItem>;
   private emailNotifications: Map<string, EmailNotification>;
+  private cabinets: Map<string, Cabinet>;
 
   constructor() {
     this.users = new Map();
     this.medicalItems = new Map();
     this.emailNotifications = new Map();
+    this.cabinets = new Map();
     
     // Initialize with some sample data
     this.initializeSampleData();
   }
 
   private initializeSampleData() {
+    // Initialize default cabinets
+    const defaultCabinets: Cabinet[] = [
+      {
+        id: "A",
+        name: "Spoedhulp Voorraad",
+        description: "Eerste hulp en spoedvoorraad",
+        location: "Gang 1 - Links"
+      },
+      {
+        id: "B", 
+        name: "Medicijnen",
+        description: "Algemene medicatie en pillen",
+        location: "Gang 1 - Midden"
+      },
+      {
+        id: "C",
+        name: "Chirurgische Instrumenten", 
+        description: "Operatie instrumenten en steriele materialen",
+        location: "Gang 1 - Rechts"
+      },
+      {
+        id: "D",
+        name: "Monitoring Apparatuur",
+        description: "Meet- en monitoringapparatuur", 
+        location: "Gang 2 - Links"
+      },
+      {
+        id: "E",
+        name: "Persoonlijke Beschermingsmiddelen",
+        description: "PBM en hygiënematerialen",
+        location: "Gang 2 - Rechts"
+      }
+    ];
+
+    defaultCabinets.forEach(cabinet => {
+      this.cabinets.set(cabinet.id, cabinet);
+    });
     const sampleItems: InsertMedicalItem[] = [
       {
         name: "Insuline Spuiten 1ml",
@@ -198,6 +243,49 @@ export class MemStorage implements IStorage {
 
   async getEmailNotifications(): Promise<EmailNotification[]> {
     return Array.from(this.emailNotifications.values());
+  }
+
+  async getCabinets(): Promise<Cabinet[]> {
+    return Array.from(this.cabinets.values());
+  }
+
+  async getCabinet(id: string): Promise<Cabinet | undefined> {
+    return this.cabinets.get(id);
+  }
+
+  async createCabinet(insertCabinet: InsertCabinet): Promise<Cabinet> {
+    const cabinet: Cabinet = {
+      ...insertCabinet,
+      description: insertCabinet.description || null,
+      location: insertCabinet.location || null
+    };
+    this.cabinets.set(cabinet.id, cabinet);
+    return cabinet;
+  }
+
+  async updateCabinet(id: string, updateData: Partial<InsertCabinet>): Promise<Cabinet | undefined> {
+    const existingCabinet = this.cabinets.get(id);
+    if (!existingCabinet) {
+      return undefined;
+    }
+    
+    const updatedCabinet: Cabinet = { 
+      ...existingCabinet, 
+      ...updateData,
+      description: updateData.description !== undefined ? updateData.description || null : existingCabinet.description,
+      location: updateData.location !== undefined ? updateData.location || null : existingCabinet.location
+    };
+    this.cabinets.set(id, updatedCabinet);
+    return updatedCabinet;
+  }
+
+  async deleteCabinet(id: string): Promise<boolean> {
+    // Check if any items are in this cabinet before deleting
+    const itemsInCabinet = Array.from(this.medicalItems.values()).filter(item => item.cabinet === id);
+    if (itemsInCabinet.length > 0) {
+      throw new Error("Cannot delete cabinet with items in it");
+    }
+    return this.cabinets.delete(id);
   }
 }
 
