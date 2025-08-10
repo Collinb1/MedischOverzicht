@@ -15,6 +15,7 @@ export default function Home() {
   const [selectedCabinet, setSelectedCabinet] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<string>("hilversum");
 
   const { data: items = [], isLoading, refetch } = useQuery<MedicalItem[]>({
     queryKey: ["/api/medical-items", selectedCabinet, selectedCategory, searchTerm],
@@ -50,9 +51,20 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="hidden sm:flex items-center space-x-2 text-sm text-slate-600">
-                <UserRound className="w-4 h-4" />
-                <span>Dr. Sarah Johnson</span>
+              <div className="hidden sm:flex items-center space-x-4 text-sm text-slate-600">
+                <div className="flex items-center space-x-2">
+                  <UserRound className="w-4 h-4" />
+                  <span>Dr. Sarah Johnson</span>
+                </div>
+                <Select value={selectedPost} onValueChange={setSelectedPost}>
+                  <SelectTrigger className="w-40 h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hilversum">Post Hilversum</SelectItem>
+                    <SelectItem value="blaricum">Post Blaricum</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <Button 
                 onClick={() => setIsAddDialogOpen(true)}
