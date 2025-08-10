@@ -21,6 +21,7 @@ export const medicalItems = pgTable("medical_items", {
   drawer: text("drawer"), // Simple text field for drawer location
   ambulancePost: text("ambulance_post").notNull().default("hilversum"), // "hilversum" or "blaricum"
   isLowStock: boolean("is_low_stock").notNull().default(false),
+  stockStatus: text("stock_status").notNull().default("op-voorraad"), // "op-voorraad", "bijna-op", "niet-meer-aanwezig"
   expiryDate: date("expiry_date"),
   alertEmail: text("alert_email"),
   photoUrl: text("photo_url"),

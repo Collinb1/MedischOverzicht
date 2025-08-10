@@ -111,7 +111,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const summary = cabinets.map(cabinet => {
         const cabinetItems = allItems.filter(item => item.cabinet === cabinet.id);
         const totalItems = cabinetItems.length;
-        const lowStockItems = cabinetItems.filter(item => item.isLowStock).length;
+        // Count items based on new stock status or fallback to isLowStock
+        const lowStockItems = cabinetItems.filter(item => 
+          item.stockStatus === "bijna-op" || item.stockStatus === "niet-meer-aanwezig" || 
+          (!item.stockStatus && item.isLowStock)
+        ).length;
         
         // Group by category
         const categories = cabinetItems.reduce((acc, item) => {
@@ -123,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: cabinet.id,
           name: cabinet.name,
           totalItems,
-          lowStockItems: lowStockItems, // Items that are low stock
+          lowStockItems: lowStockItems, // Items that are low stock or out of stock
           categories
         };
       });

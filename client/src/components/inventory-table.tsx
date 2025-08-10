@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import EditItemDialog from "../components/edit-item-dialog";
@@ -38,10 +39,23 @@ const getCategoryIcon = (category: string) => {
 };
 
 const getStockStatus = (item: MedicalItem) => {
-  if (item.isLowStock) {
-    return { label: "Bijna Op", className: "bg-orange-100 text-orange-800" };
+  if (item.stockStatus) {
+    switch (item.stockStatus) {
+      case "op-voorraad":
+        return { label: "Op voorraad", className: "bg-green-100 text-green-800" };
+      case "bijna-op":
+        return { label: "Bijna op", className: "bg-orange-100 text-orange-800" };
+      case "niet-meer-aanwezig":
+        return { label: "Niet meer aanwezig", className: "bg-red-100 text-red-800" };
+      default:
+        return { label: "Op voorraad", className: "bg-green-100 text-green-800" };
+    }
   }
-  return { label: "Voldoende", className: "bg-medical-green bg-opacity-20 text-medical-green" };
+  // Fallback to old logic for items without stockStatus
+  if (item.isLowStock) {
+    return { label: "Bijna op", className: "bg-orange-100 text-orange-800" };
+  }
+  return { label: "Op voorraad", className: "bg-green-100 text-green-800" };
 };
 
 export default function InventoryTable({ items, isLoading, onRefetch }: InventoryTableProps) {
@@ -209,6 +223,41 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
     markLowStockMutation.mutate(item);
   };
 
+  // New mutation for updating stock status
+  const updateStockStatusMutation = useMutation({
+    mutationFn: async ({ itemId, newStatus }: { itemId: string, newStatus: string }) => {
+      const response = await apiRequest("PATCH", `/api/medical-items/${itemId}`, {
+        stockStatus: newStatus
+      });
+      return response;
+    },
+    onSuccess: (data: any, variables) => {
+      const statusLabels = {
+        "op-voorraad": "Op voorraad",
+        "bijna-op": "Bijna op",
+        "niet-meer-aanwezig": "Niet meer aanwezig"
+      };
+      toast({
+        title: "Status bijgewerkt",
+        description: `Voorraad status gewijzigd naar: ${statusLabels[variables.newStatus as keyof typeof statusLabels]}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-items"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cabinets/summary"] });
+      onRefetch();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Fout bij bijwerken",
+        description: error.message || "Er is een fout opgetreden bij het bijwerken van de status.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleStockStatusChange = (item: MedicalItem, newStatus: string) => {
+    updateStockStatusMutation.mutate({ itemId: item.id, newStatus });
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -323,33 +372,21 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-1">
-                          {/* OP and Bijna op buttons */}
-                          {item.alertEmail && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleMarkOutOfStock(item)}
-                                disabled={markOutOfStockMutation.isPending}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2"
-                                data-testid={`button-out-of-stock-${item.id}`}
-                                title={`Markeer als OP en verstuur email naar ${item.alertEmail}`}
-                              >
-                                OP
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleMarkLowStock(item)}
-                                disabled={markLowStockMutation.isPending}
-                                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 text-xs px-2"
-                                data-testid={`button-low-stock-${item.id}`}
-                                title={`Markeer als Bijna op en verstuur email naar ${item.alertEmail}`}
-                              >
-                                Bijna
-                              </Button>
-                            </>
-                          )}
+                          {/* Stock Status Dropdown */}
+                          <Select 
+                            value={item.stockStatus || "op-voorraad"} 
+                            onValueChange={(value) => handleStockStatusChange(item, value)}
+                            disabled={updateStockStatusMutation.isPending}
+                          >
+                            <SelectTrigger className="w-32 h-8 text-xs" data-testid={`select-status-${item.id}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="op-voorraad" className="text-xs">Op voorraad</SelectItem>
+                              <SelectItem value="bijna-op" className="text-xs">Bijna op</SelectItem>
+                              <SelectItem value="niet-meer-aanwezig" className="text-xs">Niet meer aanwezig</SelectItem>
+                            </SelectContent>
+                          </Select>
                           
                           <Button
                             variant="ghost"

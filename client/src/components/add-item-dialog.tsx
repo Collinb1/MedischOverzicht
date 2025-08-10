@@ -71,6 +71,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
       cabinet: cabinets.length > 0 ? cabinets[0].id : "A",
       drawer: "",
       isLowStock: false,
+      stockStatus: "op-voorraad",
       expiryDate: null,
       alertEmail: "spoedhulp@ziekenhuis.nl",
       photoUrl: photoUrl,
@@ -352,6 +353,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
                       placeholder="Bijv. Boven, Onder, Links, Rechts, Midden"
                       data-testid="input-drawer"
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
