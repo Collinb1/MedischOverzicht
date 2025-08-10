@@ -1,6 +1,6 @@
 import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -30,6 +30,7 @@ export interface IStorage {
   
   createEmailNotification(insertEmailNotification: InsertEmailNotification): Promise<EmailNotification>;
   getEmailNotifications(): Promise<EmailNotification[]>;
+  getLastEmailNotificationForItem(itemId: string): Promise<EmailNotification | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -234,7 +235,8 @@ export class MemStorage implements IStorage {
         ambulancePost: (item as any).ambulancePost || "hilversum",
         alertEmail: (item as any).alertEmail || null,
         photoUrl: null,
-        isLowStock: (item as any).isLowStock || false
+        isLowStock: (item as any).isLowStock || false,
+        stockStatus: (item as any).isLowStock ? "bijna-op" : "op-voorraad"
       };
       this.medicalItems.set(id, medicalItem);
     });
@@ -282,6 +284,7 @@ export class MemStorage implements IStorage {
       alertEmail: insertItem.alertEmail || null,
       photoUrl: insertItem.photoUrl || null,
       isLowStock: insertItem.isLowStock || false,
+      stockStatus: insertItem.stockStatus || "op-voorraad",
       expiryDate: insertItem.expiryDate || null
     };
     this.medicalItems.set(id, item);
@@ -320,6 +323,13 @@ export class MemStorage implements IStorage {
 
   async getEmailNotifications(): Promise<EmailNotification[]> {
     return Array.from(this.emailNotifications.values());
+  }
+
+  async getLastEmailNotificationForItem(itemId: string): Promise<EmailNotification | undefined> {
+    const notifications = Array.from(this.emailNotifications.values())
+      .filter(notification => notification.itemId === itemId)
+      .sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+    return notifications[0];
   }
 
   async getCabinets(): Promise<Cabinet[]> {
@@ -495,6 +505,16 @@ export class DatabaseStorage implements IStorage {
 
   async getEmailNotifications(): Promise<EmailNotification[]> {
     return await db.select().from(emailNotifications);
+  }
+
+  async getLastEmailNotificationForItem(itemId: string): Promise<EmailNotification | undefined> {
+    const [notification] = await db
+      .select()
+      .from(emailNotifications)
+      .where(eq(emailNotifications.itemId, itemId))
+      .orderBy(sql`sent_at DESC`)
+      .limit(1);
+    return notification || undefined;
   }
 
   // Drawer operations for database storage

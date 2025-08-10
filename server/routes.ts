@@ -287,7 +287,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Record the email notification
         await storage.createEmailNotification({
           itemId: item.id,
-          recipientEmail: item.alertEmail
+          recipientEmail: item.alertEmail!,
+          department: "Automatische waarschuwing"
         });
         
         res.json({ 
@@ -342,7 +343,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Record the email notification
         await storage.createEmailNotification({
           itemId: item.id,
-          recipientEmail: item.alertEmail
+          recipientEmail: item.alertEmail!,
+          department: "Urgent voorraad melding"
         });
         
         res.json({ 
@@ -399,7 +401,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Record the email notification
         await storage.createEmailNotification({
           itemId: item.id,
-          recipientEmail: item.alertEmail
+          recipientEmail: item.alertEmail!,
+          department: "Bijna op melding"
         });
         
         res.json({ 
@@ -549,6 +552,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating item photo:", error);
       res.status(500).json({ error: "Failed to update item photo" });
+    }
+  });
+
+  // Get last email notification for item
+  app.get("/api/medical-items/:id/last-email", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const notification = await storage.getLastEmailNotificationForItem(id);
+      res.json(notification || null);
+    } catch (error) {
+      console.error("Error getting last email notification:", error);
+      res.status(500).json({ error: "Server fout" });
     }
   });
 

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import EditItemDialog from "../components/edit-item-dialog";
-import type { MedicalItem } from "@shared/schema";
+import type { MedicalItem, EmailNotification } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 interface InventoryTableProps {
@@ -56,6 +56,37 @@ const getStockStatusColor = (item: MedicalItem) => {
     return { color: "bg-orange-500", tooltip: "Bijna op" };
   }
   return { color: "bg-green-500", tooltip: "Op voorraad" };
+};
+
+// Component to display last email notification info
+const EmailNotificationInfo = ({ itemId }: { itemId: string }) => {
+  const { data: notification, isLoading } = useQuery({
+    queryKey: ['/api/medical-items', itemId, 'last-email'],
+    queryFn: () => apiRequest(`/api/medical-items/${itemId}/last-email`),
+  });
+
+  if (isLoading) {
+    return <div className="text-xs text-slate-400">Laden...</div>;
+  }
+
+  if (!notification) {
+    return <div className="text-xs text-slate-600">Geen email verzonden</div>;
+  }
+
+  return (
+    <div className="text-xs">
+      <div className="text-slate-900 font-medium">
+        {notification.department}
+      </div>
+      <div className="text-slate-500">
+        {new Date(notification.sentAt).toLocaleDateString('nl-NL', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        })}
+      </div>
+    </div>
+  );
 };
 
 export default function InventoryTable({ items, isLoading, onRefetch }: InventoryTableProps) {
@@ -296,7 +327,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                 <TableHead>Lade</TableHead>
                 <TableHead>Categorie</TableHead>
                 <TableHead>Voorraad Status</TableHead>
-                <TableHead>Alert Email</TableHead>
+                <TableHead>Laatste Email</TableHead>
                 <TableHead>Acties</TableHead>
               </TableRow>
             </TableHeader>
@@ -365,8 +396,8 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                           data-testid={`status-indicator-${item.id}`}
                         />
                       </TableCell>
-                      <TableCell className="text-xs text-slate-600" data-testid={`text-alert-email-${item.id}`}>
-                        {item.alertEmail || "Niet ingesteld"}
+                      <TableCell data-testid={`email-notification-${item.id}`}>
+                        <EmailNotificationInfo itemId={item.id} />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-1">

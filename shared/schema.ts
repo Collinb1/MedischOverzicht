@@ -40,6 +40,7 @@ export const emailNotifications = pgTable("email_notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   itemId: varchar("item_id").notNull().references(() => medicalItems.id),
   recipientEmail: text("recipient_email").notNull(),
+  department: text("department").notNull(), // Afdeling waar mail naartoe is verzonden
   sentAt: date("sent_at").notNull().default(sql`CURRENT_DATE`),
 });
 
