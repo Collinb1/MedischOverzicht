@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import EditItemDialog from "../components/edit-item-dialog";
+import { EditItemDialog } from "../components/edit-item-dialog";
 import type { MedicalItem, EmailNotification } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -550,7 +550,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
         <EditItemDialog
           item={editingItem}
           open={!!editingItem}
-          onOpenChange={(open) => !open && setEditingItem(null)}
+          onOpenChange={(open: boolean) => !open && setEditingItem(null)}
           onSuccess={() => {
             setEditingItem(null);
             onRefetch();
