@@ -74,13 +74,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update medical item
   app.patch("/api/medical-items/:id", async (req, res) => {
     try {
+      console.log(`PATCH /api/medical-items/${req.params.id}`, req.body);
       const partialData = insertMedicalItemSchema.partial().parse(req.body);
+      console.log("Parsed data:", partialData);
       const item = await storage.updateMedicalItem(req.params.id, partialData);
       if (!item) {
+        console.log("Item not found:", req.params.id);
         return res.status(404).json({ message: "Medical item not found" });
       }
+      console.log("Updated item:", item);
       res.json(item);
     } catch (error) {
+      console.error("Update error:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {

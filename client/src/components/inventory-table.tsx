@@ -373,6 +373,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
   });
 
   const handleStockStatusChange = (item: MedicalItem, newStatus: string) => {
+    console.log("Changing stock status:", item.id, "from", item.stockStatus, "to", newStatus);
     updateStockStatusMutation.mutate({ itemId: item.id, newStatus });
   };
 
