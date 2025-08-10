@@ -19,7 +19,7 @@ export default function LowStockOverview() {
     queryFn: () => apiRequest('/api/medical-items'),
   });
 
-  const { data: cabinets = [] } = useQuery({
+  const { data: cabinets = [] } = useQuery<any[]>({
     queryKey: ['/api/cabinets'],
     queryFn: () => apiRequest('/api/cabinets'),
   });
