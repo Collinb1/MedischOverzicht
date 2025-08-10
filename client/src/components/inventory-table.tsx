@@ -38,24 +38,24 @@ const getCategoryIcon = (category: string) => {
   return icons[category as keyof typeof icons] || "📦";
 };
 
-const getStockStatus = (item: MedicalItem) => {
+const getStockStatusColor = (item: MedicalItem) => {
   if (item.stockStatus) {
     switch (item.stockStatus) {
       case "op-voorraad":
-        return { label: "Op voorraad", className: "bg-green-100 text-green-800" };
+        return { color: "bg-green-500", tooltip: "Op voorraad" };
       case "bijna-op":
-        return { label: "Bijna op", className: "bg-orange-100 text-orange-800" };
+        return { color: "bg-orange-500", tooltip: "Bijna op" };
       case "niet-meer-aanwezig":
-        return { label: "Niet meer aanwezig", className: "bg-red-100 text-red-800" };
+        return { color: "bg-red-500", tooltip: "Niet meer aanwezig" };
       default:
-        return { label: "Op voorraad", className: "bg-green-100 text-green-800" };
+        return { color: "bg-green-500", tooltip: "Op voorraad" };
     }
   }
   // Fallback to old logic for items without stockStatus
   if (item.isLowStock) {
-    return { label: "Bijna op", className: "bg-orange-100 text-orange-800" };
+    return { color: "bg-orange-500", tooltip: "Bijna op" };
   }
-  return { label: "Op voorraad", className: "bg-green-100 text-green-800" };
+  return { color: "bg-green-500", tooltip: "Op voorraad" };
 };
 
 export default function InventoryTable({ items, isLoading, onRefetch }: InventoryTableProps) {
@@ -316,7 +316,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                   if (!a.photoUrl && b.photoUrl) return 1;
                   return 0;
                 }).map((item) => {
-                  const stockStatus = getStockStatus(item);
+                  const stockStatusColor = getStockStatusColor(item);
                   return (
                     <TableRow key={item.id} className="hover:bg-slate-50" data-testid={`row-item-${item.id}`}>
                       <TableCell>
@@ -359,10 +359,12 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                       <TableCell className="text-xs text-slate-900" data-testid={`text-category-${item.id}`}>
                         {item.category}
                       </TableCell>
-                      <TableCell>
-                        <Badge className={stockStatus.className} data-testid={`badge-stock-status-${item.id}`}>
-                          {stockStatus.label}
-                        </Badge>
+                      <TableCell className="text-center">
+                        <div 
+                          className={`w-4 h-4 rounded-full ${stockStatusColor.color} mx-auto`}
+                          title={stockStatusColor.tooltip}
+                          data-testid={`status-indicator-${item.id}`}
+                        />
                       </TableCell>
                       <TableCell className="text-xs text-slate-900" data-testid={`text-expiry-${item.id}`}>
                         {item.expiryDate || "N/A"}
