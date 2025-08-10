@@ -30,7 +30,10 @@ export default function LowStockOverview() {
 
   const { data: cabinets = [] } = useQuery<any[]>({
     queryKey: ['/api/cabinets'],
-    queryFn: () => apiRequest('/api/cabinets'),
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/cabinets');
+      return response.json();
+    },
   });
 
   // Filter items die bijna op zijn of niet meer aanwezig
@@ -40,7 +43,9 @@ export default function LowStockOverview() {
 
   const updateStockStatusMutation = useMutation({
     mutationFn: async ({ id, stockStatus }: { id: string; stockStatus: string }) => {
-      return apiRequest(`/api/medical-items/${id}`, 'PATCH', { stockStatus });
+      console.log("LOW STOCK: Making PATCH request to:", `/api/medical-items/${id}`, "with status:", stockStatus);
+      const response = await apiRequest('PATCH', `/api/medical-items/${id}`, { stockStatus });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/medical-items'] });
@@ -94,6 +99,7 @@ export default function LowStockOverview() {
   };
 
   const handleResetStock = (item: MedicalItem) => {
+    console.log("RESET STOCK aangeroepen voor item:", item.id, item.name);
     updateStockStatusMutation.mutate({
       id: item.id,
       stockStatus: 'op-voorraad'
@@ -261,10 +267,14 @@ export default function LowStockOverview() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleResetStock(item)}
+                              onClick={() => {
+                                console.log("Reset knop GEKLIKT in Low Stock Overview voor:", item.name);
+                                handleResetStock(item);
+                              }}
                               disabled={updateStockStatusMutation.isPending}
                               className="h-7 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
                               title="Markeer als aangevuld"
+                              data-testid={`reset-button-${item.id}`}
                             >
                               <RotateCcw className="w-3 h-3" />
                             </Button>
