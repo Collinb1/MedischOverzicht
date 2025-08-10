@@ -308,6 +308,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Convert photo URL to object path
+  app.post("/api/medical-items/convert-photo-url", async (req, res) => {
+    if (!req.body.photoUrl) {
+      return res.status(400).json({ error: "photoUrl is required" });
+    }
+
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = objectStorageService.normalizeObjectEntityPath(req.body.photoUrl);
+      
+      res.json({ objectPath });
+    } catch (error) {
+      console.error("Error converting photo URL:", error);
+      res.status(500).json({ error: "Failed to convert photo URL" });
+    }
+  });
+
   // Update item photo after upload
   app.put("/api/medical-items/:id/photo", async (req, res) => {
     if (!req.body.photoURL) {

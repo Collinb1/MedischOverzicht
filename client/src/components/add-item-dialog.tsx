@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -70,10 +70,15 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
       isLowStock: false,
       expiryDate: null,
       alertEmail: "spoedhulp@ziekenhuis.nl",
-      photoUrl: null,
+      photoUrl: photoUrl,
       ambulancePost: selectedPost,
     },
   });
+
+  // Update form when photoUrl changes
+  useEffect(() => {
+    form.setValue("photoUrl", photoUrl);
+  }, [photoUrl, form]);
 
   const handleAddCabinet = (newCabinet: Cabinet) => {
     form.setValue("cabinet", newCabinet.id);
@@ -91,9 +96,34 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
   };
 
   const handlePhotoUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    console.log("Photo upload result:", result);
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
+      console.log("Uploaded file:", uploadedFile);
+      
+      // Try to get the object path from the upload URL
+      let objectPath = uploadedFile.uploadURL as string;
+      
+      // Convert Google Storage URL to our object path format
+      if (objectPath.includes('storage.googleapis.com')) {
+        try {
+          // Extract the object path and convert to our /objects/ format
+          const url = new URL(objectPath);
+          const pathParts = url.pathname.split('/');
+          if (pathParts.length >= 3) {
+            const objectId = pathParts.slice(2).join('/');
+            objectPath = `/objects/${objectId}`;
+          }
+        } catch (e) {
+          console.warn("Failed to convert URL, using original:", e);
+        }
+      }
+      
+      console.log("Final object path:", objectPath);
+      
+      // Use the upload URL directly for now, convert it later when saving
       setPhotoUrl(uploadedFile.uploadURL as string);
+      
       setIsUploadingPhoto(false);
       
       toast({
@@ -134,16 +164,40 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
     },
   });
 
-  const onSubmit = (data: InsertMedicalItem) => {
+  const onSubmit = async (data: InsertMedicalItem) => {
     console.log("Form submitted with data:", data);
     console.log("Photo URL:", photoUrl);
     console.log("Form errors:", form.formState.errors);
-    addItemMutation.mutate(data);
+    
+    let finalPhotoUrl = photoUrl;
+    
+    // Convert Google Storage URL to our object path if needed
+    if (photoUrl && photoUrl.includes('storage.googleapis.com')) {
+      try {
+        const response = await fetch("/api/medical-items/convert-photo-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ photoUrl }),
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          finalPhotoUrl = result.objectPath;
+        }
+      } catch (error) {
+        console.warn("Failed to convert photo URL:", error);
+      }
+    }
+    
+    // Include final photo URL in the data
+    const submitData = { ...data, photoUrl: finalPhotoUrl };
+    console.log("Submitting data:", submitData);
+    addItemMutation.mutate(submitData);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg" data-testid="dialog-add-item">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" data-testid="dialog-add-item">
         <DialogHeader>
           <DialogTitle>Nieuw Medisch Item Toevoegen</DialogTitle>
         </DialogHeader>
@@ -169,33 +223,38 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
               </div>
               
               {photoUrl ? (
-                <div className="border rounded-lg p-3">
+                <div className="border rounded-lg p-3 bg-green-50">
                   <div className="flex items-center space-x-3">
                     <img 
                       src={photoUrl} 
                       alt="Item foto" 
-                      className="w-16 h-16 object-cover rounded-lg"
+                      className="w-20 h-20 object-cover rounded-lg border-2 border-blue-300"
                       data-testid="img-uploaded-photo"
                     />
                     <div>
-                      <p className="text-sm font-medium text-green-600">Foto geüpload</p>
-                      <p className="text-sm text-muted-foreground">De foto wordt toegevoegd aan het item</p>
+                      <p className="text-sm font-medium text-green-700">✓ Foto succesvol geüpload</p>
+                      <p className="text-xs text-green-600">Deze foto wordt toegevoegd aan het medische item</p>
                     </div>
                   </div>
                 </div>
               ) : (
-                <ObjectUploader
-                  maxNumberOfFiles={1}
-                  maxFileSize={5242880} // 5MB
-                  onGetUploadParameters={handleGetUploadParameters}
-                  onComplete={handlePhotoUploadComplete}
-                  buttonClassName="w-full"
-                >
-                  <div className="flex items-center justify-center space-x-2">
-                    <Camera className="w-4 h-4" />
-                    <span>Foto Toevoegen</span>
-                  </div>
-                </ObjectUploader>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+                  <ObjectUploader
+                    maxNumberOfFiles={1}
+                    maxFileSize={5242880} // 5MB
+                    onGetUploadParameters={handleGetUploadParameters}
+                    onComplete={handlePhotoUploadComplete}
+                    buttonClassName="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+                  >
+                    <div className="flex items-center justify-center space-x-2">
+                      <Camera className="w-5 h-5" />
+                      <span className="font-medium">Foto van Item Toevoegen</span>
+                    </div>
+                  </ObjectUploader>
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Ondersteunde formaten: JPG, PNG (max 5MB)
+                  </p>
+                </div>
               )}
             </div>
 
