@@ -68,11 +68,29 @@ export type Drawer = typeof drawers.$inferSelect;
 export type InsertEmailNotification = z.infer<typeof insertEmailNotificationSchema>;
 export type EmailNotification = typeof emailNotifications.$inferSelect;
 
+export const emailConfigs = pgTable("email_configs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  smtpHost: text("smtp_host").notNull(),
+  smtpPort: integer("smtp_port").notNull(),
+  smtpUser: text("smtp_user").notNull(),
+  smtpPassword: text("smtp_password").notNull(),
+  smtpSecure: boolean("smtp_secure").notNull().default(true),
+  fromEmail: text("from_email").notNull(),
+  fromName: text("from_name").notNull(),
+});
+
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
 });
+
+export const insertEmailConfigSchema = createInsertSchema(emailConfigs).omit({
+  id: true,
+});
+
+export type InsertEmailConfig = z.infer<typeof insertEmailConfigSchema>;
+export type EmailConfig = typeof emailConfigs.$inferSelect;
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,

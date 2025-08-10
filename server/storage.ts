@@ -1,4 +1,4 @@
-import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser } from "@shared/schema";
+import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser, emailConfigs, type EmailConfig, type InsertEmailConfig } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -31,6 +31,10 @@ export interface IStorage {
   createEmailNotification(insertEmailNotification: InsertEmailNotification): Promise<EmailNotification>;
   getEmailNotifications(): Promise<EmailNotification[]>;
   getLastEmailNotificationForItem(itemId: string): Promise<EmailNotification | undefined>;
+  
+  getEmailConfig(): Promise<EmailConfig | undefined>;
+  createEmailConfig(config: InsertEmailConfig): Promise<EmailConfig>;
+  updateEmailConfig(config: InsertEmailConfig): Promise<EmailConfig>;
 }
 
 export class MemStorage implements IStorage {
@@ -39,6 +43,7 @@ export class MemStorage implements IStorage {
   private emailNotifications: Map<string, EmailNotification>;
   private cabinets: Map<string, Cabinet>;
   private drawers: Map<string, Drawer>;
+  private emailConfig: EmailConfig | null;
 
   constructor() {
     this.users = new Map();
@@ -46,6 +51,7 @@ export class MemStorage implements IStorage {
     this.emailNotifications = new Map();
     this.cabinets = new Map();
     this.drawers = new Map();
+    this.emailConfig = null;
     
     // Initialize with some sample data
     this.initializeSampleData();
@@ -414,6 +420,26 @@ export class MemStorage implements IStorage {
   async deleteDrawer(id: string): Promise<boolean> {
     return this.drawers.delete(id);
   }
+
+  async getEmailConfig(): Promise<EmailConfig | undefined> {
+    return this.emailConfig || undefined;
+  }
+
+  async createEmailConfig(config: InsertEmailConfig): Promise<EmailConfig> {
+    const id = randomUUID();
+    const emailConfig: EmailConfig = { ...config, id };
+    this.emailConfig = emailConfig;
+    return emailConfig;
+  }
+
+  async updateEmailConfig(config: InsertEmailConfig): Promise<EmailConfig> {
+    if (this.emailConfig) {
+      this.emailConfig = { ...this.emailConfig, ...config };
+      return this.emailConfig;
+    } else {
+      return await this.createEmailConfig(config);
+    }
+  }
 }
 
 // Database Storage Implementation
@@ -548,6 +574,32 @@ export class DatabaseStorage implements IStorage {
   async deleteDrawer(id: string): Promise<boolean> {
     const result = await db.delete(drawers).where(eq(drawers.id, id));
     return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async getEmailConfig(): Promise<EmailConfig | undefined> {
+    const [config] = await db.select().from(emailConfigs).limit(1);
+    return config || undefined;
+  }
+
+  async createEmailConfig(config: InsertEmailConfig): Promise<EmailConfig> {
+    const [emailConfig] = await db.insert(emailConfigs).values(config).returning();
+    return emailConfig;
+  }
+
+  async updateEmailConfig(config: InsertEmailConfig): Promise<EmailConfig> {
+    // First check if config exists
+    const existingConfig = await this.getEmailConfig();
+    
+    if (existingConfig) {
+      const [updated] = await db
+        .update(emailConfigs)
+        .set(config)
+        .where(eq(emailConfigs.id, existingConfig.id))
+        .returning();
+      return updated;
+    } else {
+      return await this.createEmailConfig(config);
+    }
   }
 }
 

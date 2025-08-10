@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema } from "@shared/schema";
+import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema, insertEmailConfigSchema } from "@shared/schema";
 import { sendEmail, generateRestockEmailHTML } from "./email";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
@@ -564,6 +564,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting last email notification:", error);
       res.status(500).json({ error: "Server fout" });
+    }
+  });
+
+  // Get email configuration
+  app.get("/api/email-config", async (req, res) => {
+    try {
+      const config = await storage.getEmailConfig();
+      if (!config) {
+        res.status(404).json({ message: "Email configuration not found" });
+        return;
+      }
+      res.json(config);
+    } catch (error) {
+      console.error("Error fetching email config:", error);
+      res.status(500).json({ message: "Failed to fetch email configuration" });
+    }
+  });
+
+  // Save email configuration
+  app.post("/api/email-config", async (req, res) => {
+    try {
+      const validatedData = insertEmailConfigSchema.parse(req.body);
+      const config = await storage.updateEmailConfig(validatedData);
+      res.status(201).json({
+        success: true,
+        message: "Email configuration saved successfully",
+        config
+      });
+    } catch (error) {
+      console.error("Error saving email config:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Failed to save email configuration" });
+      }
     }
   });
 
