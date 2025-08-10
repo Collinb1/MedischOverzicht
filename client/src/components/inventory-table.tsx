@@ -347,11 +347,9 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
   // New mutation for updating stock status
   const updateStockStatusMutation = useMutation({
     mutationFn: async ({ itemId, newStatus }: { itemId: string, newStatus: string }) => {
-      console.log("Making PATCH request to:", `/api/medical-items/${itemId}`, "with data:", { stockStatus: newStatus });
       const response = await apiRequest("PATCH", `/api/medical-items/${itemId}`, {
         stockStatus: newStatus
       });
-      console.log("PATCH response received:", response);
       return response;
     },
     onSuccess: (data: any, variables) => {
@@ -378,7 +376,6 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
   });
 
   const handleStockStatusChange = (item: MedicalItem, newStatus: string) => {
-    console.log("Changing stock status:", item.id, "from", item.stockStatus, "to", newStatus);
     updateStockStatusMutation.mutate({ itemId: item.id, newStatus });
   };
 
@@ -490,39 +487,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                         />
                       </TableCell>
                       <TableCell data-testid={`supply-request-${item.id}`}>
-                        <div className="flex items-center space-x-2">
-                          <SupplyRequestButton item={item} onStockStatusChange={handleStockStatusChange} />
-                          {/* Test knop - maakt item lage voorraad voor reset testing */}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              console.log("TEST: Zet item naar bijna-op voor reset test");
-                              handleStockStatusChange(item, 'bijna-op');
-                            }}
-                            className="h-7 w-7 p-0 bg-orange-200"
-                            title="Test: Zet naar Bijna op"
-                            data-testid={`button-test-low-${item.id}`}
-                          >
-                            ↓
-                          </Button>
-                          {/* Direct reset knop voor alle items met lage voorraad */}
-                          {(item.stockStatus === 'bijna-op' || item.stockStatus === 'niet-meer-aanwezig') && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                console.log("DIRECT reset knop geklikt voor item:", item.id);
-                                handleStockStatusChange(item, 'op-voorraad');
-                              }}
-                              className="h-7 w-7 p-0"
-                              title="Reset naar Op voorraad"
-                              data-testid={`button-direct-reset-${item.id}`}
-                            >
-                              <RotateCcw className="w-3 h-3" />
-                            </Button>
-                          )}
-                        </div>
+                        <SupplyRequestButton item={item} onStockStatusChange={handleStockStatusChange} />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-1">

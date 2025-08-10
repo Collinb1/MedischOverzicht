@@ -43,7 +43,6 @@ export default function LowStockOverview() {
 
   const updateStockStatusMutation = useMutation({
     mutationFn: async ({ id, stockStatus }: { id: string; stockStatus: string }) => {
-      console.log("LOW STOCK: Making PATCH request to:", `/api/medical-items/${id}`, "with status:", stockStatus);
       const response = await apiRequest('PATCH', `/api/medical-items/${id}`, { stockStatus });
       return response.json();
     },
@@ -99,7 +98,6 @@ export default function LowStockOverview() {
   };
 
   const handleResetStock = (item: MedicalItem) => {
-    console.log("RESET STOCK aangeroepen voor item:", item.id, item.name);
     updateStockStatusMutation.mutate({
       id: item.id,
       stockStatus: 'op-voorraad'
@@ -267,10 +265,7 @@ export default function LowStockOverview() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                console.log("Reset knop GEKLIKT in Low Stock Overview voor:", item.name);
-                                handleResetStock(item);
-                              }}
+                              onClick={() => handleResetStock(item)}
                               disabled={updateStockStatusMutation.isPending}
                               className="h-7 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
                               title="Markeer als aangevuld"
