@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus } from "lucide-react";
+import { Plus, UserPlus } from "lucide-react";
 import AddCabinetDialog from "../components/add-cabinet-dialog";
 
 interface AddItemDialogProps {
@@ -44,6 +44,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddCabinetOpen, setIsAddCabinetOpen] = useState(false);
+  const [isCustomEmail, setIsCustomEmail] = useState(false);
 
   const { data: cabinets = [] } = useQuery<Cabinet[]>({
     queryKey: ["/api/cabinets"],
@@ -214,20 +215,57 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Waarschuwing Email</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ""}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-alert-email">
-                        <SelectValue placeholder="Selecteer naar wie de melding moet" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {emailOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {!isCustomEmail ? (
+                    <div className="space-y-2">
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-alert-email">
+                            <SelectValue placeholder="Selecteer naar wie de melding moet" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {emailOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsCustomEmail(true)}
+                        className="w-full"
+                        data-testid="button-add-custom-email"
+                      >
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Ander email adres toevoegen
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="naam@afdeling.nl"
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          data-testid="input-custom-email"
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsCustomEmail(false)}
+                        className="w-full"
+                        data-testid="button-use-preset-email"
+                      >
+                        Gebruik voorgedefinieerde opties
+                      </Button>
+                    </div>
+                  )}
                   <div className="text-sm text-muted-foreground">
                     Wie moet een email krijgen bij voorraad aanvulling?
                   </div>

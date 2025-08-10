@@ -34,3 +34,4 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-01-10: Vereenvoudigd naar "bijna op" model - geen exacte voorraadaantallen, alleen status of items bijna op zijn
 - 2025-01-10: Email keuzemenu toegevoegd met voorgedefinieerde afdelingen
 - 2025-01-10: Waarschuwing email functionaliteit - speciale knop voor items die bijna op zijn
+- 2025-01-10: Custom email persoon toevoegen - gebruikers kunnen nu eigen email adressen invoeren naast voorgedefinieerde opties
