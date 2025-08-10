@@ -211,15 +211,15 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                             />
                           ) : (
                             <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
-                              <span className="text-2xl">{getCategoryIcon(item.category)}</span>
+                              <span className="text-xl">{getCategoryIcon(item.category)}</span>
                             </div>
                           )}
                           <div>
-                            <div className="text-sm font-medium text-slate-900" data-testid={`text-item-name-${item.id}`}>
+                            <div className="text-xs font-medium text-slate-900" data-testid={`text-item-name-${item.id}`}>
                               {item.name}
                             </div>
                             {item.description && (
-                              <div className="text-sm text-slate-500" data-testid={`text-item-description-${item.id}`}>
+                              <div className="text-xs text-slate-500" data-testid={`text-item-description-${item.id}`}>
                                 {item.description}
                               </div>
                             )}
@@ -234,10 +234,10 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                           {getCabinetAbbreviation(item.cabinet)}
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-slate-700" data-testid={`text-drawer-${item.id}`}>
+                      <TableCell className="text-xs text-slate-700" data-testid={`text-drawer-${item.id}`}>
                         {item.drawer || "-"}
                       </TableCell>
-                      <TableCell className="text-sm text-slate-900" data-testid={`text-category-${item.id}`}>
+                      <TableCell className="text-xs text-slate-900" data-testid={`text-category-${item.id}`}>
                         {item.category}
                       </TableCell>
                       <TableCell>
@@ -245,10 +245,10 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                           {stockStatus.label}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-slate-900" data-testid={`text-expiry-${item.id}`}>
+                      <TableCell className="text-xs text-slate-900" data-testid={`text-expiry-${item.id}`}>
                         {item.expiryDate || "N/A"}
                       </TableCell>
-                      <TableCell className="text-sm text-slate-600" data-testid={`text-alert-email-${item.id}`}>
+                      <TableCell className="text-xs text-slate-600" data-testid={`text-alert-email-${item.id}`}>
                         {item.alertEmail || "Niet ingesteld"}
                       </TableCell>
                       <TableCell>
