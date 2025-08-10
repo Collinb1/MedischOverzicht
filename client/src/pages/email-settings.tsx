@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,7 @@ export default function EmailSettings() {
 
   const form = useForm<EmailConfig>({
     resolver: zodResolver(emailConfigSchema),
-    defaultValues: emailConfig || {
+    defaultValues: {
       smtpHost: '',
       smtpPort: 587,
       smtpUser: '',
@@ -69,13 +69,24 @@ export default function EmailSettings() {
   });
 
   // Update form when data loads
-  if (emailConfig && !form.formState.isDirty) {
-    form.reset(emailConfig);
-  }
+  useEffect(() => {
+    if (emailConfig && !isLoading) {
+      form.reset(emailConfig);
+    }
+  }, [emailConfig, isLoading, form]);
 
   const updateEmailConfigMutation = useMutation({
     mutationFn: async (data: EmailConfig) => {
-      const response = await apiRequest('POST', '/api/email-config', data);
+      const response = await fetch('/api/email-config', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save email config');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -97,10 +108,19 @@ export default function EmailSettings() {
 
   const testEmailMutation = useMutation({
     mutationFn: async (testEmail: string) => {
-      const response = await apiRequest('POST', '/api/test-email', { 
-        testEmail,
-        config: form.getValues()
+      const response = await fetch('/api/test-email', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          testEmail,
+          config: form.getValues()
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
+      if (!response.ok) {
+        throw new Error('Failed to send test email');
+      }
       return response.json();
     },
     onSuccess: () => {
