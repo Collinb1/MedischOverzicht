@@ -122,7 +122,8 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
       onSuccess();
       onOpenChange(false);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error adding item:", error);
       toast({
         title: "Fout bij toevoegen",
         description: "Er is een fout opgetreden bij het toevoegen van het item.",
@@ -132,6 +133,9 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess }: AddItem
   });
 
   const onSubmit = (data: InsertMedicalItem) => {
+    console.log("Form submitted with data:", data);
+    console.log("Photo URL:", photoUrl);
+    console.log("Form errors:", form.formState.errors);
     addItemMutation.mutate(data);
   };
 
