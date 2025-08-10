@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Edit, Trash2, Mail, Download, Plus, AlertTriangle, Send, CheckCircle } from "lucide-react";
+import { Edit, Trash2, Mail, Download, Plus, AlertTriangle, Send, CheckCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -59,22 +59,21 @@ const getStockStatusColor = (item: MedicalItem) => {
 };
 
 // Component voor Aanvulverzoek knop/status
-const SupplyRequestButton = ({ item }: { item: MedicalItem }) => {
+const SupplyRequestButton = ({ item, onStockStatusChange }: { 
+  item: MedicalItem; 
+  onStockStatusChange: (item: MedicalItem, status: string) => void;
+}) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const { data: notification, isLoading } = useQuery({
+  const { data: notification, isLoading } = useQuery<EmailNotification | null>({
     queryKey: ['/api/medical-items', item.id, 'last-email'],
     queryFn: () => apiRequest(`/api/medical-items/${item.id}/last-email`),
   });
 
   const sendEmailMutation = useMutation({
     mutationFn: async (emailData: any) => {
-      return apiRequest('/api/send-email', {
-        method: 'POST',
-        body: JSON.stringify(emailData),
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return apiRequest('/api/send-email', 'POST', emailData);
     },
     onSuccess: () => {
       toast({
@@ -98,7 +97,7 @@ const SupplyRequestButton = ({ item }: { item: MedicalItem }) => {
     const emailData = {
       itemId: item.id,
       itemName: item.name,
-      cabinetId: item.cabinetId,
+      cabinetId: item.cabinet,
       drawer: item.drawer,
       stockStatus: item.stockStatus,
       department: "Magazijn", // Default department
@@ -120,11 +119,11 @@ const SupplyRequestButton = ({ item }: { item: MedicalItem }) => {
   }
 
   if (notification) {
-    // Toon verstuurd icon met datum
+    // Toon verstuurd icon met datum en reset knop
     return (
       <div className="flex items-center space-x-2 text-xs">
         <CheckCircle className="w-3 h-3 text-green-500" />
-        <div>
+        <div className="flex-1">
           <div className="text-slate-900 font-medium">Verstuurd</div>
           <div className="text-slate-500">
             {new Date(notification.sentAt).toLocaleDateString('nl-NL', {
@@ -134,6 +133,16 @@ const SupplyRequestButton = ({ item }: { item: MedicalItem }) => {
             })}
           </div>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onStockStatusChange(item, 'op-voorraad')}
+          className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600"
+          title="Aangevuld - zet terug naar Op voorraad"
+          data-testid={`button-reset-${item.id}`}
+        >
+          <RotateCcw className="w-3 h-3" />
+        </Button>
       </div>
     );
   }
@@ -462,7 +471,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                         />
                       </TableCell>
                       <TableCell data-testid={`supply-request-${item.id}`}>
-                        <SupplyRequestButton item={item} />
+                        <SupplyRequestButton item={item} onStockStatusChange={handleStockStatusChange} />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-1">
