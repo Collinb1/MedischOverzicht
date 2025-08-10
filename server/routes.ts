@@ -11,53 +11,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { cabinet, category, search, ambulancePost } = req.query;
       
-      if (!ambulancePost || typeof ambulancePost !== 'string') {
-        return res.status(400).json({ message: "ambulancePost parameter is required" });
-      }
-      
-      // Get item locations for the specific ambulance post
-      const itemLocations = await storage.getItemLocationsByPost(ambulancePost);
-      
-      // Get all medical items and join with locations
+      // Get all medical items
       const allItems = await storage.getMedicalItems();
-      const itemsWithLocations = itemLocations.map(location => {
-        const item = allItems.find(item => item.id === location.itemId);
-        if (!item) return null;
+      
+      if (ambulancePost && typeof ambulancePost === 'string') {
+        // Filter items for specific ambulance post
+        const itemLocations = await storage.getItemLocationsByPost(ambulancePost);
         
-        return {
-          ...item,
-          locationId: location.id,
-          cabinet: location.cabinet,
-          drawer: location.drawer,
-          isLowStock: location.isLowStock,
-          stockStatus: location.stockStatus,
-          ambulancePost: location.ambulancePostId
-        };
-      }).filter(Boolean);
-      
-      let filteredItems = itemsWithLocations;
-      
-      // Filter by cabinet if specified
-      if (cabinet && typeof cabinet === 'string') {
-        filteredItems = filteredItems.filter(item => item.cabinet === cabinet);
-      }
-      
-      // Filter by category if specified
-      if (category && typeof category === 'string') {
-        filteredItems = filteredItems.filter(item => item.category.toLowerCase() === category.toLowerCase());
-      }
-      
-      // Search filter
-      if (search && typeof search === 'string') {
-        const searchLower = search.toLowerCase();
-        filteredItems = filteredItems.filter(item => 
-          item.name.toLowerCase().includes(searchLower) ||
-          item.description?.toLowerCase().includes(searchLower) ||
-          item.category.toLowerCase().includes(searchLower)
+        const itemsWithLocations = itemLocations.map(location => {
+          const item = allItems.find(item => item.id === location.itemId);
+          if (!item) return null;
+          
+          return {
+            ...item,
+            locationId: location.id,
+            cabinet: location.cabinet,
+            drawer: location.drawer,
+            isLowStock: location.isLowStock,
+            stockStatus: location.stockStatus,
+            ambulancePost: location.ambulancePostId
+          };
+        }).filter(Boolean);
+        
+        let filteredItems = itemsWithLocations;
+        
+        // Apply filters
+        if (cabinet && typeof cabinet === 'string') {
+          filteredItems = filteredItems.filter(item => item.cabinet === cabinet);
+        }
+        
+        if (category && typeof category === 'string') {
+          filteredItems = filteredItems.filter(item => item.category.toLowerCase() === category.toLowerCase());
+        }
+        
+        if (search && typeof search === 'string') {
+          const searchLower = search.toLowerCase();
+          filteredItems = filteredItems.filter(item => 
+            item.name.toLowerCase().includes(searchLower) ||
+            item.description?.toLowerCase().includes(searchLower) ||
+            item.category.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        res.json(filteredItems);
+      } else {
+        // Return all items with all their locations
+        const itemsWithAllLocations = await Promise.all(
+          allItems.map(async (item) => {
+            const locations = await storage.getItemLocationsByItem(item.id);
+            return { ...item, locations };
+          })
         );
+        
+        res.json(itemsWithAllLocations);
       }
-      
-      res.json(filteredItems);
     } catch (error) {
       console.error("Error fetching medical items:", error);
       res.status(500).json({ message: "Failed to fetch medical items" });
@@ -77,10 +84,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create medical item with location
+  // Create medical item with multiple locations
   app.post("/api/medical-items", async (req, res) => {
     try {
-      const { ambulancePost, cabinet, drawer, isLowStock, stockStatus, ...itemData } = req.body;
+      const { locations, isLowStock, stockStatus, ...itemData } = req.body;
       
       // Validate medical item data
       const validatedItemData = insertMedicalItemSchema.parse(itemData);
@@ -88,28 +95,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the medical item first
       const item = await storage.createMedicalItem(validatedItemData);
       
-      // Create location record
-      const locationData = {
-        itemId: item.id,
-        ambulancePostId: ambulancePost,
-        cabinet: cabinet || "A",
-        drawer: drawer || null,
-        isLowStock: isLowStock || false,
-        stockStatus: stockStatus || "op-voorraad"
-      };
-      
-      const validatedLocationData = insertItemLocationSchema.parse(locationData);
-      const location = await storage.createItemLocation(validatedLocationData);
+      // Create location records for each location
+      const createdLocations = [];
+      if (locations && locations.length > 0) {
+        for (const location of locations) {
+          const locationData = {
+            itemId: item.id,
+            ambulancePostId: location.ambulancePostId,
+            cabinet: location.cabinet,
+            drawer: location.drawer || null,
+            isLowStock: isLowStock || false,
+            stockStatus: stockStatus || "op-voorraad"
+          };
+          
+          const validatedLocationData = insertItemLocationSchema.parse(locationData);
+          const createdLocation = await storage.createItemLocation(validatedLocationData);
+          createdLocations.push(createdLocation);
+        }
+      }
       
       // Return combined data
       const response = {
         ...item,
-        locationId: location.id,
-        cabinet: location.cabinet,
-        drawer: location.drawer,
-        isLowStock: location.isLowStock,
-        stockStatus: location.stockStatus,
-        ambulancePost: location.ambulancePostId
+        locations: createdLocations
       };
       
       res.status(201).json(response);
