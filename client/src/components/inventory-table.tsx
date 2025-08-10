@@ -50,7 +50,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
   const queryClient = useQueryClient();
 
   // Get cabinet data to access abbreviations
-  const { data: cabinets = [] } = useQuery({
+  const { data: cabinets = [] } = useQuery<any[]>({
     queryKey: ["/api/cabinets"],
   });
 
@@ -138,6 +138,75 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
 
   const handleSendWarningEmail = (item: MedicalItem) => {
     sendWarningEmailMutation.mutate(item.id);
+  };
+
+  // New mutations for "OP" and "Bijna op" functionality
+  const markOutOfStockMutation = useMutation({
+    mutationFn: async (item: MedicalItem) => {
+      const response = await apiRequest("POST", `/api/items/${item.id}/mark-out-of-stock`, {});
+      return response;
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Email verzonden",
+        description: `Item "${data.itemName}" gemarkeerd als OP. Email verzonden naar ${data.recipient}.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-items"] });
+      onRefetch();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Fout bij verzenden",
+        description: error.message || "Er is een fout opgetreden bij het versturen van de email.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const markLowStockMutation = useMutation({
+    mutationFn: async (item: MedicalItem) => {
+      const response = await apiRequest("POST", `/api/items/${item.id}/mark-low-stock`, {});
+      return response;
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Email verzonden",
+        description: `Item "${data.itemName}" gemarkeerd als Bijna op. Email verzonden naar ${data.recipient}.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-items"] });
+      onRefetch();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Fout bij verzenden",
+        description: error.message || "Er is een fout opgetreden bij het versturen van de email.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleMarkOutOfStock = (item: MedicalItem) => {
+    if (!item.alertEmail) {
+      toast({
+        title: "Geen email ingesteld",
+        description: "Dit item heeft geen alert email adres ingesteld.",
+        variant: "destructive",
+      });
+      return;
+    }
+    markOutOfStockMutation.mutate(item);
+  };
+
+  const handleMarkLowStock = (item: MedicalItem) => {
+    if (!item.alertEmail) {
+      toast({
+        title: "Geen email ingesteld",
+        description: "Dit item heeft geen alert email adres ingesteld.",
+        variant: "destructive",
+      });
+      return;
+    }
+    markLowStockMutation.mutate(item);
   };
 
   if (isLoading) {
@@ -253,20 +322,35 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                         {item.alertEmail || "Niet ingesteld"}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center space-x-2">
-                          {item.isLowStock && item.alertEmail && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleSendWarningEmail(item)}
-                              disabled={sendWarningEmailMutation.isPending}
-                              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                              data-testid={`button-warning-${item.id}`}
-                              title={`Stuur waarschuwing naar ${item.alertEmail}`}
-                            >
-                              <AlertTriangle className="w-4 h-4" />
-                            </Button>
+                        <div className="flex items-center space-x-1">
+                          {/* OP and Bijna op buttons */}
+                          {item.alertEmail && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleMarkOutOfStock(item)}
+                                disabled={markOutOfStockMutation.isPending}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2"
+                                data-testid={`button-out-of-stock-${item.id}`}
+                                title={`Markeer als OP en verstuur email naar ${item.alertEmail}`}
+                              >
+                                OP
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleMarkLowStock(item)}
+                                disabled={markLowStockMutation.isPending}
+                                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 text-xs px-2"
+                                data-testid={`button-low-stock-${item.id}`}
+                                title={`Markeer als Bijna op en verstuur email naar ${item.alertEmail}`}
+                              >
+                                Bijna
+                              </Button>
+                            </>
                           )}
+                          
                           <Button
                             variant="ghost"
                             size="sm"
@@ -278,18 +362,10 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleEmailNotification(item)}
-                            disabled={emailNotificationMutation.isPending}
-                            data-testid={`button-email-${item.id}`}
-                          >
-                            <Mail className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
                             onClick={() => handleDelete(item)}
                             disabled={deleteItemMutation.isPending}
                             data-testid={`button-delete-${item.id}`}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

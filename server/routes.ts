@@ -302,6 +302,176 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mark item as out of stock and send email
+  app.post("/api/items/:itemId/mark-out-of-stock", async (req, res) => {
+    try {
+      const { itemId } = req.params;
+      const item = await storage.getMedicalItem(itemId);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Item niet gevonden" });
+      }
+
+      if (!item.alertEmail) {
+        return res.status(400).json({ message: "Geen email adres ingesteld voor dit item" });
+      }
+
+      // Update item status to out of stock
+      await storage.updateMedicalItem(itemId, { isLowStock: true });
+
+      // Get cabinet name
+      const cabinet = await storage.getCabinet(item.cabinet);
+      const cabinetName = cabinet ? cabinet.name : `Kast ${item.cabinet}`;
+
+      // Generate email HTML
+      const emailHTML = generateRestockEmailHTML(item, cabinetName, "OP");
+
+      // Send email
+      const success = await sendEmail({
+        to: item.alertEmail,
+        from: "inventaris@ziekenhuis.nl",
+        subject: `🚨 URGENT: ${item.name} - OP`,
+        html: emailHTML
+      });
+
+      if (success) {
+        // Record the email notification
+        await storage.createEmailNotification({
+          itemId: item.id,
+          recipientEmail: item.alertEmail
+        });
+        
+        res.json({ 
+          success: true, 
+          message: "Email verzonden voor item dat OP is",
+          itemName: item.name,
+          recipient: item.alertEmail
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Fout bij het verzenden van de email" 
+        });
+      }
+    } catch (error) {
+      console.error("Mark out of stock error:", error);
+      res.status(500).json({ message: "Fout bij het markeren als OP" });
+    }
+  });
+
+  // Mark item as low stock and send email
+  app.post("/api/items/:itemId/mark-low-stock", async (req, res) => {
+    try {
+      const { itemId } = req.params;
+      const item = await storage.getMedicalItem(itemId);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Item niet gevonden" });
+      }
+
+      if (!item.alertEmail) {
+        return res.status(400).json({ message: "Geen email adres ingesteld voor dit item" });
+      }
+
+      // Update item status to low stock
+      await storage.updateMedicalItem(itemId, { isLowStock: true });
+
+      // Get cabinet name
+      const cabinet = await storage.getCabinet(item.cabinet);
+      const cabinetName = cabinet ? cabinet.name : `Kast ${item.cabinet}`;
+
+      // Generate email HTML
+      const emailHTML = generateRestockEmailHTML(item, cabinetName, "Bijna op");
+
+      // Send email
+      const success = await sendEmail({
+        to: item.alertEmail,
+        from: "inventaris@ziekenhuis.nl",
+        subject: `⚠️ Voorraad Waarschuwing: ${item.name} - Bijna op`,
+        html: emailHTML
+      });
+
+      if (success) {
+        // Record the email notification
+        await storage.createEmailNotification({
+          itemId: item.id,
+          recipientEmail: item.alertEmail
+        });
+        
+        res.json({ 
+          success: true, 
+          message: "Email verzonden voor item dat bijna op is",
+          itemName: item.name,
+          recipient: item.alertEmail
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Fout bij het verzenden van de email" 
+        });
+      }
+    } catch (error) {
+      console.error("Mark low stock error:", error);
+      res.status(500).json({ message: "Fout bij het markeren als bijna op" });
+    }
+  });
+
+  // Get low stock items overview
+  app.get("/api/low-stock-overview", async (req, res) => {
+    try {
+      const { ambulancePost } = req.query;
+      let items = await storage.getMedicalItems();
+      
+      // Filter by ambulance post
+      if (ambulancePost && typeof ambulancePost === 'string') {
+        items = items.filter(item => item.ambulancePost === ambulancePost);
+      }
+      
+      // Filter only low stock items
+      const lowStockItems = items.filter(item => item.isLowStock);
+      
+      // Get cabinet info for each item
+      const itemsWithCabinets = await Promise.all(
+        lowStockItems.map(async (item) => {
+          const cabinet = await storage.getCabinet(item.cabinet);
+          return {
+            ...item,
+            cabinetName: cabinet ? cabinet.name : `Kast ${item.cabinet}`
+          };
+        })
+      );
+      
+      res.json(itemsWithCabinets);
+    } catch (error) {
+      console.error("Error fetching low stock overview:", error);
+      res.status(500).json({ message: "Fout bij het ophalen van lage voorraad overzicht" });
+    }
+  });
+
+  // Reset item stock status
+  app.post("/api/items/:itemId/reset-stock", async (req, res) => {
+    try {
+      const { itemId } = req.params;
+      const item = await storage.getMedicalItem(itemId);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Item niet gevonden" });
+      }
+
+      // Reset stock status
+      await storage.updateMedicalItem(itemId, { isLowStock: false });
+      
+      res.json({ 
+        success: true, 
+        message: `Voorraad status van ${item.name} is gereset`,
+        itemName: item.name
+      });
+    } catch (error) {
+      console.error("Reset stock error:", error);
+      res.status(500).json({ message: "Fout bij het resetten van voorraad status" });
+    }
+  });
+
   // Object Storage Routes for Photo Upload
   
   // Serve public objects (photos)
