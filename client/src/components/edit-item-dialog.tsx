@@ -99,20 +99,25 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
     },
   });
 
-  // Initialize locations when item changes
+  // Load existing locations for the item
+  const { data: existingLocations } = useQuery<ItemLocation[]>({
+    queryKey: ['/api/item-locations', item.id],
+    enabled: !!item.id,
+  });
+
+  // Initialize locations when existing locations change
   useEffect(() => {
-    if (item.locations && item.locations.length > 0) {
-      setItemLocations(item.locations.map(loc => ({
-        id: loc.id,
+    if (existingLocations && existingLocations.length > 0) {
+      setItemLocations(existingLocations.map(loc => ({
         ambulancePostId: loc.ambulancePostId,
         cabinet: loc.cabinet,
-        drawer: loc.drawer || "",
+        drawer: loc.drawer || ""
       })));
-    } else {
-      // If no locations, add one empty row
+    } else if (item?.id) {
+      // If no existing locations, start with one empty location
       setItemLocations([{ ambulancePostId: "", cabinet: "", drawer: "" }]);
     }
-  }, [item]);
+  }, [existingLocations, item?.id]);
 
   const updateItemMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -127,6 +132,7 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/medical-items'] });
       queryClient.invalidateQueries({ queryKey: ['/api/cabinets/summary'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/item-locations', item.id] });
       onOpenChange(false);
       onSuccess?.();
       toast({

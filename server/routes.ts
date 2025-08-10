@@ -84,6 +84,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get locations for a specific item
+  app.get("/api/item-locations/:itemId", async (req, res) => {
+    try {
+      const locations = await storage.getItemLocationsByItem(req.params.itemId);
+      res.json(locations);
+    } catch (error) {
+      console.error("Error fetching item locations:", error);
+      res.status(500).json({ message: "Failed to fetch item locations" });
+    }
+  });
+
   // Create medical item with multiple locations
   app.post("/api/medical-items", async (req, res) => {
     try {
