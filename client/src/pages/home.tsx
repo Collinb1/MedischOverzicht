@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Plus, Settings, ChevronDown, AlertTriangle, Mail } from "lucide-react";
+import { Search, Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,6 +107,14 @@ export default function Home() {
                       <div className="flex items-center gap-2">
                         <Mail className="w-4 h-4" />
                         Email Instellingen
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/ambulance-posts" data-testid="menu-ambulance-posts">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        Posten Beheer
                       </div>
                     </Link>
                   </DropdownMenuItem>

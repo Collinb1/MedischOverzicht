@@ -1,4 +1,4 @@
-import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser, emailConfigs, type EmailConfig, type InsertEmailConfig } from "@shared/schema";
+import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser, emailConfigs, type EmailConfig, type InsertEmailConfig, ambulancePosts, type AmbulancePost, type InsertAmbulancePost } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -35,6 +35,12 @@ export interface IStorage {
   getEmailConfig(): Promise<EmailConfig | undefined>;
   createEmailConfig(config: InsertEmailConfig): Promise<EmailConfig>;
   updateEmailConfig(config: InsertEmailConfig): Promise<EmailConfig>;
+  
+  getAmbulancePosts(): Promise<AmbulancePost[]>;
+  getAmbulancePost(id: string): Promise<AmbulancePost | undefined>;
+  createAmbulancePost(post: InsertAmbulancePost): Promise<AmbulancePost>;
+  updateAmbulancePost(id: string, post: Partial<InsertAmbulancePost>): Promise<AmbulancePost | undefined>;
+  deleteAmbulancePost(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -44,6 +50,7 @@ export class MemStorage implements IStorage {
   private cabinets: Map<string, Cabinet>;
   private drawers: Map<string, Drawer>;
   private emailConfig: EmailConfig | null;
+  private ambulancePosts: Map<string, AmbulancePost>;
 
   constructor() {
     this.users = new Map();
@@ -52,6 +59,7 @@ export class MemStorage implements IStorage {
     this.cabinets = new Map();
     this.drawers = new Map();
     this.emailConfig = null;
+    this.ambulancePosts = new Map();
     
     // Initialize with some sample data
     this.initializeSampleData();
@@ -104,6 +112,30 @@ export class MemStorage implements IStorage {
 
     defaultCabinets.forEach(cabinet => {
       this.cabinets.set(cabinet.id, cabinet);
+    });
+
+    // Initialize default ambulance posts
+    const defaultAmbulancePosts: AmbulancePost[] = [
+      {
+        id: "hilversum",
+        name: "Post Hilversum",
+        location: "Hilversum, Gooiland",
+        description: "Hoofdpost voor de Gooi regio",
+        isActive: true,
+        createdAt: new Date().toISOString().split('T')[0]
+      },
+      {
+        id: "blaricum", 
+        name: "Post Blaricum",
+        location: "Blaricum, Gooiland",
+        description: "Dependance post Blaricum",
+        isActive: true,
+        createdAt: new Date().toISOString().split('T')[0]
+      }
+    ];
+
+    defaultAmbulancePosts.forEach(post => {
+      this.ambulancePosts.set(post.id, post);
     });
 
     // Initialize default drawers for each cabinet
@@ -440,6 +472,50 @@ export class MemStorage implements IStorage {
       return await this.createEmailConfig(config);
     }
   }
+
+  async getAmbulancePosts(): Promise<AmbulancePost[]> {
+    return Array.from(this.ambulancePosts.values());
+  }
+
+  async getAmbulancePost(id: string): Promise<AmbulancePost | undefined> {
+    return this.ambulancePosts.get(id);
+  }
+
+  async createAmbulancePost(insertPost: InsertAmbulancePost): Promise<AmbulancePost> {
+    const post: AmbulancePost = {
+      ...insertPost,
+      createdAt: new Date().toISOString().split('T')[0],
+      location: insertPost.location || null,
+      description: insertPost.description || null
+    };
+    this.ambulancePosts.set(post.id, post);
+    return post;
+  }
+
+  async updateAmbulancePost(id: string, updateData: Partial<InsertAmbulancePost>): Promise<AmbulancePost | undefined> {
+    const existing = this.ambulancePosts.get(id);
+    if (!existing) {
+      return undefined;
+    }
+
+    const updated: AmbulancePost = { 
+      ...existing, 
+      ...updateData,
+      location: updateData.location !== undefined ? updateData.location || null : existing.location,
+      description: updateData.description !== undefined ? updateData.description || null : existing.description
+    };
+    this.ambulancePosts.set(id, updated);
+    return updated;
+  }
+
+  async deleteAmbulancePost(id: string): Promise<boolean> {
+    // Check if any items are assigned to this post
+    const itemsInPost = Array.from(this.medicalItems.values()).filter(item => item.ambulancePost === id);
+    if (itemsInPost.length > 0) {
+      throw new Error("Kan ambulancepost niet verwijderen: er zijn nog items toegewezen aan deze post");
+    }
+    return this.ambulancePosts.delete(id);
+  }
 }
 
 // Database Storage Implementation
@@ -600,6 +676,40 @@ export class DatabaseStorage implements IStorage {
     } else {
       return await this.createEmailConfig(config);
     }
+  }
+
+  async getAmbulancePosts(): Promise<AmbulancePost[]> {
+    return await db.select().from(ambulancePosts);
+  }
+
+  async getAmbulancePost(id: string): Promise<AmbulancePost | undefined> {
+    const [post] = await db.select().from(ambulancePosts).where(eq(ambulancePosts.id, id));
+    return post || undefined;
+  }
+
+  async createAmbulancePost(insertPost: InsertAmbulancePost): Promise<AmbulancePost> {
+    const [post] = await db.insert(ambulancePosts).values(insertPost).returning();
+    return post;
+  }
+
+  async updateAmbulancePost(id: string, updateData: Partial<InsertAmbulancePost>): Promise<AmbulancePost | undefined> {
+    const [post] = await db
+      .update(ambulancePosts)
+      .set(updateData)
+      .where(eq(ambulancePosts.id, id))
+      .returning();
+    return post || undefined;
+  }
+
+  async deleteAmbulancePost(id: string): Promise<boolean> {
+    // Check if any items are assigned to this post
+    const itemsInPost = await db.select().from(medicalItems).where(eq(medicalItems.ambulancePost, id));
+    if (itemsInPost.length > 0) {
+      throw new Error("Kan ambulancepost niet verwijderen: er zijn nog items toegewezen aan deze post");
+    }
+    
+    const result = await db.delete(ambulancePosts).where(eq(ambulancePosts.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 }
 

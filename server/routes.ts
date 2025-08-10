@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema, insertEmailConfigSchema } from "@shared/schema";
+import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema, insertEmailConfigSchema, insertAmbulancePostSchema } from "@shared/schema";
 import { sendEmail, generateRestockEmailHTML } from "./email";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
@@ -598,6 +598,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(400).json({ message: error.message });
       } else {
         res.status(500).json({ message: "Failed to save email configuration" });
+      }
+    }
+  });
+
+  // Ambulance Posts Routes
+  app.get("/api/ambulance-posts", async (req, res) => {
+    try {
+      const posts = await storage.getAmbulancePosts();
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching ambulance posts:", error);
+      res.status(500).json({ message: "Failed to fetch ambulance posts" });
+    }
+  });
+
+  app.post("/api/ambulance-posts", async (req, res) => {
+    try {
+      const validatedData = insertAmbulancePostSchema.parse(req.body);
+      const post = await storage.createAmbulancePost(validatedData);
+      res.status(201).json({
+        success: true,
+        message: "Ambulancepost succesvol aangemaakt",
+        post
+      });
+    } catch (error) {
+      console.error("Error creating ambulance post:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Failed to create ambulance post" });
+      }
+    }
+  });
+
+  app.put("/api/ambulance-posts/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertAmbulancePostSchema.partial().parse(req.body);
+      const post = await storage.updateAmbulancePost(id, validatedData);
+      
+      if (!post) {
+        return res.status(404).json({ message: "Ambulancepost niet gevonden" });
+      }
+      
+      res.json({
+        success: true,
+        message: "Ambulancepost succesvol bijgewerkt",
+        post
+      });
+    } catch (error) {
+      console.error("Error updating ambulance post:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Failed to update ambulance post" });
+      }
+    }
+  });
+
+  app.delete("/api/ambulance-posts/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteAmbulancePost(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Ambulancepost niet gevonden" });
+      }
+      
+      res.json({
+        success: true,
+        message: "Ambulancepost succesvol verwijderd"
+      });
+    } catch (error) {
+      console.error("Error deleting ambulance post:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Failed to delete ambulance post" });
       }
     }
   });

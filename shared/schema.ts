@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, date, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, date, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -91,6 +91,22 @@ export const insertEmailConfigSchema = createInsertSchema(emailConfigs).omit({
 
 export type InsertEmailConfig = z.infer<typeof insertEmailConfigSchema>;
 export type EmailConfig = typeof emailConfigs.$inferSelect;
+
+export const ambulancePosts = pgTable("ambulance_posts", {
+  id: varchar("id").primaryKey(),
+  name: text("name").notNull(),
+  location: text("location"),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAmbulancePostSchema = createInsertSchema(ambulancePosts).omit({
+  createdAt: true,
+});
+
+export type InsertAmbulancePost = z.infer<typeof insertAmbulancePostSchema>;
+export type AmbulancePost = typeof ambulancePosts.$inferSelect;
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
