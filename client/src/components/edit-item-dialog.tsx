@@ -41,7 +41,7 @@ import AddPostDialog from "@/components/add-post-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import type { MedicalItem, AmbulancePost, Cabinet, ItemLocation } from "@shared/schema";
+import type { MedicalItem, AmbulancePost, Cabinet, ItemLocation, PostContact } from "@shared/schema";
 
 const editItemSchema = z.object({
   name: z.string().min(1, "Naam is verplicht"),
@@ -66,6 +66,7 @@ interface LocationRow {
   ambulancePostId: string;
   cabinet: string;
   drawer: string;
+  contactPersonId?: string;
 }
 
 export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItemDialogProps) {
@@ -83,6 +84,24 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
   const { data: cabinets = [] } = useQuery<Cabinet[]>({
     queryKey: ['/api/cabinets'],
   });
+
+  const { data: postContacts = [] } = useQuery<PostContact[]>({
+    queryKey: ["/api/post-contacts"],
+    queryFn: async () => {
+      const response = await fetch("/api/post-contacts");
+      if (!response.ok) throw new Error("Failed to fetch post contacts");
+      return response.json();
+    },
+  });
+
+  // Get contacts for a specific ambulance post
+  const getContactsForPost = (ambulancePostId: string) => {
+    if (!postContacts || postContacts.length === 0) return [];
+    const filtered = postContacts.filter((contact: PostContact) => 
+      contact.ambulancePostId === ambulancePostId && contact.isActive
+    );
+    return filtered;
+  };
 
   // Initialize form with item data
   const form = useForm({
@@ -111,11 +130,12 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
       setItemLocations(existingLocations.map(loc => ({
         ambulancePostId: loc.ambulancePostId,
         cabinet: loc.cabinet,
-        drawer: loc.drawer || ""
+        drawer: loc.drawer || "",
+        contactPersonId: loc.contactPersonId || ""
       })));
     } else if (item?.id) {
       // If no existing locations, start with one empty location
-      setItemLocations([{ ambulancePostId: "", cabinet: "", drawer: "" }]);
+      setItemLocations([{ ambulancePostId: "", cabinet: "", drawer: "", contactPersonId: "" }]);
     }
   }, [existingLocations, item?.id]);
 
@@ -151,7 +171,7 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
   });
 
   const addLocation = () => {
-    setItemLocations([...itemLocations, { ambulancePostId: "", cabinet: "", drawer: "" }]);
+    setItemLocations([...itemLocations, { ambulancePostId: "", cabinet: "", drawer: "", contactPersonId: "" }]);
   };
 
   const removeLocation = (index: number) => {
@@ -183,7 +203,10 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
     // Filter out empty locations
     const validLocations = itemLocations.filter(loc => 
       loc.ambulancePostId && loc.cabinet
-    );
+    ).map(loc => ({
+      ...loc,
+      contactPersonId: loc.contactPersonId || null
+    }));
 
     const submissionData = {
       ...data,
@@ -390,14 +413,15 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
                 </Button>
               </div>
 
-              <div className="border rounded-lg">
-                <Table>
+              <div className="border rounded-lg overflow-x-auto">
+                <Table className="min-w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Ambulancepost</TableHead>
-                      <TableHead>Kast</TableHead>
-                      <TableHead>Lade</TableHead>
-                      <TableHead className="w-16">Acties</TableHead>
+                      <TableHead className="min-w-[150px]">Ambulancepost</TableHead>
+                      <TableHead className="min-w-[120px]">Kast</TableHead>
+                      <TableHead className="min-w-[100px]">Lade</TableHead>
+                      <TableHead className="min-w-[150px]">Contactpersoon</TableHead>
+                      <TableHead className="min-w-[80px]">Acties</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -466,6 +490,28 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
                             onChange={(e) => updateLocation(index, 'drawer', e.target.value)}
                             data-testid={`input-drawer-${index}`}
                           />
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={location.contactPersonId || "none"}
+                            onValueChange={(value) => updateLocation(index, 'contactPersonId', value === "none" ? "" : value)}
+                          >
+                            <SelectTrigger data-testid={`select-contact-person-${index}`} className="w-full">
+                              <SelectValue placeholder="Contactpersoon" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Geen contactpersoon</SelectItem>
+                              {location.ambulancePostId ? getContactsForPost(location.ambulancePostId).map((contact: PostContact) => (
+                                <SelectItem key={contact.id} value={contact.id}>
+                                  {contact.name} - {contact.department || contact.email}
+                                </SelectItem>
+                              )) : (
+                                <SelectItem value="select-post" disabled>
+                                  Selecteer eerst een ambulancepost
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell>
                           <Button

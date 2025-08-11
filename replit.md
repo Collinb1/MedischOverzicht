@@ -45,3 +45,5 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-01-10: Dynamische ambulancepost selectie - header dropdown toont nu werkelijke posten uit database in plaats van hardcoded opties
 - 2025-01-10: Tabel layout geïmplementeerd voor locatie selectie - nieuw item formulier toont ambulancepost, kast en lade in overzichtelijke tabel format
 - 2025-01-10: Locatie overzicht verwijderd uit instellingen menu en "Locatie Details" hernoemd naar "Locatie Item per post"
+- 2025-08-11: Contactpersoon kolom toegevoegd aan itemLocations database schema en beide item dialogs (nieuw + bewerken)
+- 2025-08-11: Contactpersoon selectie functionaliteit geïmplementeerd - gebruikers kunnen contactpersonen per ambulancepost selecteren voor voorraadbeheer
