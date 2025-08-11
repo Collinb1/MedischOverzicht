@@ -146,8 +146,8 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
 
   // Get contacts for a specific ambulance post
   const getContactsForPost = (ambulancePostId: string) => {
-    if (!postContacts.data) return [];
-    const filtered = postContacts.data.filter(contact => 
+    if (!postContacts || postContacts.length === 0) return [];
+    const filtered = postContacts.filter((contact: PostContact) => 
       contact.ambulancePostId === ambulancePostId && contact.isActive
     );
     console.log(`Contactpersonen voor post ${ambulancePostId}:`, filtered);
@@ -502,14 +502,14 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
                         <TableCell>
                           <Select
                             value={location.contactPersonId || "none"}
-                            onValueChange={(value) => updateLocation(index, 'contactPersonId', value === "none" ? undefined : value)}
+                            onValueChange={(value) => updateLocation(index, 'contactPersonId', value === "none" ? "" : value)}
                           >
                             <SelectTrigger data-testid={`select-contact-person-${index}`} className="w-full">
                               <SelectValue placeholder="Contactpersoon" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">Geen contactpersoon</SelectItem>
-                              {location.ambulancePostId ? getContactsForPost(location.ambulancePostId).map(contact => (
+                              {location.ambulancePostId ? getContactsForPost(location.ambulancePostId).map((contact: PostContact) => (
                                 <SelectItem key={contact.id} value={contact.id}>
                                   {contact.name} - {contact.department || contact.email}
                                 </SelectItem>
