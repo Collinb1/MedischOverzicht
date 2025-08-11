@@ -1020,7 +1020,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cabinet ordering API routes
+  
+  // Get cabinets ordered by ambulance post
+  app.get("/api/ambulance-posts/:postId/cabinets/ordered", async (req, res) => {
+    try {
+      const orderedCabinets = await storage.getCabinetsOrderedByPost(req.params.postId);
+      res.json(orderedCabinets);
+    } catch (error) {
+      console.error("Error fetching ordered cabinets:", error);
+      res.status(500).json({ message: "Failed to fetch ordered cabinets" });
+    }
+  });
 
+  // Set cabinet order for ambulance post
+  app.post("/api/ambulance-posts/:postId/cabinets/order", async (req, res) => {
+    try {
+      const { orderedCabinetIds } = req.body;
+      
+      if (!Array.isArray(orderedCabinetIds)) {
+        return res.status(400).json({ message: "orderedCabinetIds must be an array" });
+      }
+      
+      const orderResult = await storage.setPostCabinetOrder(req.params.postId, orderedCabinetIds);
+      res.json({ 
+        message: "Cabinet order updated successfully", 
+        order: orderResult 
+      });
+    } catch (error) {
+      console.error("Error setting cabinet order:", error);
+      res.status(500).json({ message: "Failed to set cabinet order" });
+    }
+  });
+
+  // Get current cabinet order for ambulance post
+  app.get("/api/ambulance-posts/:postId/cabinets/order", async (req, res) => {
+    try {
+      const cabinetOrders = await storage.getPostCabinetOrder(req.params.postId);
+      res.json(cabinetOrders);
+    } catch (error) {
+      console.error("Error fetching cabinet order:", error);
+      res.status(500).json({ message: "Failed to fetch cabinet order" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

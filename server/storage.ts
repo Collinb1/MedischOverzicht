@@ -1,4 +1,4 @@
-import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser, emailConfigs, type EmailConfig, type InsertEmailConfig, ambulancePosts, type AmbulancePost, type InsertAmbulancePost, itemLocations, type ItemLocation, type InsertItemLocation, postContacts, type PostContact, type InsertPostContact, supplyRequests, type SupplyRequest, type InsertSupplyRequest } from "@shared/schema";
+import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser, emailConfigs, type EmailConfig, type InsertEmailConfig, ambulancePosts, type AmbulancePost, type InsertAmbulancePost, itemLocations, type ItemLocation, type InsertItemLocation, postContacts, type PostContact, type InsertPostContact, supplyRequests, type SupplyRequest, type InsertSupplyRequest, postCabinetOrder, type PostCabinetOrder, type InsertPostCabinetOrder } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
 
@@ -61,6 +61,10 @@ export interface IStorage {
   getSupplyRequestsByItem(itemId: string, ambulancePost?: string): Promise<SupplyRequest[]>;
   createSupplyRequest(request: InsertSupplyRequest): Promise<SupplyRequest>;
   deleteSupplyRequestsByLocation(locationId: string): Promise<boolean>;
+  
+  getPostCabinetOrder(ambulancePostId: string): Promise<PostCabinetOrder[]>;
+  setPostCabinetOrder(ambulancePostId: string, orderedCabinetIds: string[]): Promise<PostCabinetOrder[]>;
+  getCabinetsOrderedByPost(ambulancePostId: string): Promise<Cabinet[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -353,6 +357,64 @@ export class DatabaseStorage implements IStorage {
   async deleteSupplyRequestsByLocation(locationId: string): Promise<boolean> {
     const result = await db.delete(supplyRequests).where(eq(supplyRequests.locationId, locationId));
     return (result.rowCount ?? 0) > 0;
+  }
+
+  // Post Cabinet Order operations
+  async getPostCabinetOrder(ambulancePostId: string): Promise<PostCabinetOrder[]> {
+    return await db.select()
+      .from(postCabinetOrder)
+      .where(eq(postCabinetOrder.ambulancePostId, ambulancePostId))
+      .orderBy(postCabinetOrder.displayOrder);
+  }
+
+  async setPostCabinetOrder(ambulancePostId: string, orderedCabinetIds: string[]): Promise<PostCabinetOrder[]> {
+    // Delete existing orders for this post
+    await db.delete(postCabinetOrder).where(eq(postCabinetOrder.ambulancePostId, ambulancePostId));
+    
+    // Insert new orders
+    const orderData = orderedCabinetIds.map((cabinetId, index) => ({
+      ambulancePostId,
+      cabinetId,
+      displayOrder: index + 1,
+    }));
+    
+    if (orderData.length > 0) {
+      return await db.insert(postCabinetOrder).values(orderData).returning();
+    }
+    return [];
+  }
+
+  async getCabinetsOrderedByPost(ambulancePostId: string): Promise<Cabinet[]> {
+    const orderedCabinets = await db
+      .select({
+        id: cabinets.id,
+        name: cabinets.name,
+        abbreviation: cabinets.abbreviation,
+        description: cabinets.description,
+        location: cabinets.location,
+        color: cabinets.color,
+        displayOrder: postCabinetOrder.displayOrder,
+      })
+      .from(cabinets)
+      .leftJoin(postCabinetOrder, and(
+        eq(cabinets.id, postCabinetOrder.cabinetId),
+        eq(postCabinetOrder.ambulancePostId, ambulancePostId)
+      ))
+      .orderBy(postCabinetOrder.displayOrder);
+
+    // If no custom order is set, return cabinets in their default order (by ID)
+    if (orderedCabinets.every(c => c.displayOrder === null)) {
+      return await db.select().from(cabinets);
+    }
+
+    return orderedCabinets.map(c => ({
+      id: c.id,
+      name: c.name,
+      abbreviation: c.abbreviation,
+      description: c.description,
+      location: c.location,
+      color: c.color,
+    }));
   }
 }
 

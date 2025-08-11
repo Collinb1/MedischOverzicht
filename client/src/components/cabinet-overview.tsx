@@ -1,5 +1,9 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
+import { CabinetOrderDialog } from "./cabinet-order-dialog";
 
 interface CabinetSummary {
   id: string;
@@ -13,6 +17,8 @@ interface CabinetSummary {
 
 interface CabinetOverviewProps {
   onCabinetSelect: (cabinet: string) => void;
+  selectedAmbulancePost?: string;
+  ambulancePostName?: string;
 }
 
 const getCabinetColor = (cabinetId: string) => {
@@ -26,14 +32,62 @@ const getCabinetColor = (cabinetId: string) => {
   return colors[cabinetId as keyof typeof colors] || "bg-slate-500";
 };
 
-export default function CabinetOverview({ onCabinetSelect }: CabinetOverviewProps) {
+export default function CabinetOverview({ 
+  onCabinetSelect, 
+  selectedAmbulancePost,
+  ambulancePostName 
+}: CabinetOverviewProps) {
+  const [showOrderDialog, setShowOrderDialog] = useState(false);
+
+  // Get ordered cabinets for the selected post, fall back to regular cabinet summary
   const { data: cabinets = [] } = useQuery<CabinetSummary[]>({
-    queryKey: ["/api/cabinets/summary"],
+    queryKey: selectedAmbulancePost 
+      ? ["/api/ambulance-posts", selectedAmbulancePost, "cabinets", "summary"]
+      : ["/api/cabinets/summary"],
+    queryFn: async () => {
+      if (selectedAmbulancePost) {
+        // Get ordered cabinets and their summary data
+        const orderedCabinets = await fetch(`/api/ambulance-posts/${selectedAmbulancePost}/cabinets/ordered`).then(r => r.json());
+        const summaryData = await fetch(`/api/cabinets/summary`).then(r => r.json());
+        
+        // Merge and return in the custom order
+        const orderedSummary = orderedCabinets.map((cabinet: any) => {
+          const summary = summaryData.find((s: CabinetSummary) => s.id === cabinet.id);
+          return summary || {
+            id: cabinet.id,
+            name: cabinet.name,
+            abbreviation: cabinet.abbreviation,
+            totalItems: 0,
+            totalQuantity: 0,
+            lowStockItems: 0,
+            categories: {}
+          };
+        });
+        
+        return orderedSummary;
+      }
+      // Default behavior - fetch regular summary
+      return fetch("/api/cabinets/summary").then(r => r.json());
+    }
   });
 
   return (
     <div className="mb-8">
-      <h2 className="text-2xl font-semibold text-slate-900 mb-6">Kast Overzicht</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-semibold text-slate-900">Kast Overzicht</h2>
+        {selectedAmbulancePost && ambulancePostName && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowOrderDialog(true)}
+            className="flex items-center space-x-2"
+            data-testid="cabinet-order-settings"
+          >
+            <Settings className="w-4 h-4" />
+            <span>Volgorde</span>
+          </Button>
+        )}
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {cabinets.map((cabinet) => (
           <Card 
@@ -74,6 +128,16 @@ export default function CabinetOverview({ onCabinetSelect }: CabinetOverviewProp
           </Card>
         ))}
       </div>
+
+      {/* Cabinet Order Dialog */}
+      {selectedAmbulancePost && ambulancePostName && (
+        <CabinetOrderDialog
+          open={showOrderDialog}
+          onOpenChange={setShowOrderDialog}
+          ambulancePostId={selectedAmbulancePost}
+          ambulancePostName={ambulancePostName}
+        />
+      )}
     </div>
   );
 }

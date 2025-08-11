@@ -47,6 +47,16 @@ export const cabinets = pgTable("cabinets", {
   color: varchar("color", { length: 20 }).default("bg-slate-200"),
 });
 
+// Cabinet ordering per ambulance post
+export const postCabinetOrder = pgTable("post_cabinet_order", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ambulancePostId: varchar("ambulance_post_id").notNull().references(() => ambulancePosts.id),
+  cabinetId: varchar("cabinet_id", { length: 10 }).notNull().references(() => cabinets.id),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const emailNotifications = pgTable("email_notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   itemId: varchar("item_id").notNull().references(() => medicalItems.id),
@@ -69,6 +79,12 @@ export const insertItemLocationSchema = createInsertSchema(itemLocations).omit({
 
 export const insertCabinetSchema = createInsertSchema(cabinets);
 
+export const insertPostCabinetOrderSchema = createInsertSchema(postCabinetOrder).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertDrawerSchema = createInsertSchema(drawers).omit({
   id: true,
 });
@@ -83,6 +99,8 @@ export type MedicalItem = typeof medicalItems.$inferSelect;
 export type InsertItemLocation = z.infer<typeof insertItemLocationSchema>;
 export type ItemLocation = typeof itemLocations.$inferSelect;
 export type InsertCabinet = z.infer<typeof insertCabinetSchema>;
+export type PostCabinetOrder = typeof postCabinetOrder.$inferSelect;
+export type InsertPostCabinetOrder = z.infer<typeof insertPostCabinetOrderSchema>;
 export type Cabinet = typeof cabinets.$inferSelect;
 export type InsertDrawer = z.infer<typeof insertDrawerSchema>;
 export type Drawer = typeof drawers.$inferSelect;

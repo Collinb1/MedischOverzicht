@@ -239,7 +239,11 @@ export default function Home() {
         </div>
 
         {/* Cabinet Overview */}
-        <CabinetOverview onCabinetSelect={setSelectedCabinet} />
+        <CabinetOverview 
+          onCabinetSelect={setSelectedCabinet} 
+          selectedAmbulancePost={selectedPost}
+          ambulancePostName={ambulancePosts.find((p: any) => p.id === selectedPost)?.name}
+        />
 
         {/* Detailed Inventory */}
         <InventoryTable 
