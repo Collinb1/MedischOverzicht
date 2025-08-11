@@ -124,11 +124,6 @@ export class DatabaseStorage implements IStorage {
     return location || undefined;
   }
 
-  async getItemLocation(id: string): Promise<ItemLocation | undefined> {
-    const [location] = await db.select().from(itemLocations).where(eq(itemLocations.id, id));
-    return location;
-  }
-
   async getItemLocationsByPost(ambulancePostId: string): Promise<ItemLocation[]> {
     return await db.select().from(itemLocations).where(eq(itemLocations.ambulancePostId, ambulancePostId));
   }
