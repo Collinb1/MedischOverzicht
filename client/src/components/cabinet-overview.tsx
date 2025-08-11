@@ -21,15 +21,21 @@ interface CabinetOverviewProps {
   ambulancePostName?: string;
 }
 
-const getCabinetColor = (cabinetId: string) => {
-  const colors = {
-    A: "bg-cabinet-a",
-    B: "bg-cabinet-b", 
-    C: "bg-cabinet-c",
-    D: "bg-cabinet-d",
-    E: "bg-cabinet-e"
+const getCabinetColor = (abbreviation: string): string => {
+  const colors: { [key: string]: string } = {
+    'A': '#EF4444',    // Red
+    'Ab': '#F97316',   // Orange  
+    'B': '#EAB308',    // Yellow
+    'C': '#22C55E',    // Green
+    'D': '#3B82F6',    // Blue
+    'E': '#A855F7',    // Purple
+    'F': '#EC4899',    // Pink
+    'G': '#06B6D4',    // Cyan
+    'H': '#84CC16',    // Lime
+    'I': '#F59E0B',    // Amber
   };
-  return colors[cabinetId as keyof typeof colors] || "bg-slate-500";
+  
+  return colors[abbreviation] || '#6B7280'; // Default gray
 };
 
 export default function CabinetOverview({ 
@@ -116,7 +122,10 @@ export default function CabinetOverview({
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className={`w-12 h-12 ${getCabinetColor(cabinet.id)} rounded-lg flex items-center justify-center`}>
+                <div 
+                  className="w-12 h-12 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: getCabinetColor(cabinet.abbreviation) }}
+                >
                   <span className="text-white font-bold text-xl">{cabinet.abbreviation}</span>
                 </div>
                 <div className="text-right">

@@ -123,13 +123,13 @@ const CabinetColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost
 
   return (
     <div className="flex flex-wrap gap-1">
-      {uniqueCabinets.map((cabinetId: string) => {
+      {uniqueCabinets.map((cabinetId) => {
         const cabinet = cabinets.find((c: any) => c.id === cabinetId);
         const cabinetColor = cabinet?.abbreviation ? getCabinetColor(cabinet.abbreviation) : '#6B7280';
         
         return (
           <div 
-            key={cabinetId}
+            key={String(cabinetId)}
             className="flex items-center justify-center px-3 py-2 rounded-md text-base font-bold text-white min-w-[40px]"
             style={{ backgroundColor: cabinetColor }}
             data-testid={`cabinet-${cabinetId}-${item.id}`}
@@ -171,13 +171,13 @@ const DrawerColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost?
 
   return (
     <div className="flex flex-wrap gap-1">
-      {uniqueDrawers.map((drawer: string, index: number) => (
+      {uniqueDrawers.map((drawer, index: number) => (
         <div 
           key={index}
           className="px-2 py-1 bg-slate-100 rounded-md text-sm text-slate-700"
           data-testid={`drawer-${drawer}-${item.id}`}
         >
-          {drawer}
+          {String(drawer)}
         </div>
       ))}
     </div>
@@ -512,7 +512,7 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
                     console.error('Photo failed to load via objects route, trying direct URL:', item.photoUrl);
                     // Try direct URL as fallback
                     const target = e.currentTarget;
-                    if (!target.src.includes('storage.googleapis.com')) {
+                    if (!target.src.includes('storage.googleapis.com') && item.photoUrl) {
                       target.src = item.photoUrl;
                     } else {
                       // Both failed, show placeholder
@@ -529,7 +529,7 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
                               <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                             <p class="text-sm mt-2">Foto kan niet worden geladen</p>
-                            <p class="text-xs text-gray-400">${item.photoUrl.split('/').pop()}</p>
+                            <p class="text-xs text-gray-400">${item.photoUrl?.split('/').pop() || 'Onbekend'}</p>
                           </div>
                         `;
                         target.parentNode?.appendChild(placeholder);
@@ -695,12 +695,12 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                             onError={(e) => {
                               // Fallback to original URL if objects route fails
                               const target = e.currentTarget;
-                              if (!target.src.includes('storage.googleapis.com')) {
+                              if (!target.src.includes('storage.googleapis.com') && item.photoUrl) {
                                 target.src = item.photoUrl;
                               } else {
                                 // Both failed, hide image and show icon instead
                                 target.style.display = 'none';
-                                const iconDiv = target.nextElementSibling;
+                                const iconDiv = target.nextElementSibling as HTMLElement;
                                 if (iconDiv) iconDiv.style.display = 'flex';
                               }
                             }}
