@@ -1025,8 +1025,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { filename } = req.params;
       console.log(`Requesting image: ${filename}`);
       
-      // Try to get the image using the ObjectStorageService
-      const objectStorageService = new ObjectStorageService();
+      // Use the Google Cloud Storage client directly
+      const bucket = objectStorageClient.bucket(process.env.BUCKET_NAME || 'repl-default-bucket-27aaf1d5-64b6-4b02-b0a5-1f1c5b2375bb');
       
       // Try different possible paths for the image
       const possiblePaths = [
@@ -1039,7 +1039,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const path of possiblePaths) {
         try {
           console.log(`Trying path: ${path}`);
-          const imageBuffer = await objectStorageService.getObject(path);
+          const file = bucket.file(path);
+          
+          // Check if file exists
+          const [exists] = await file.exists();
+          if (!exists) {
+            console.log(`File does not exist at path: ${path}`);
+            continue;
+          }
+          
+          // Download the file
+          const [fileContents] = await file.download();
           
           // Determine content type based on file extension
           const ext = filename.toLowerCase().split('.').pop();
@@ -1056,7 +1066,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           
           console.log(`Successfully found image at path: ${path}`);
-          return res.send(imageBuffer);
+          return res.send(fileContents);
           
         } catch (pathError) {
           console.log(`Path ${path} failed:`, pathError.message);
@@ -1065,6 +1075,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // If all paths fail, return 404
+      console.log(`Image not found in any location: ${filename}`);
       return res.status(404).json({ message: "Image not found in any location" });
       
     } catch (error) {
