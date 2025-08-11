@@ -99,12 +99,13 @@ export class DatabaseStorage implements IStorage {
 
   // Medical Items operations
   async getMedicalItems(): Promise<MedicalItem[]> {
-    return await db.select().from(medicalItems);
+    const items = await db.select().from(medicalItems);
+    return items as MedicalItem[];
   }
 
   async getMedicalItem(id: string): Promise<MedicalItem | undefined> {
     const [item] = await db.select().from(medicalItems).where(eq(medicalItems.id, id));
-    return item;
+    return item as MedicalItem | undefined;
   }
 
   async getMedicalItemsByCabinet(cabinet: string): Promise<MedicalItem[]> {
@@ -114,7 +115,7 @@ export class DatabaseStorage implements IStorage {
 
   async createMedicalItem(item: InsertMedicalItem): Promise<MedicalItem> {
     const [newItem] = await db.insert(medicalItems).values(item).returning();
-    return newItem;
+    return newItem as MedicalItem;
   }
 
   async updateMedicalItem(id: string, item: Partial<InsertMedicalItem>): Promise<MedicalItem | undefined> {
@@ -123,7 +124,7 @@ export class DatabaseStorage implements IStorage {
       .set(item)
       .where(eq(medicalItems.id, id))
       .returning();
-    return updatedItem;
+    return updatedItem as MedicalItem | undefined;
   }
 
   async deleteMedicalItem(id: string): Promise<boolean> {

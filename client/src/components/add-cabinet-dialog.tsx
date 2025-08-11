@@ -55,7 +55,8 @@ export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddC
   const addCabinetMutation = useMutation({
     mutationFn: async (data: InsertCabinet) => {
       // First create the cabinet
-      const cabinet = await apiRequest("POST", "/api/cabinets", data);
+      const response = await apiRequest("POST", "/api/cabinets", data);
+      const cabinet = await response.json();
       
       // Then create cabinet locations for selected posts
       for (const postId of selectedPosts) {
