@@ -298,9 +298,30 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
               <div className="flex items-center gap-4">
                 {form.watch('photoUrl') && (
                   <img 
-                    src={form.watch('photoUrl') || ''} 
+                    src={form.watch('photoUrl')?.includes('storage.googleapis.com') 
+                      ? `/objects/uploads/${form.watch('photoUrl')?.split('/').pop()}` 
+                      : form.watch('photoUrl') || ''
+                    }
                     alt="Item foto" 
                     className="w-24 h-24 object-cover rounded-lg border"
+                    onError={(e) => {
+                      // Fallback to original URL if objects route fails
+                      const target = e.currentTarget;
+                      const originalUrl = form.watch('photoUrl');
+                      if (originalUrl && !target.src.includes('storage.googleapis.com')) {
+                        target.src = originalUrl;
+                      } else {
+                        // Both failed, show placeholder
+                        target.style.display = 'none';
+                        const parentDiv = target.parentElement;
+                        if (parentDiv && !parentDiv.querySelector('.photo-placeholder')) {
+                          const placeholder = document.createElement('div');
+                          placeholder.className = 'photo-placeholder w-24 h-24 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center';
+                          placeholder.innerHTML = '<span class="text-xs text-gray-500">Foto fout</span>';
+                          parentDiv.appendChild(placeholder);
+                        }
+                      }
+                    }}
                   />
                 )}
                 <ObjectUploader
