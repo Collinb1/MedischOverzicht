@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin } from "lucide-react";
+import { Search, Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin, Archive } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,7 +160,10 @@ export default function Home() {
                     onClick={() => setShowSettingsDialog(true)}
                     data-testid="menu-cabinet-management"
                   >
-                    Kasten Beheren
+                    <div className="flex items-center gap-2">
+                      <Archive className="w-4 h-4" />
+                      Kasten Beheren
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/email-settings" data-testid="menu-email-settings">
