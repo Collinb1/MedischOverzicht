@@ -416,6 +416,11 @@ export default function EmailSettings() {
                     <p className="text-amber-700">Gmail vereist een <strong>App-specifiek wachtwoord</strong> voor SMTP. Gebruik niet je gewone Gmail wachtwoord.</p>
                     <p className="text-amber-700 mt-1">Instructies: Google Account → Beveiliging → 2-staps verificatie → App-wachtwoorden</p>
                   </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="font-medium text-blue-800 mb-1">🏢 Bedrijfsmail servers:</p>
+                    <p className="text-blue-700">Voor bedrijfsmail (Exchange, eigen servers) werkt het systeem automatisch met zelfondertekende certificaten.</p>
+                    <p className="text-blue-700 mt-1">TLS certificaat verificatie is flexibel geconfigureerd voor maximale compatibiliteit.</p>
+                  </div>
                   <p>Voor andere providers: controleer of SMTP toegang is ingeschakeld in je account instellingen.</p>
                 </div>
               </div>

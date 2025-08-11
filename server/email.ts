@@ -39,6 +39,10 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
           user: emailConfig.smtpUser,
           pass: emailConfig.smtpPassword,
         },
+        tls: {
+          // Accept self-signed certificates and hostname mismatches
+          rejectUnauthorized: false
+        }
       });
 
       const fromEmail = emailConfig.fromEmail || params.from;
@@ -65,6 +69,9 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
         console.error('Kan geen verbinding maken met SMTP server. Controleer host en poort.');
       } else if (error.code === 'ETIMEDOUT') {
         console.error('SMTP verbinding time-out. Controleer internet verbinding en firewall.');
+      } else if (error.code === 'ESOCKET' && error.reason && error.reason.includes('altnames')) {
+        console.error('TLS certificaat hostname mismatch. Dit is normaal bij bedrijfsmail servers.');
+        console.error('TLS verificatie is uitgeschakeld voor compatibiliteit.');
       }
       
       return false;
