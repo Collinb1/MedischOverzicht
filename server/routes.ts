@@ -1025,62 +1025,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { filename } = req.params;
       console.log(`Requesting image: ${filename}`);
       
-      // Use the Google Cloud Storage client directly
-      const bucket = objectStorageClient.bucket(process.env.BUCKET_NAME || 'repl-default-bucket-27aaf1d5-64b6-4b02-b0a5-1f1c5b2375bb');
+      const objectStorageService = new ObjectStorageService();
       
-      // Try different possible paths for the image
-      const possiblePaths = [
-        `.private/uploads/${filename}`,
-        `uploads/${filename}`,
-        `public/uploads/${filename}`,
-        filename
-      ];
+      // Construct object path using the filename
+      const objectPath = `/objects/uploads/${filename}`;
+      console.log(`Trying to get object with path: ${objectPath}`);
       
-      for (const path of possiblePaths) {
-        try {
-          console.log(`Trying path: ${path}`);
-          const file = bucket.file(path);
-          
-          // Check if file exists
-          const [exists] = await file.exists();
-          if (!exists) {
-            console.log(`File does not exist at path: ${path}`);
+      try {
+        // Use the existing getObjectEntityFile method
+        const file = await objectStorageService.getObjectEntityFile(objectPath);
+        
+        console.log(`Found file, downloading...`);
+        
+        // Use the existing downloadObject method to stream to response
+        await objectStorageService.downloadObject(file, res);
+        
+        console.log(`Successfully served image: ${filename}`);
+        
+      } catch (entityError) {
+        console.log(`Object entity method failed:`, entityError.message);
+        
+        // Fallback: try direct bucket access with various paths
+        const bucket = objectStorageClient.bucket('repl-default-bucket-27aaf1d5-64b6-4b02-b0a5-1f1c5b2375bb');
+        const paths = [`.private/uploads/${filename}`, `uploads/${filename}`];
+        
+        for (const path of paths) {
+          try {
+            console.log(`Fallback: trying path ${path}`);
+            const file = bucket.file(path);
+            const [exists] = await file.exists();
+            
+            if (exists) {
+              console.log(`Found file at ${path}, streaming...`);
+              
+              // Get metadata and stream
+              const [metadata] = await file.getMetadata();
+              res.set({
+                'Content-Type': metadata.contentType || 'image/jpeg',
+                'Cache-Control': 'public, max-age=3600',
+              });
+              
+              const stream = file.createReadStream();
+              stream.pipe(res);
+              return;
+            }
+          } catch (pathError) {
+            console.log(`Path ${path} failed:`, pathError.message);
             continue;
           }
-          
-          // Download the file
-          const [fileContents] = await file.download();
-          
-          // Determine content type based on file extension
-          const ext = filename.toLowerCase().split('.').pop();
-          let contentType = 'image/jpeg';
-          if (ext === 'png') contentType = 'image/png';
-          if (ext === 'gif') contentType = 'image/gif';
-          if (ext === 'webp') contentType = 'image/webp';
-          if (ext === 'heic') contentType = 'image/heic';
-          
-          // Set appropriate headers
-          res.set({
-            'Content-Type': contentType,
-            'Cache-Control': 'public, max-age=86400',
-          });
-          
-          console.log(`Successfully found image at path: ${path}`);
-          return res.send(fileContents);
-          
-        } catch (pathError) {
-          console.log(`Path ${path} failed:`, pathError.message);
-          continue;
         }
+        
+        throw new Error("Image not found in any location");
       }
-      
-      // If all paths fail, return 404
-      console.log(`Image not found in any location: ${filename}`);
-      return res.status(404).json({ message: "Image not found in any location" });
       
     } catch (error) {
       console.error("Error serving image:", error);
-      res.status(500).json({ message: "Failed to serve image" });
+      if (!res.headersSent) {
+        res.status(404).json({ message: "Image not found" });
+      }
     }
   });
 
