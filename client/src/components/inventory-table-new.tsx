@@ -123,6 +123,16 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
     enabled: !!selectedPost,
   });
 
+  // Get contact info for display
+  const { data: postContacts = [] } = useQuery({
+    queryKey: ['/api/post-contacts'],
+    queryFn: async () => {
+      const response = await fetch('/api/post-contacts');
+      if (!response.ok) throw new Error("Failed to fetch contacts");
+      return response.json();
+    },
+  });
+
   const hasRecentRequest = notifications.length > 0;
 
   const sendSupplyRequestMutation = useMutation({
@@ -163,17 +173,30 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
 
   if (hasRecentRequest) {
     const latestRequest = notifications[0];
+    
+    // Find the contact person who received the email
+    const location = relevantLocations.find(loc => 
+      loc.stockStatus === 'bijna-op' || loc.stockStatus === 'niet-meer-aanwezig'
+    );
+    const contactPerson = location ? postContacts.find(c => c.id === location.contactPersonId) : null;
+    
     return (
-      <div className="flex items-center space-x-2 text-xs">
-        <CheckCircle className="w-3 h-3 text-green-500" />
+      <div className="flex items-center space-x-2 text-xs bg-green-50 p-2 rounded-lg border border-green-200">
+        <CheckCircle className="w-4 h-4 text-green-600" />
         <div className="flex-1">
-          <div className="text-slate-900 font-medium">Verzonden</div>
-          <div className="text-slate-500">
+          <div className="text-green-800 font-medium">Email verzonden</div>
+          <div className="text-green-600">
             {new Date(latestRequest.sentAt).toLocaleDateString('nl-NL', {
               day: '2-digit',
-              month: '2-digit'
+              month: '2-digit',
+              year: 'numeric'
             })}
           </div>
+          {contactPerson && (
+            <div className="text-green-600 text-xs">
+              Naar: {contactPerson.name}
+            </div>
+          )}
         </div>
       </div>
     );
