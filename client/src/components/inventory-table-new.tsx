@@ -4,6 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { EditItemDialog } from "../components/edit-item-dialog";
@@ -413,6 +414,84 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
   return null;
 };
 
+// Quick status selector for changing stock status
+const QuickStatusSelector = ({ item, selectedPost }: { 
+  item: MedicalItem; 
+  selectedPost?: string;
+}) => {
+  const queryClient = useQueryClient();
+  
+  const { data: locations = [] } = useQuery({
+    queryKey: ['/api/item-locations', item.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/item-locations/${item.id}`);
+      if (!response.ok) throw new Error("Failed to fetch locations");
+      return response.json();
+    },
+  });
+
+  const relevantLocation = selectedPost 
+    ? locations.find((loc: any) => loc.ambulancePostId === selectedPost)
+    : locations[0]; // Take first location if no specific post selected
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async (newStatus: string) => {
+      if (!relevantLocation) return;
+      
+      const response = await fetch(`/api/item-locations/${relevantLocation.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stockStatus: newStatus }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update status');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/item-locations'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/item-locations', item.id] });
+    },
+  });
+
+  if (!relevantLocation || item.isDiscontinued) {
+    return null;
+  }
+
+  const currentStatus = relevantLocation.stockStatus;
+
+  return (
+    <Select
+      value={currentStatus}
+      onValueChange={(value) => updateStatusMutation.mutate(value)}
+      disabled={updateStatusMutation.isPending}
+    >
+      <SelectTrigger className="w-[140px] h-8 text-xs">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="op-voorraad">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            Op voorraad
+          </div>
+        </SelectItem>
+        <SelectItem value="bijna-op">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+            Bijna op
+          </div>
+        </SelectItem>
+        <SelectItem value="niet-meer-aanwezig">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-red-500"></div>
+            Niet meer aanwezig
+          </div>
+        </SelectItem>
+      </SelectContent>
+    </Select>
+  );
+};
+
 // Actions column with status dropdowns (contact info runs in background)
 const ActionsColumn = ({ item, selectedPost, onEdit }: { 
   item: MedicalItem; 
@@ -420,17 +499,19 @@ const ActionsColumn = ({ item, selectedPost, onEdit }: {
   onEdit: () => void;
 }) => {
   return (
-    <div className="flex items-center space-x-1">
-      {/* Status dropdowns for each location */}
-      <LocationStockStatus item={item} selectedPost={selectedPost} />
+    <div className="flex items-center space-x-2">
+      {/* Quick status selector */}
+      <QuickStatusSelector item={item} selectedPost={selectedPost} />
       
-      {/* Action buttons */}
+      {/* Supply request button */}
+      <SupplyRequestButton item={item} selectedPost={selectedPost} />
+      
+      {/* Edit button */}
       <Button
         variant="ghost"
         size="sm"
         onClick={onEdit}
         data-testid={`button-edit-${item.id}`}
-        className="ml-2"
       >
         <Edit className="w-4 h-4" />
       </Button>
