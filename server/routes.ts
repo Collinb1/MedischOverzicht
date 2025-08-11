@@ -31,7 +31,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             stockStatus: location.stockStatus,
             ambulancePost: location.ambulancePostId
           };
-        }).filter(Boolean);
+        }).filter((item): item is NonNullable<typeof item> => item !== null);
         
         let filteredItems = itemsWithLocations;
         
@@ -222,20 +222,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/cabinets/summary", async (req, res) => {
     try {
       const allItems = await storage.getMedicalItems();
+      const allLocations = await storage.getItemLocations();
       const cabinets = await storage.getCabinets();
       
       const summary = cabinets.map(cabinet => {
-        const cabinetItems = allItems.filter(item => item.cabinet === cabinet.id);
-        const totalItems = cabinetItems.length;
-        // Count items based on new stock status or fallback to isLowStock
-        const lowStockItems = cabinetItems.filter(item => 
-          item.stockStatus === "bijna-op" || item.stockStatus === "niet-meer-aanwezig" || 
-          (!item.stockStatus && item.isLowStock)
+        // Get all locations for this cabinet
+        const cabinetLocations = allLocations.filter(location => location.cabinet === cabinet.id);
+        const totalItems = cabinetLocations.length;
+        
+        // Count items based on stock status
+        const lowStockItems = cabinetLocations.filter(location => 
+          location.stockStatus === "bijna-op" || location.stockStatus === "niet-meer-aanwezig" || 
+          location.isLowStock
         ).length;
         
-        // Group by category
-        const categories = cabinetItems.reduce((acc, item) => {
-          acc[item.category] = (acc[item.category] || 0) + 1;
+        // Group by category (need to join with items)
+        const categories = cabinetLocations.reduce((acc, location) => {
+          const item = allItems.find(item => item.id === location.itemId);
+          if (item) {
+            acc[item.category] = (acc[item.category] || 0) + 1;
+          }
           return acc;
         }, {} as Record<string, number>);
         
@@ -384,9 +390,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Geen email adres ingesteld voor dit item" });
       }
 
-      // Get cabinet name
-      const cabinet = await storage.getCabinet(item.cabinet);
-      const cabinetName = cabinet ? cabinet.name : `Kast ${item.cabinet}`;
+      // Get item locations to find cabinet
+      const itemLocations = await storage.getItemLocationsByItem(itemId);
+      const firstLocation = itemLocations[0];
+      const cabinet = firstLocation ? await storage.getCabinet(firstLocation.cabinet) : null;
+      const cabinetName = cabinet ? cabinet.name : firstLocation ? `Kast ${firstLocation.cabinet}` : "Onbekende locatie";
 
       // Generate email HTML
       const emailHTML = generateRestockEmailHTML(item, cabinetName);
@@ -437,12 +445,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Geen email adres ingesteld voor dit item" });
       }
 
-      // Update item status to out of stock
-      await storage.updateMedicalItem(itemId, { isLowStock: true });
+      // Get item locations to find cabinet and update status
+      const itemLocations = await storage.getItemLocationsByItem(itemId);
+      
+      // Update all locations to be out of stock
+      for (const location of itemLocations) {
+        await storage.updateItemLocation(location.id, { 
+          isLowStock: true, 
+          stockStatus: "niet-meer-aanwezig" 
+        });
+      }
 
-      // Get cabinet name
-      const cabinet = await storage.getCabinet(item.cabinet);
-      const cabinetName = cabinet ? cabinet.name : `Kast ${item.cabinet}`;
+      const firstLocation = itemLocations[0];
+      const cabinet = firstLocation ? await storage.getCabinet(firstLocation.cabinet) : null;
+      const cabinetName = cabinet ? cabinet.name : firstLocation ? `Kast ${firstLocation.cabinet}` : "Onbekende locatie";
 
       // Generate email HTML
       const emailHTML = generateRestockEmailHTML(item, cabinetName, "OP");
@@ -495,12 +511,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Geen email adres ingesteld voor dit item" });
       }
 
-      // Update item status to low stock
-      await storage.updateMedicalItem(itemId, { isLowStock: true });
+      // Get item locations to find cabinet and update status
+      const itemLocations = await storage.getItemLocationsByItem(itemId);
+      
+      // Update all locations to be low stock
+      for (const location of itemLocations) {
+        await storage.updateItemLocation(location.id, { 
+          isLowStock: true, 
+          stockStatus: "bijna-op" 
+        });
+      }
 
-      // Get cabinet name
-      const cabinet = await storage.getCabinet(item.cabinet);
-      const cabinetName = cabinet ? cabinet.name : `Kast ${item.cabinet}`;
+      const firstLocation = itemLocations[0];
+      const cabinet = firstLocation ? await storage.getCabinet(firstLocation.cabinet) : null;
+      const cabinetName = cabinet ? cabinet.name : firstLocation ? `Kast ${firstLocation.cabinet}` : "Onbekende locatie";
 
       // Generate email HTML
       const emailHTML = generateRestockEmailHTML(item, cabinetName, "Bijna op");
@@ -543,28 +567,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/low-stock-overview", async (req, res) => {
     try {
       const { ambulancePost } = req.query;
-      let items = await storage.getMedicalItems();
       
-      // Filter by ambulance post
+      // Get all items and locations
+      const allItems = await storage.getMedicalItems();
+      let allLocations = await storage.getItemLocations();
+      
+      // Filter by ambulance post if specified
       if (ambulancePost && typeof ambulancePost === 'string') {
-        items = items.filter(item => item.ambulancePost === ambulancePost);
+        allLocations = allLocations.filter(location => location.ambulancePostId === ambulancePost);
       }
       
-      // Filter only low stock items
-      const lowStockItems = items.filter(item => item.isLowStock);
+      // Filter only low stock locations
+      const lowStockLocations = allLocations.filter(location => 
+        location.isLowStock || 
+        location.stockStatus === "bijna-op" || 
+        location.stockStatus === "niet-meer-aanwezig"
+      );
       
-      // Get cabinet info for each item
+      // Combine items with their low stock locations and cabinet info
       const itemsWithCabinets = await Promise.all(
-        lowStockItems.map(async (item) => {
-          const cabinet = await storage.getCabinet(item.cabinet);
+        lowStockLocations.map(async (location) => {
+          const item = allItems.find(item => item.id === location.itemId);
+          if (!item) return null;
+          
+          const cabinet = await storage.getCabinet(location.cabinet);
           return {
             ...item,
-            cabinetName: cabinet ? cabinet.name : `Kast ${item.cabinet}`
+            locationId: location.id,
+            cabinet: location.cabinet,
+            drawer: location.drawer,
+            isLowStock: location.isLowStock,
+            stockStatus: location.stockStatus,
+            ambulancePost: location.ambulancePostId,
+            cabinetName: cabinet ? cabinet.name : `Kast ${location.cabinet}`
           };
         })
       );
       
-      res.json(itemsWithCabinets);
+      // Filter out null results
+      const validItems = itemsWithCabinets.filter((item): item is NonNullable<typeof item> => item !== null);
+      
+      res.json(validItems);
     } catch (error) {
       console.error("Error fetching low stock overview:", error);
       res.status(500).json({ message: "Fout bij het ophalen van lage voorraad overzicht" });
@@ -581,8 +624,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Item niet gevonden" });
       }
 
-      // Reset stock status
-      await storage.updateMedicalItem(itemId, { isLowStock: false });
+      // Reset stock status for all locations of this item
+      const itemLocations = await storage.getItemLocationsByItem(itemId);
+      for (const location of itemLocations) {
+        await storage.updateItemLocation(location.id, { 
+          isLowStock: false, 
+          stockStatus: "op-voorraad" 
+        });
+      }
       
       res.json({ 
         success: true, 

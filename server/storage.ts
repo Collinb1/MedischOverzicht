@@ -21,6 +21,7 @@ export interface IStorage {
   createItemLocation(location: InsertItemLocation): Promise<ItemLocation>;
   updateItemLocation(id: string, location: Partial<InsertItemLocation>): Promise<ItemLocation | undefined>;
   deleteItemLocation(id: string): Promise<boolean>;
+  deleteItemLocationsByItemId(itemId: string): Promise<boolean>;
   
   getCabinets(): Promise<Cabinet[]>;
   getCabinet(id: string): Promise<Cabinet | undefined>;
