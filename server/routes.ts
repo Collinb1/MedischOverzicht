@@ -148,20 +148,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { locations, ...itemData } = req.body;
       
-      // Update the medical item only if there are fields to update
-      let updatedItem;
-      if (Object.keys(itemData).length > 0) {
-        const partialItemData = insertMedicalItemSchema.partial().parse(itemData);
+      // Get the existing item first
+      let updatedItem = await storage.getMedicalItem(req.params.id);
+      if (!updatedItem) {
+        return res.status(404).json({ message: "Medical item not found" });
+      }
+      
+      // Update the medical item only if there are meaningful fields to update
+      const meaningfulFields = Object.entries(itemData).filter(([key, value]) => {
+        // Filter out empty strings, null, undefined, but keep boolean false and numbers
+        return value !== undefined && value !== null && value !== "";
+      });
+      
+      if (meaningfulFields.length > 0) {
+        const updateData = Object.fromEntries(meaningfulFields);
+        const partialItemData = insertMedicalItemSchema.partial().parse(updateData);
         updatedItem = await storage.updateMedicalItem(req.params.id, partialItemData);
-        if (!updatedItem) {
-          return res.status(404).json({ message: "Medical item not found" });
-        }
-      } else {
-        // If no item data to update, just get the existing item
-        updatedItem = await storage.getMedicalItem(req.params.id);
-        if (!updatedItem) {
-          return res.status(404).json({ message: "Medical item not found" });
-        }
       }
       
       // Handle locations update if provided

@@ -133,6 +133,7 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
         drawer: loc.drawer || "",
         contactPersonId: loc.contactPersonId || ""
       })));
+      console.log("Loaded existing locations with contact persons:", existingLocations);
     } else if (item?.id) {
       // If no existing locations, start with one empty location
       setItemLocations([{ ambulancePostId: "", cabinet: "", drawer: "", contactPersonId: "" }]);
