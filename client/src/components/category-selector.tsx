@@ -111,7 +111,7 @@ export function CategorySelector({ value, onValueChange, placeholder = "Selectee
             <Settings className="w-4 h-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Categorieën beheren</DialogTitle>
           </DialogHeader>
@@ -141,7 +141,7 @@ export function CategorySelector({ value, onValueChange, placeholder = "Selectee
             {/* Existing categories */}
             <div className="space-y-2">
               <h4 className="font-medium">Bestaande categorieën</h4>
-              <div className="max-h-40 overflow-y-auto space-y-1">
+              <div className="max-h-60 overflow-y-auto space-y-1 pr-2">
                 {categories.length === 0 ? (
                   <p className="text-sm text-slate-500">Geen categorieën gevonden</p>
                 ) : (
