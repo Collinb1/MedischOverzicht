@@ -27,15 +27,48 @@ export default function Home() {
     queryFn: async () => {
       if (!selectedPost) return [];
       
-      const params = new URLSearchParams();
-      if (selectedCabinet && selectedCabinet !== "all") params.append("cabinet", selectedCabinet);
-      if (selectedCategory && selectedCategory !== "all") params.append("category", selectedCategory);
-      if (searchTerm) params.append("search", searchTerm);
-      params.append("ambulancePost", selectedPost);
-      
-      const response = await fetch(`/api/medical-items?${params}`);
+      // Fetch all medical items first
+      const response = await fetch('/api/medical-items');
       if (!response.ok) throw new Error("Failed to fetch medical items");
-      return response.json();
+      const allItems = await response.json();
+      
+      // Filter items that have locations in the selected post
+      const locationsResponse = await fetch('/api/item-locations');
+      if (!locationsResponse.ok) throw new Error("Failed to fetch locations");
+      const allLocations = await locationsResponse.json();
+      
+      // Get items that have at least one location in the selected post
+      const itemsInPost = allItems.filter((item: MedicalItem) => 
+        allLocations.some((loc: any) => loc.itemId === item.id && loc.ambulancePostId === selectedPost)
+      );
+      
+      let filteredItems = itemsInPost;
+      
+      // Apply filters
+      if (selectedCabinet && selectedCabinet !== "all") {
+        filteredItems = filteredItems.filter((item: MedicalItem) => 
+          allLocations.some((loc: any) => 
+            loc.itemId === item.id && 
+            loc.ambulancePostId === selectedPost && 
+            loc.cabinet === selectedCabinet
+          )
+        );
+      }
+      
+      if (selectedCategory && selectedCategory !== "all") {
+        filteredItems = filteredItems.filter((item: MedicalItem) => item.category === selectedCategory);
+      }
+      
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        filteredItems = filteredItems.filter((item: MedicalItem) => 
+          item.name.toLowerCase().includes(searchLower) ||
+          item.description?.toLowerCase().includes(searchLower) ||
+          item.category.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      return filteredItems;
     },
     enabled: !!selectedPost,
   });
