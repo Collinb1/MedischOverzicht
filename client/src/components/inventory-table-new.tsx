@@ -72,6 +72,15 @@ const ItemStatusIndicator = ({ item, selectedPost }: { item: MedicalItem; select
     },
   });
 
+  // Check if item is discontinued first - highest priority
+  if ((item as any).isDiscontinued) {
+    return (
+      <div className="flex justify-center" data-testid={`status-discontinued-${item.id}`} title="Niet meer leverbaar">
+        <div className="w-4 h-4 rounded-full bg-black"></div>
+      </div>
+    );
+  }
+
   // Filter locations for selected post if specified
   const relevantLocations = selectedPost 
     ? locations.filter((loc: any) => loc.ambulancePostId === selectedPost)
@@ -568,6 +577,19 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
                   {item.description && <div><span className="font-medium">Beschrijving:</span> {item.description}</div>}
                   {item.expiryDate && <div><span className="font-medium">Vervaldatum:</span> {new Date(item.expiryDate).toLocaleDateString('nl-NL')}</div>}
                   {item.alertEmail && <div><span className="font-medium">Alert Email:</span> {item.alertEmail}</div>}
+                  
+                  {/* Discontinued Status */}
+                  {(item as any).isDiscontinued && (
+                    <div className="flex items-center gap-2 p-2 bg-black bg-opacity-10 rounded-md">
+                      <div className="w-3 h-3 rounded-full bg-black"></div>
+                      <span className="font-medium text-gray-900">Niet meer leverbaar</span>
+                      {(item as any).replacementItemId && (
+                        <span className="text-xs text-gray-600">
+                          (Vervangingsproduct beschikbaar)
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
