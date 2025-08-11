@@ -157,13 +157,6 @@ interface EmailItemData {
 }
 
 export function generateRestockEmailHTML(item: EmailItemData, cabinetName: string, status: string = "Bijna op"): string {
-  const isUrgent = status === "OP";
-  const backgroundColor = isUrgent ? "#dc2626" : "#2563eb";
-  const warningBackground = isUrgent ? "#fee2e2" : "#fef3cd";
-  const warningBorder = isUrgent ? "#dc2626" : "#f59e0b";
-  const warningIcon = isUrgent ? "🚨" : "⚠️";
-  const urgencyText = isUrgent ? "is OP en heeft DIRECTE aanvulling nodig" : "is bijna uitgeput en heeft dringende aanvulling nodig";
-  
   return `
     <!DOCTYPE html>
     <html>
@@ -171,53 +164,43 @@ export function generateRestockEmailHTML(item: EmailItemData, cabinetName: strin
       <meta charset="utf-8">
       <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .header { background-color: ${backgroundColor}; color: white; padding: 20px; text-align: center; }
-        .content { padding: 20px; }
-        .item-details { background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; }
-        .warning { background-color: ${warningBackground}; border-left: 4px solid ${warningBorder}; padding: 15px; margin: 20px 0; }
-        .footer { background-color: #f1f5f9; padding: 15px; text-align: center; color: #64748b; }
-        .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; color: white; background-color: ${backgroundColor}; }
+        .header { background-color: #4a90e2; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; max-width: 600px; }
+        .item-details { background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4a90e2; }
+        .footer { background-color: #f1f5f9; padding: 15px; text-align: center; color: #64748b; font-size: 14px; }
+        .greeting { margin-bottom: 20px; }
       </style>
     </head>
     <body>
       <div class="header">
-        <h1>🏥 Medische Inventaris Waarschuwing</h1>
-        <div class="status-badge">${status.toUpperCase()}</div>
+        <h1>Medische Inventaris - Aanvulverzoek</h1>
       </div>
       
       <div class="content">
-        <h2>Voorraad Aanvulling ${isUrgent ? 'URGENT' : 'Vereist'}</h2>
-        
-        <div class="warning">
-          <strong>${warningIcon} ${isUrgent ? 'URGENT' : 'Let op'}:</strong> Het volgende item ${urgencyText}.
+        <div class="greeting">
+          <p>Beste collega,</p>
+          <p>Het volgende medische item heeft aanvulling nodig:</p>
         </div>
         
         <div class="item-details">
-          <h3>Item Details:</h3>
-          <p><strong>Naam:</strong> ${item.name}</p>
-          <p><strong>Beschrijving:</strong> ${item.description || 'Geen beschrijving'}</p>
+          <h3>Item informatie</h3>
+          <p><strong>Artikel:</strong> ${item.name}</p>
+          ${item.description ? `<p><strong>Beschrijving:</strong> ${item.description}</p>` : ''}
           <p><strong>Categorie:</strong> ${item.category}</p>
           <p><strong>Locatie:</strong> ${cabinetName}</p>
           ${item.drawer ? `<p><strong>Lade:</strong> ${item.drawer}</p>` : ''}
           ${item.ambulancePost ? `<p><strong>Ambulancepost:</strong> ${item.ambulancePost}</p>` : ''}
-          <p><strong>Vervaldatum:</strong> ${item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('nl-NL') : 'Geen'}</p>
-          <p><strong>Status:</strong> <span class="status-badge">${status}</span></p>
+          ${item.expiryDate ? `<p><strong>Vervaldatum:</strong> ${new Date(item.expiryDate).toLocaleDateString('nl-NL')}</p>` : ''}
         </div>
         
-        <p>Gelieve ${isUrgent ? 'ONMIDDELLIJK' : 'zo spoedig mogelijk'} actie te ondernemen om de voorraad aan te vullen.</p>
+        <p>Zou je dit item kunnen aanvullen wanneer het uitkomt? Bedankt voor je medewerking!</p>
         
-        <p><strong>Aanbevolen acties:</strong></p>
-        <ul>
-          <li>Controleer huidige voorraad ter plaatse</li>
-          <li>${isUrgent ? 'SPOED: Plaats directe bestelling bij leverancier' : 'Plaats bestelling bij leverancier'}</li>
-          <li>Update inventaris systeem na aanvulling</li>
-          ${isUrgent ? '<li>Zoek tijdelijke vervanging indien mogelijk</li>' : ''}
-        </ul>
+        <p>Met vriendelijke groet,<br>
+        Het Medische Inventaris Systeem</p>
       </div>
       
       <div class="footer">
-        <p>Deze email is automatisch gegenereerd door het Medische Inventaris Systeem</p>
-        <p>Datum: ${new Date().toLocaleDateString('nl-NL')} om ${new Date().toLocaleTimeString('nl-NL')}</p>
+        <p>Automatisch bericht - ${new Date().toLocaleDateString('nl-NL')} om ${new Date().toLocaleTimeString('nl-NL')}</p>
       </div>
     </body>
     </html>
