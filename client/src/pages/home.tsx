@@ -239,7 +239,7 @@ export default function Home() {
         </div>
 
         {/* Cabinet Overview */}
-        <CabinetOverview onCabinetSelect={setSelectedCabinet} selectedPost={selectedPost} />
+        <CabinetOverview onCabinetSelect={setSelectedCabinet} />
 
         {/* Detailed Inventory */}
         <InventoryTable 
