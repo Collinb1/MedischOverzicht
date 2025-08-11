@@ -32,6 +32,10 @@ export default function Home() {
       setShowPasswordDialog(false);
       setPasswordInput("");
       setShowSettingsDialog(true);
+      toast({
+        title: "Toegang verleend",
+        description: "Instellingen zijn nu toegankelijk.",
+      });
     } else {
       toast({
         title: "Onjuiste wachtwoordcode",
@@ -159,56 +163,15 @@ export default function Home() {
                 <Plus className="w-4 h-4 mr-2" />
                 Item Toevoegen
               </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    data-testid="button-settings"
-                    className="px-2"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem 
-                    onClick={handleSettingsClick}
-                    data-testid="menu-stock-overview"
-                  >
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4" />
-                      Voorraad Overzicht
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={handleSettingsClick}
-                    data-testid="menu-cabinet-management"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Archive className="w-4 h-4" />
-                      Kasten Beheren
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={handleSettingsClick}
-                    data-testid="menu-email-settings"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      Email Instellingen
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={handleSettingsClick}
-                    data-testid="menu-ambulance-posts"
-                  >
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      Posten Beheer
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleSettingsClick}
+                data-testid="button-settings"
+                className="px-2"
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </div>
