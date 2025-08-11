@@ -153,63 +153,28 @@ export function LocationStockStatus({ item, selectedPost }: LocationStockStatusP
   }
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-wrap gap-1">
       {locations.map((location) => {
         const locationDetails = getLocationDetails(location);
         const canSendRequest = location.stockStatus === 'bijna-op' || location.stockStatus === 'niet-meer-aanwezig';
         const hasContactPerson = !!locationDetails.contactPerson;
 
         return (
-          <div key={location.id} className="flex items-center space-x-2 p-2 bg-slate-50 rounded-lg">
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-medium text-slate-900 truncate">
-                {locationDetails.ambulancePostName}
-              </div>
-              <div className="text-xs text-slate-500">
-                Kast {location.cabinet}{location.drawer ? ` - Lade ${location.drawer}` : ''}
-              </div>
-              {locationDetails.contactPerson && (
-                <div className="text-xs text-slate-400">
-                  Contact: {locationDetails.contactPerson.name}
-                </div>
-              )}
-            </div>
-            
-            <div className="flex items-center space-x-1">
-              <Select
-                value={location.stockStatus || "op-voorraad"}
-                onValueChange={(value) => handleStatusChange(location.id, value)}
-                disabled={updateLocationStatusMutation.isPending}
-              >
-                <SelectTrigger className="w-32 h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="op-voorraad" className="text-xs">Op voorraad</SelectItem>
-                  <SelectItem value="bijna-op" className="text-xs">Bijna op</SelectItem>
-                  <SelectItem value="niet-meer-aanwezig" className="text-xs">Niet meer aanwezig</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              {canSendRequest && hasContactPerson && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={() => handleSendSupplyRequest(location.id)}
-                  disabled={sendSupplyRequestMutation.isPending}
-                  title={`Aanvulverzoek verzenden naar ${locationDetails.contactPerson?.name}`}
-                >
-                  <Send className="w-3 h-3" />
-                </Button>
-              )}
-              
-              {canSendRequest && !hasContactPerson && (
-                <div className="text-xs text-red-500" title="Geen contactpersoon ingesteld voor deze locatie">
-                  <Mail className="w-3 h-3" />
-                </div>
-              )}
-            </div>
+          <div key={location.id} className="flex items-center space-x-1">
+            <Select
+              value={location.stockStatus || "op-voorraad"}
+              onValueChange={(value) => handleStatusChange(location.id, value)}
+              disabled={updateLocationStatusMutation.isPending}
+            >
+              <SelectTrigger className="w-32 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="op-voorraad" className="text-xs">Op voorraad</SelectItem>
+                <SelectItem value="bijna-op" className="text-xs">Bijna op</SelectItem>
+                <SelectItem value="niet-meer-aanwezig" className="text-xs">Niet meer aanwezig</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         );
       })}
