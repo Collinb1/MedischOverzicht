@@ -289,9 +289,9 @@ export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddC
                       </div>
                       {selectedPosts.includes(post.id) && (
                         <div className="ml-6 space-y-1">
-                          <label className="text-sm text-gray-600">Specifieke locatie in ambulance (optioneel):</label>
+                          <label className="text-sm text-gray-600">Specifieke locatie in ambulancepost (optioneel):</label>
                           <Input
-                            placeholder="Bijv. Voor in de ambulance, Achterin bij brancard..."
+                            placeholder="Bijv. Voor in de ambulancepost, Achterin bij brancard..."
                             value={specificLocations[post.id] || ""}
                             onChange={(e) => handleSpecificLocationChange(post.id, e.target.value)}
                             data-testid={`input-location-${post.id}`}
