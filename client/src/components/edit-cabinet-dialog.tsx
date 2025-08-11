@@ -79,20 +79,22 @@ export default function EditCabinetDialog({ open, onOpenChange, cabinet, onSucce
 
   // Load current cabinet locations
   useEffect(() => {
-    if (cabinetLocations.length > 0) {
-      const postIds = cabinetLocations.map((loc: any) => loc.ambulancePostId);
-      const locations = cabinetLocations.reduce((acc: Record<string, string>, loc: any) => {
-        if (loc.specificLocation) {
-          acc[loc.ambulancePostId] = loc.specificLocation;
-        }
-        return acc;
-      }, {});
-      
-      setSelectedPosts(postIds);
-      setSpecificLocations(locations);
-    } else if (open && cabinet?.id) {
-      setSelectedPosts([]);
-      setSpecificLocations({});
+    if (open && cabinet?.id) {
+      if (cabinetLocations.length > 0) {
+        const postIds = cabinetLocations.map((loc: any) => loc.ambulancePostId);
+        const locations = cabinetLocations.reduce((acc: Record<string, string>, loc: any) => {
+          if (loc.specificLocation) {
+            acc[loc.ambulancePostId] = loc.specificLocation;
+          }
+          return acc;
+        }, {});
+        
+        setSelectedPosts(postIds);
+        setSpecificLocations(locations);
+      } else {
+        setSelectedPosts([]);
+        setSpecificLocations({});
+      }
     }
   }, [cabinetLocations, open, cabinet?.id]);
 

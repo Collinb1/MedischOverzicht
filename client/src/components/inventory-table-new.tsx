@@ -29,6 +29,27 @@ const getCategoryIcon = (category: string) => {
   return icons[category as keyof typeof icons] || "📦";
 };
 
+// Convert Tailwind CSS color classes to hex colors
+const tailwindToHex = (tailwindClass: string): string => {
+  const colorMap: { [key: string]: string } = {
+    'bg-red-500': '#EF4444',
+    'bg-orange-500': '#F97316', 
+    'bg-yellow-500': '#EAB308',
+    'bg-green-500': '#22C55E',
+    'bg-blue-500': '#3B82F6',
+    'bg-purple-500': '#A855F7',
+    'bg-pink-500': '#EC4899',
+    'bg-indigo-500': '#6366F1',
+    'bg-teal-500': '#14B8A6',
+    'bg-lime-500': '#84CC16',
+    'bg-slate-500': '#64748B',
+    'bg-gray-700': '#374151',
+    'bg-slate-200': '#E2E8F0'
+  };
+  
+  return colorMap[tailwindClass] || '#6B7280'; // Default gray
+};
+
 // Component to show overall status indicator for an item
 const ItemStatusIndicator = ({ item, selectedPost }: { item: MedicalItem; selectedPost?: string }) => {
   const { data: locations = [] } = useQuery({
@@ -184,27 +205,7 @@ const DrawerColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost?
   );
 };
 
-// Helper function to get cabinet colors
-// Convert Tailwind CSS color classes to hex colors
-const tailwindToHex = (tailwindClass: string): string => {
-  const colorMap: { [key: string]: string } = {
-    'bg-red-500': '#EF4444',
-    'bg-orange-500': '#F97316', 
-    'bg-yellow-500': '#EAB308',
-    'bg-green-500': '#22C55E',
-    'bg-blue-500': '#3B82F6',
-    'bg-purple-500': '#A855F7',
-    'bg-pink-500': '#EC4899',
-    'bg-indigo-500': '#6366F1',
-    'bg-teal-500': '#14B8A6',
-    'bg-lime-500': '#84CC16',
-    'bg-slate-500': '#64748B',
-    'bg-gray-700': '#374151',
-    'bg-slate-200': '#E2E8F0'
-  };
-  
-  return colorMap[tailwindClass] || '#6B7280'; // Default gray
-};
+
 
 // Component for table row with status-based background color
 const StatusTableRow = ({ item, selectedPost, children, onDoubleClick }: { 
