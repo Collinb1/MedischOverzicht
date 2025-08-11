@@ -4,6 +4,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom placeholder styling for lighter gray */
+input::placeholder,
+textarea::placeholder {
+  color: #d1d5db !important; /* Light gray color */
+  opacity: 1;
+}
+
+/* Firefox specific placeholder styling */
+input::-moz-placeholder,
+textarea::-moz-placeholder {
+  color: #d1d5db !important;
+  opacity: 1;
+}
+
 :root {
   --background: hsl(0 0% 100%);
   --foreground: hsl(210 25% 7.8431%);
