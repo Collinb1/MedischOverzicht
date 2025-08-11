@@ -72,17 +72,28 @@ export default function CabinetOverview({
     enabled: !!selectedAmbulancePost,
   });
 
-  // Combine ordered cabinets with their summary data
+  // Get full cabinet data 
+  const { data: allCabinets = [] } = useQuery({
+    queryKey: ["/api/cabinets"],
+    queryFn: async () => {
+      const response = await fetch("/api/cabinets");
+      return response.json();
+    },
+  });
+
+  // Combine ordered cabinets with their summary data and full cabinet info
   const cabinets = selectedAmbulancePost && orderedCabinets.length > 0
     ? orderedCabinets.map((cabinet: any) => {
-        // Find the summary data for this cabinet
+        // Find the summary data and full cabinet data for this cabinet
         const summary = summaryData.find((s: CabinetSummary) => s.id === cabinet.id);
+        const fullCabinet = allCabinets.find((c: any) => c.id === cabinet.id);
         if (summary) {
           // Use the summary data with the cabinet info from ordered list
           return {
             ...summary,
             name: cabinet.name,
             abbreviation: cabinet.abbreviation,
+            color: fullCabinet?.color || 'bg-slate-200'
           };
         } else {
           // Cabinet exists in order but has no items
@@ -90,6 +101,7 @@ export default function CabinetOverview({
             id: cabinet.id,
             name: cabinet.name,
             abbreviation: cabinet.abbreviation,
+            color: fullCabinet?.color || 'bg-slate-200',
             totalItems: 0,
             totalQuantity: 0,
             lowStockItems: 0,
@@ -97,7 +109,13 @@ export default function CabinetOverview({
           };
         }
       })
-    : summaryData;
+    : summaryData.map((summary) => {
+        const fullCabinet = allCabinets.find((c: any) => c.id === summary.id);
+        return {
+          ...summary,
+          color: fullCabinet?.color || 'bg-slate-200'
+        };
+      });
 
   return (
     <div className="mb-8">
@@ -128,7 +146,7 @@ export default function CabinetOverview({
               <div className="flex items-center justify-between mb-4">
                 <div 
                   className="w-12 h-12 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: tailwindToHex((cabinet as any).color || 'bg-slate-200') }}
+                  style={{ backgroundColor: tailwindToHex(cabinet.color || 'bg-slate-200') }}
                 >
                   <span className="text-white font-bold text-xl">{cabinet.abbreviation}</span>
                 </div>
