@@ -155,3 +155,23 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+export const supplyRequests = pgTable("supply_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  itemId: varchar("item_id").notNull().references(() => medicalItems.id, { onDelete: 'cascade' }),
+  locationId: varchar("location_id").notNull().references(() => itemLocations.id, { onDelete: 'cascade' }),
+  ambulancePostId: varchar("ambulance_post_id").notNull(),
+  contactPersonId: varchar("contact_person_id"),
+  contactPersonName: text("contact_person_name"),
+  contactPersonEmail: text("contact_person_email"),
+  status: text("status").notNull().default("sent"),
+  sentAt: timestamp("sent_at").defaultNow(),
+});
+
+export const insertSupplyRequestSchema = createInsertSchema(supplyRequests).omit({
+  id: true,
+  sentAt: true,
+});
+
+export type InsertSupplyRequest = z.infer<typeof insertSupplyRequestSchema>;
+export type SupplyRequest = typeof supplyRequests.$inferSelect;

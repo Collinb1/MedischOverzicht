@@ -175,10 +175,10 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
     const latestRequest = notifications[0];
     
     // Find the contact person who received the email
-    const location = relevantLocations.find(loc => 
+    const location = relevantLocations.find((loc: any) => 
       loc.stockStatus === 'bijna-op' || loc.stockStatus === 'niet-meer-aanwezig'
     );
-    const contactPerson = location ? postContacts.find(c => c.id === location.contactPersonId) : null;
+    const contactPerson = location ? postContacts.find((c: any) => c.id === location.contactPersonId) : null;
     
     return (
       <div className="flex items-center space-x-2 text-xs bg-green-50 p-2 rounded-lg border border-green-200">

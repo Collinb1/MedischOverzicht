@@ -1,4 +1,4 @@
-import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser, emailConfigs, type EmailConfig, type InsertEmailConfig, ambulancePosts, type AmbulancePost, type InsertAmbulancePost, itemLocations, type ItemLocation, type InsertItemLocation, postContacts, type PostContact, type InsertPostContact } from "@shared/schema";
+import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser, emailConfigs, type EmailConfig, type InsertEmailConfig, ambulancePosts, type AmbulancePost, type InsertAmbulancePost, itemLocations, type ItemLocation, type InsertItemLocation, postContacts, type PostContact, type InsertPostContact, supplyRequests, type SupplyRequest, type InsertSupplyRequest } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
 
@@ -51,10 +51,15 @@ export interface IStorage {
   deleteAmbulancePost(id: string): Promise<boolean>;
   
   getPostContacts(): Promise<PostContact[]>;
+  getPostContact(id: string): Promise<PostContact | undefined>;
   getPostContactsByPost(ambulancePostId: string): Promise<PostContact[]>;
   createPostContact(contact: InsertPostContact): Promise<PostContact>;
   updatePostContact(id: string, contact: Partial<InsertPostContact>): Promise<PostContact | undefined>;
   deletePostContact(id: string): Promise<boolean>;
+  
+  getAllSupplyRequests(): Promise<SupplyRequest[]>;
+  getSupplyRequestsByItem(itemId: string, ambulancePost?: string): Promise<SupplyRequest[]>;
+  createSupplyRequest(request: InsertSupplyRequest): Promise<SupplyRequest>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -324,7 +329,30 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount ?? 0) > 0;
   }
 
-  // Removed duplicate getAmbulancePost method - already exists above
+  // Supply Request operations
+  async getAllSupplyRequests(): Promise<SupplyRequest[]> {
+    return await db.select().from(supplyRequests);
+  }
+
+  async getSupplyRequestsByItem(itemId: string, ambulancePost?: string): Promise<SupplyRequest[]> {
+    if (ambulancePost) {
+      return await db.select()
+        .from(supplyRequests)
+        .where(and(
+          eq(supplyRequests.itemId, itemId),
+          eq(supplyRequests.ambulancePostId, ambulancePost)
+        ));
+    } else {
+      return await db.select()
+        .from(supplyRequests)
+        .where(eq(supplyRequests.itemId, itemId));
+    }
+  }
+
+  async createSupplyRequest(request: InsertSupplyRequest): Promise<SupplyRequest> {
+    const [newRequest] = await db.insert(supplyRequests).values(request).returning();
+    return newRequest;
+  }
 }
 
 export const storage = new DatabaseStorage();

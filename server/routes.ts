@@ -914,6 +914,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get supply requests 
+  app.get("/api/supply-requests", async (req, res) => {
+    try {
+      const { itemId, ambulancePost } = req.query;
+      
+      if (itemId) {
+        // Get supply requests for specific item and ambulance post
+        const supplyRequests = await storage.getSupplyRequestsByItem(itemId as string, ambulancePost as string);
+        res.json(supplyRequests);
+      } else {
+        // Get all supply requests
+        const supplyRequests = await storage.getAllSupplyRequests();
+        res.json(supplyRequests);
+      }
+    } catch (error) {
+      console.error("Error fetching supply requests:", error);
+      res.status(500).json({ message: "Failed to fetch supply requests" });
+    }
+  });
+
   // Send supply request email for specific location with contact person
   app.post("/api/supply-request/:locationId", async (req, res) => {
     try {
@@ -945,6 +965,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`Supply request sent for item ${item.name} at ${ambulancePost?.name} to ${contactPerson.email}`);
+      
+      // Store the supply request in database
+      await storage.createSupplyRequest({
+        itemId: item.id,
+        locationId: location.id,
+        ambulancePostId: location.ambulancePostId,
+        contactPersonId: contactPerson.id,
+        contactPersonName: contactPerson.name,
+        contactPersonEmail: contactPerson.email,
+        status: "sent"
+      });
       
       res.json({ 
         message: `Aanvulverzoek verzonden naar ${contactPerson.name} (${contactPerson.email})`,
