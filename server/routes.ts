@@ -225,9 +225,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get cabinet summary
   app.get("/api/cabinets/summary", async (req, res) => {
     try {
+      const { ambulancePost } = req.query;
       const allItems = await storage.getMedicalItems();
-      const allLocations = await storage.getItemLocations();
+      let allLocations = await storage.getItemLocations();
       const cabinets = await storage.getCabinets();
+      
+      // Filter locations by ambulance post if specified
+      if (ambulancePost && typeof ambulancePost === 'string') {
+        allLocations = allLocations.filter(location => location.ambulancePostId === ambulancePost);
+      }
       
       const summary = cabinets.map(cabinet => {
         // Get all locations for this cabinet

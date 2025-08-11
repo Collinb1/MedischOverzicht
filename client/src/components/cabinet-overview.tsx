@@ -41,9 +41,12 @@ export default function CabinetOverview({
 
   // Get cabinet summary data
   const { data: summaryData = [] } = useQuery<CabinetSummary[]>({
-    queryKey: ["/api/cabinets/summary"],
+    queryKey: ["/api/cabinets/summary", selectedAmbulancePost],
     queryFn: async () => {
-      const response = await fetch("/api/cabinets/summary");
+      const url = selectedAmbulancePost 
+        ? `/api/cabinets/summary?ambulancePost=${selectedAmbulancePost}`
+        : "/api/cabinets/summary";
+      const response = await fetch(url);
       return response.json();
     }
   });
@@ -62,16 +65,27 @@ export default function CabinetOverview({
   // Combine ordered cabinets with their summary data
   const cabinets = selectedAmbulancePost && orderedCabinets.length > 0
     ? orderedCabinets.map((cabinet: any) => {
+        // Find the summary data for this cabinet
         const summary = summaryData.find((s: CabinetSummary) => s.id === cabinet.id);
-        return summary || {
-          id: cabinet.id,
-          name: cabinet.name,
-          abbreviation: cabinet.abbreviation,
-          totalItems: 0,
-          totalQuantity: 0,
-          lowStockItems: 0,
-          categories: {}
-        };
+        if (summary) {
+          // Use the summary data with the cabinet info from ordered list
+          return {
+            ...summary,
+            name: cabinet.name,
+            abbreviation: cabinet.abbreviation,
+          };
+        } else {
+          // Cabinet exists in order but has no items
+          return {
+            id: cabinet.id,
+            name: cabinet.name,
+            abbreviation: cabinet.abbreviation,
+            totalItems: 0,
+            totalQuantity: 0,
+            lowStockItems: 0,
+            categories: {}
+          };
+        }
       })
     : summaryData;
 
