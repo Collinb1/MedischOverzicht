@@ -28,6 +28,71 @@ const getCategoryIcon = (category: string) => {
   return icons[category as keyof typeof icons] || "📦";
 };
 
+// Component to show overall status indicator for an item
+const ItemStatusIndicator = ({ item, selectedPost }: { item: MedicalItem; selectedPost?: string }) => {
+  const { data: locations = [] } = useQuery({
+    queryKey: ['/api/item-locations', item.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/item-locations/${item.id}`);
+      if (!response.ok) throw new Error("Failed to fetch locations");
+      return response.json();
+    },
+  });
+
+  // Filter locations for selected post if specified
+  const relevantLocations = selectedPost 
+    ? locations.filter((loc: any) => loc.ambulancePostId === selectedPost)
+    : locations;
+
+  if (relevantLocations.length === 0) {
+    return (
+      <div className="flex items-center space-x-2">
+        <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+        <span className="text-xs text-gray-500">Geen locaties</span>
+      </div>
+    );
+  }
+
+  // Determine overall status based on worst status in relevant locations
+  const hasUnavailable = relevantLocations.some((loc: any) => loc.stockStatus === 'niet-meer-aanwezig');
+  const hasLowStock = relevantLocations.some((loc: any) => loc.stockStatus === 'bijna-op');
+  const allInStock = relevantLocations.every((loc: any) => loc.stockStatus === 'op-voorraad');
+
+  if (hasUnavailable) {
+    return (
+      <div className="flex items-center space-x-2" data-testid={`status-unavailable-${item.id}`}>
+        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+        <span className="text-xs text-red-700 font-medium">Niet beschikbaar</span>
+      </div>
+    );
+  }
+
+  if (hasLowStock) {
+    return (
+      <div className="flex items-center space-x-2" data-testid={`status-low-${item.id}`}>
+        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+        <span className="text-xs text-yellow-700 font-medium">Bijna op</span>
+      </div>
+    );
+  }
+
+  if (allInStock) {
+    return (
+      <div className="flex items-center space-x-2" data-testid={`status-available-${item.id}`}>
+        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+        <span className="text-xs text-green-700 font-medium">Op voorraad</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center space-x-2">
+      <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+      <span className="text-xs text-gray-500">Onbekend</span>
+    </div>
+  );
+};
+
 export default function InventoryTable({ items, isLoading, onRefetch, selectedPost }: InventoryTableProps) {
   const [editingItem, setEditingItem] = useState<MedicalItem | null>(null);
   const { toast } = useToast();
@@ -79,9 +144,8 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
             <TableHeader>
               <TableRow className="bg-slate-50">
                 <TableHead>Item</TableHead>
-                <TableHead>Beschrijving</TableHead>
-                <TableHead>Vervaldatum</TableHead>
                 <TableHead>Categorie</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Locaties & Status</TableHead>
                 <TableHead>Acties</TableHead>
               </TableRow>
@@ -89,7 +153,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={5} className="text-center py-8 text-slate-500">
                     Geen items gevonden
                   </TableCell>
                 </TableRow>
@@ -122,17 +186,14 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-slate-600" data-testid={`text-description-${item.id}`}>
-                      {item.description || '-'}
-                    </TableCell>
-                    <TableCell className="text-sm text-slate-600" data-testid={`text-expiry-${item.id}`}>
-                      {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('nl-NL') : '-'}
-                    </TableCell>
                     <TableCell className="text-sm text-slate-600" data-testid={`text-category-${item.id}`}>
                       <div className="flex items-center space-x-2">
                         <span>{getCategoryIcon(item.category)}</span>
                         <span>{item.category}</span>
                       </div>
+                    </TableCell>
+                    <TableCell data-testid={`status-column-${item.id}`}>
+                      <ItemStatusIndicator item={item} selectedPost={selectedPost} />
                     </TableCell>
                     <TableCell data-testid={`location-status-${item.id}`}>
                       <LocationStockStatus item={item} selectedPost={selectedPost} />
