@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet, type AmbulancePost, type PostContact } from "@shared/schema";
+import { CategorySelector } from "./category-selector";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, UserPlus, Camera, X, Building2, Pencil, Trash2 } from "lucide-react";
@@ -28,14 +29,7 @@ interface AddItemDialogProps {
   selectedPost: string;
 }
 
-const categories = [
-  "Spuiten",
-  "Medicijnen", 
-  "Instrumenten",
-  "Monitoring",
-  "PBM",
-  "Verbandmiddelen"
-];
+// Categories are now managed dynamically via the CategorySelector component
 
 const emailOptions = [
   { value: "spoedhulp@ziekenhuis.nl", label: "Spoedhulp Afdeling" },
@@ -386,18 +380,13 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Categorie</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-item-category">
-                        <SelectValue placeholder="Selecteer categorie" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categories.map(category => (
-                        <SelectItem key={category} value={category}>{category}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <CategorySelector
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Selecteer categorie"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

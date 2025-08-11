@@ -42,6 +42,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { MedicalItem, AmbulancePost, Cabinet, ItemLocation, PostContact } from "@shared/schema";
+import { CategorySelector } from "./category-selector";
 
 const editItemSchema = z.object({
   name: z.string().min(1, "Naam is verplicht"),
@@ -369,7 +370,11 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
                   <FormItem>
                     <FormLabel>Categorie *</FormLabel>
                     <FormControl>
-                      <Input placeholder="bijv. Medicijnen, Verbandmiddelen" {...field} data-testid="input-category" />
+                      <CategorySelector
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Selecteer categorie"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

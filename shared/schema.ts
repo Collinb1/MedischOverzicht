@@ -38,6 +38,14 @@ export const medicalItems = pgTable("medical_items", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const categories = pgTable("categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(),
+  icon: text("icon").default("📦"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const cabinets = pgTable("cabinets", {
   id: varchar("id", { length: 10 }).primaryKey(),
   name: text("name").notNull(),
@@ -79,6 +87,12 @@ export const insertItemLocationSchema = createInsertSchema(itemLocations).omit({
 
 export const insertCabinetSchema = createInsertSchema(cabinets);
 
+export const insertCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertPostCabinetOrderSchema = createInsertSchema(postCabinetOrder).omit({
   id: true,
   createdAt: true,
@@ -99,6 +113,8 @@ export type MedicalItem = typeof medicalItems.$inferSelect;
 export type InsertItemLocation = z.infer<typeof insertItemLocationSchema>;
 export type ItemLocation = typeof itemLocations.$inferSelect;
 export type InsertCabinet = z.infer<typeof insertCabinetSchema>;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type Category = typeof categories.$inferSelect;
 export type PostCabinetOrder = typeof postCabinetOrder.$inferSelect;
 export type InsertPostCabinetOrder = z.infer<typeof insertPostCabinetOrderSchema>;
 export type Cabinet = typeof cabinets.$inferSelect;

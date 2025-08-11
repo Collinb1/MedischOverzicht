@@ -1,4 +1,4 @@
-import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser, emailConfigs, type EmailConfig, type InsertEmailConfig, ambulancePosts, type AmbulancePost, type InsertAmbulancePost, itemLocations, type ItemLocation, type InsertItemLocation, postContacts, type PostContact, type InsertPostContact, supplyRequests, type SupplyRequest, type InsertSupplyRequest, postCabinetOrder, type PostCabinetOrder, type InsertPostCabinetOrder } from "@shared/schema";
+import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser, emailConfigs, type EmailConfig, type InsertEmailConfig, ambulancePosts, type AmbulancePost, type InsertAmbulancePost, itemLocations, type ItemLocation, type InsertItemLocation, postContacts, type PostContact, type InsertPostContact, supplyRequests, type SupplyRequest, type InsertSupplyRequest, postCabinetOrder, type PostCabinetOrder, type InsertPostCabinetOrder, categories, type Category, type InsertCategory } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
 
@@ -65,6 +65,12 @@ export interface IStorage {
   getPostCabinetOrder(ambulancePostId: string): Promise<PostCabinetOrder[]>;
   setPostCabinetOrder(ambulancePostId: string, orderedCabinetIds: string[]): Promise<PostCabinetOrder[]>;
   getCabinetsOrderedByPost(ambulancePostId: string): Promise<Cabinet[]>;
+  
+  getCategories(): Promise<Category[]>;
+  getCategory(id: string): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined>;
+  deleteCategory(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -415,6 +421,34 @@ export class DatabaseStorage implements IStorage {
       location: c.location,
       color: c.color,
     }));
+  }
+
+  // Category operations
+  async getCategories(): Promise<Category[]> {
+    return await db.select().from(categories);
+  }
+
+  async getCategory(id: string): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category;
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [created] = await db.insert(categories).values(category).returning();
+    return created;
+  }
+
+  async updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined> {
+    const [updated] = await db.update(categories)
+      .set({ ...category, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(categories.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCategory(id: string): Promise<boolean> {
+    const result = await db.delete(categories).where(eq(categories.id, id));
+    return result.rowCount > 0;
   }
 }
 
