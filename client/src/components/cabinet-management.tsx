@@ -10,6 +10,27 @@ import AddCabinetDialog from "./add-cabinet-dialog";
 import EditCabinetDialog from "./edit-cabinet-dialog";
 import type { Cabinet } from "@shared/schema";
 
+// Convert Tailwind CSS color classes to hex colors
+const tailwindToHex = (tailwindClass: string): string => {
+  const colorMap: { [key: string]: string } = {
+    'bg-red-500': '#EF4444',
+    'bg-orange-500': '#F97316', 
+    'bg-yellow-500': '#EAB308',
+    'bg-green-500': '#22C55E',
+    'bg-blue-500': '#3B82F6',
+    'bg-purple-500': '#A855F7',
+    'bg-pink-500': '#EC4899',
+    'bg-indigo-500': '#6366F1',
+    'bg-teal-500': '#14B8A6',
+    'bg-lime-500': '#84CC16',
+    'bg-slate-500': '#64748B',
+    'bg-gray-700': '#374151',
+    'bg-slate-200': '#E2E8F0'
+  };
+  
+  return colorMap[tailwindClass] || '#6B7280'; // Default gray
+};
+
 export default function CabinetManagement() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingCabinet, setEditingCabinet] = useState<Cabinet | null>(null);
@@ -80,7 +101,10 @@ export default function CabinetManagement() {
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-3">
-                  <div className={`w-12 h-12 rounded-lg ${cabinet.color || 'bg-slate-200'} text-white border-2 border-current flex items-center justify-center font-bold text-xl`}>
+                  <div 
+                    className="w-12 h-12 rounded-lg text-white border-2 border-current flex items-center justify-center font-bold text-xl"
+                    style={{ backgroundColor: tailwindToHex(cabinet.color || 'bg-slate-200') }}
+                  >
                     {cabinet.abbreviation}
                   </div>
                   <div>

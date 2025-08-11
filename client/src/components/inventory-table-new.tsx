@@ -125,7 +125,7 @@ const CabinetColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost
     <div className="flex flex-wrap gap-1">
       {uniqueCabinets.map((cabinetId) => {
         const cabinet = cabinets.find((c: any) => c.id === cabinetId);
-        const cabinetColor = cabinet?.abbreviation ? getCabinetColor(cabinet.abbreviation) : '#6B7280';
+        const cabinetColor = cabinet?.color ? tailwindToHex(cabinet.color) : '#6B7280';
         
         return (
           <div 
@@ -185,21 +185,25 @@ const DrawerColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost?
 };
 
 // Helper function to get cabinet colors
-const getCabinetColor = (abbreviation: string): string => {
-  const colors: { [key: string]: string } = {
-    'A': '#EF4444',    // Red
-    'Ab': '#F97316',   // Orange  
-    'B': '#EAB308',    // Yellow
-    'C': '#22C55E',    // Green
-    'D': '#3B82F6',    // Blue
-    'E': '#A855F7',    // Purple
-    'F': '#EC4899',    // Pink
-    'G': '#06B6D4',    // Cyan
-    'H': '#84CC16',    // Lime
-    'I': '#F59E0B',    // Amber
+// Convert Tailwind CSS color classes to hex colors
+const tailwindToHex = (tailwindClass: string): string => {
+  const colorMap: { [key: string]: string } = {
+    'bg-red-500': '#EF4444',
+    'bg-orange-500': '#F97316', 
+    'bg-yellow-500': '#EAB308',
+    'bg-green-500': '#22C55E',
+    'bg-blue-500': '#3B82F6',
+    'bg-purple-500': '#A855F7',
+    'bg-pink-500': '#EC4899',
+    'bg-indigo-500': '#6366F1',
+    'bg-teal-500': '#14B8A6',
+    'bg-lime-500': '#84CC16',
+    'bg-slate-500': '#64748B',
+    'bg-gray-700': '#374151',
+    'bg-slate-200': '#E2E8F0'
   };
   
-  return colors[abbreviation] || '#6B7280'; // Default gray
+  return colorMap[tailwindClass] || '#6B7280'; // Default gray
 };
 
 // Component for table row with status-based background color
@@ -566,7 +570,7 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
                   relevantLocations.map((location: any) => {
                     const post = ambulancePosts.find((p: any) => p.id === location.ambulancePostId);
                     const cabinet = cabinets.find((c: any) => c.id === location.cabinet);
-                    const cabinetColor = cabinet?.abbreviation ? getCabinetColor(cabinet.abbreviation) : '#6B7280';
+                    const cabinetColor = cabinet?.color ? tailwindToHex(cabinet.color) : '#6B7280';
                     
                     return (
                       <div key={location.id} className="border border-slate-200 rounded-lg p-3">

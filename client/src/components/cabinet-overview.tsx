@@ -21,21 +21,25 @@ interface CabinetOverviewProps {
   ambulancePostName?: string;
 }
 
-const getCabinetColor = (abbreviation: string): string => {
-  const colors: { [key: string]: string } = {
-    'A': '#EF4444',    // Red
-    'Ab': '#F97316',   // Orange  
-    'B': '#EAB308',    // Yellow
-    'C': '#22C55E',    // Green
-    'D': '#3B82F6',    // Blue
-    'E': '#A855F7',    // Purple
-    'F': '#EC4899',    // Pink
-    'G': '#06B6D4',    // Cyan
-    'H': '#84CC16',    // Lime
-    'I': '#F59E0B',    // Amber
+// Convert Tailwind CSS color classes to hex colors
+const tailwindToHex = (tailwindClass: string): string => {
+  const colorMap: { [key: string]: string } = {
+    'bg-red-500': '#EF4444',
+    'bg-orange-500': '#F97316', 
+    'bg-yellow-500': '#EAB308',
+    'bg-green-500': '#22C55E',
+    'bg-blue-500': '#3B82F6',
+    'bg-purple-500': '#A855F7',
+    'bg-pink-500': '#EC4899',
+    'bg-indigo-500': '#6366F1',
+    'bg-teal-500': '#14B8A6',
+    'bg-lime-500': '#84CC16',
+    'bg-slate-500': '#64748B',
+    'bg-gray-700': '#374151',
+    'bg-slate-200': '#E2E8F0'
   };
   
-  return colors[abbreviation] || '#6B7280'; // Default gray
+  return colorMap[tailwindClass] || '#6B7280'; // Default gray
 };
 
 export default function CabinetOverview({ 
@@ -124,7 +128,7 @@ export default function CabinetOverview({
               <div className="flex items-center justify-between mb-4">
                 <div 
                   className="w-12 h-12 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: getCabinetColor(cabinet.abbreviation) }}
+                  style={{ backgroundColor: tailwindToHex((cabinet as any).color || 'bg-slate-200') }}
                 >
                   <span className="text-white font-bold text-xl">{cabinet.abbreviation}</span>
                 </div>
