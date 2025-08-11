@@ -67,6 +67,8 @@ interface LocationRow {
   cabinet: string;
   drawer: string;
   contactPersonId?: string;
+  stockStatus?: string;
+  isLowStock?: boolean;
 }
 
 export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItemDialogProps) {
@@ -131,12 +133,14 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
         ambulancePostId: loc.ambulancePostId,
         cabinet: loc.cabinet,
         drawer: loc.drawer || "",
-        contactPersonId: loc.contactPersonId || ""
+        contactPersonId: loc.contactPersonId || "",
+        stockStatus: loc.stockStatus || "op-voorraad",
+        isLowStock: loc.isLowStock || false
       })));
       console.log("Loaded existing locations with contact persons:", existingLocations);
     } else if (item?.id) {
       // If no existing locations, start with one empty location
-      setItemLocations([{ ambulancePostId: "", cabinet: "", drawer: "", contactPersonId: "" }]);
+      setItemLocations([{ ambulancePostId: "", cabinet: "", drawer: "", contactPersonId: "", stockStatus: "op-voorraad", isLowStock: false }]);
     }
   }, [existingLocations, item?.id]);
 
@@ -172,7 +176,7 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
   });
 
   const addLocation = () => {
-    setItemLocations([...itemLocations, { ambulancePostId: "", cabinet: "", drawer: "", contactPersonId: "" }]);
+    setItemLocations([...itemLocations, { ambulancePostId: "", cabinet: "", drawer: "", contactPersonId: "", stockStatus: "op-voorraad", isLowStock: false }]);
   };
 
   const removeLocation = (index: number) => {
@@ -181,9 +185,15 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
     }
   };
 
-  const updateLocation = (index: number, field: keyof LocationRow, value: string) => {
+  const updateLocation = (index: number, field: keyof LocationRow, value: string | boolean) => {
     const newLocations = [...itemLocations];
     newLocations[index] = { ...newLocations[index], [field]: value };
+    
+    // Auto-update isLowStock based on stockStatus
+    if (field === 'stockStatus') {
+      newLocations[index].isLowStock = value === 'bijna-op' || value === 'niet-meer-aanwezig';
+    }
+    
     setItemLocations(newLocations);
   };
 
@@ -206,7 +216,9 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
       loc.ambulancePostId && loc.cabinet
     ).map(loc => ({
       ...loc,
-      contactPersonId: loc.contactPersonId || null
+      contactPersonId: loc.contactPersonId || null,
+      stockStatus: loc.stockStatus || "op-voorraad",
+      isLowStock: loc.stockStatus === 'bijna-op' || loc.stockStatus === 'niet-meer-aanwezig'
     }));
 
     const submissionData = {
@@ -422,6 +434,7 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
                       <TableHead className="min-w-[120px]">Kast</TableHead>
                       <TableHead className="min-w-[100px]">Lade</TableHead>
                       <TableHead className="min-w-[150px]">Contactpersoon</TableHead>
+                      <TableHead className="min-w-[140px]">Voorraad Status</TableHead>
                       <TableHead className="min-w-[80px]">Acties</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -511,6 +524,21 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
                                   Selecteer eerst een ambulancepost
                                 </SelectItem>
                               )}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={location.stockStatus || "op-voorraad"}
+                            onValueChange={(value) => updateLocation(index, 'stockStatus', value)}
+                          >
+                            <SelectTrigger data-testid={`select-stock-status-${index}`} className="w-full">
+                              <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="op-voorraad">Op voorraad</SelectItem>
+                              <SelectItem value="bijna-op">Bijna op</SelectItem>
+                              <SelectItem value="niet-meer-aanwezig">Niet meer aanwezig</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>
