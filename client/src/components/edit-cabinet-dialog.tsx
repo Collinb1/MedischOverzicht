@@ -17,7 +17,6 @@ const formSchema = z.object({
   name: z.string().min(1, "Naam is verplicht").max(50, "Naam mag maximaal 50 tekens lang zijn"),
   abbreviation: z.string().min(1, "Afkorting is verplicht").max(3, "Afkorting mag maximaal 3 tekens lang zijn").toUpperCase(),
   description: z.string().optional(),
-  location: z.string().optional(),
   color: z.string().min(1, "Kleur is verplicht"),
 });
 
@@ -62,7 +61,6 @@ export default function EditCabinetDialog({ open, onOpenChange, cabinet, onSucce
       name: "",
       abbreviation: "",
       description: "",
-      location: "",
       color: "bg-slate-500",
     },
   });
@@ -74,7 +72,6 @@ export default function EditCabinetDialog({ open, onOpenChange, cabinet, onSucce
         name: cabinet.name,
         abbreviation: cabinet.abbreviation,
         description: cabinet.description || "",
-        location: cabinet.location || "",
         color: cabinet.color || "bg-slate-500",
       });
     }
@@ -93,11 +90,11 @@ export default function EditCabinetDialog({ open, onOpenChange, cabinet, onSucce
       
       setSelectedPosts(postIds);
       setSpecificLocations(locations);
-    } else {
+    } else if (open && cabinet?.id) {
       setSelectedPosts([]);
       setSpecificLocations({});
     }
-  }, [cabinetLocations]);
+  }, [cabinetLocations, open, cabinet?.id]);
 
   const updateCabinetMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -255,18 +252,7 @@ export default function EditCabinetDialog({ open, onOpenChange, cabinet, onSucce
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="location">Locatie (optioneel)</Label>
-            <Input
-              id="location"
-              {...form.register("location")}
-              placeholder="bijv. Behandelkamer 1"
-              data-testid="input-cabinet-location"
-            />
-            {form.formState.errors.location && (
-              <p className="text-sm text-red-600">{form.formState.errors.location.message}</p>
-            )}
-          </div>
+
 
           <div className="space-y-2">
             <Label>Kastkleur *</Label>

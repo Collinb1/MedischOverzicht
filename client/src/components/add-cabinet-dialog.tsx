@@ -181,24 +181,7 @@ export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddC
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Locatie (Optioneel)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Bijv. Gang 1 - Links" 
-                      {...field}
-                      value={field.value || ""}
-                      data-testid="input-cabinet-location"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
 
             <FormField
               control={form.control}
