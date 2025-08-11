@@ -249,6 +249,11 @@ const StatusTableRow = ({ item, selectedPost, children, onDoubleClick }: {
     : locations;
 
   const getRowBackgroundClass = () => {
+    // Check if item is discontinued first - highest priority
+    if ((item as any).isDiscontinued) {
+      return "bg-gray-50 hover:bg-gray-100";
+    }
+
     if (relevantLocations.length === 0) return "hover:bg-slate-50";
     
     const hasUnavailable = relevantLocations.some((loc: any) => loc.stockStatus === "niet-meer-aanwezig");
@@ -504,6 +509,9 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
 
   // Get overall status for header color
   const getOverallStatus = () => {
+    // Check if item is discontinued first
+    if ((item as any).isDiscontinued) return "niet-meer-leverbaar";
+    
     if (relevantLocations.length === 0) return "op-voorraad";
     if (relevantLocations.some((loc: any) => loc.stockStatus === "niet-meer-aanwezig")) return "niet-meer-aanwezig";
     if (relevantLocations.some((loc: any) => loc.stockStatus === "bijna-op")) return "bijna-op";
@@ -513,6 +521,7 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
   const status = getOverallStatus();
   const getStatusColor = () => {
     switch (status) {
+      case "niet-meer-leverbaar": return "bg-black";
       case "niet-meer-aanwezig": return "bg-red-500";
       case "bijna-op": return "bg-orange-500";
       case "op-voorraad": return "bg-green-500";
@@ -522,6 +531,7 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
 
   const getStatusText = () => {
     switch (status) {
+      case "niet-meer-leverbaar": return "Niet meer leverbaar";
       case "niet-meer-aanwezig": return "Niet op voorraad";
       case "bijna-op": return "Bijna op";
       case "op-voorraad": return "Op voorraad";
