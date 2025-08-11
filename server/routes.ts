@@ -1019,37 +1019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Image proxy route using object path format
-  app.get("/api/images/:filename", async (req, res) => {
-    try {
-      const { filename } = req.params;
-      console.log(`Requesting image: ${filename}`);
-      
-      const objectStorageService = new ObjectStorageService();
-      
-      // Convert filename to proper object path
-      const objectPath = `/objects/uploads/${filename}`;
-      console.log(`Using object path: ${objectPath}`);
-      
-      try {
-        const file = await objectStorageService.getObjectEntityFile(objectPath);
-        console.log(`File found, streaming to response`);
-        
-        await objectStorageService.downloadObject(file, res);
-        return;
-        
-      } catch (error) {
-        console.log(`Object entity failed: ${error.message}`);
-        throw error;
-      }
-      
-    } catch (error) {
-      console.error("Image serving failed:", error);
-      if (!res.headersSent) {
-        res.status(404).json({ message: "Afbeelding niet gevonden" });
-      }
-    }
-  });
+
 
   const httpServer = createServer(app);
   return httpServer;

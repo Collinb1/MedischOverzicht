@@ -50,4 +50,4 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-11: Inventaris tabel herontwerp - beschrijving/vervaldatum kolommen verwijderd, status kolom toont alleen kleurtjes, aanvulverzoek en acties gescheiden
 - 2025-08-11: Status iconen geoptimaliseerd - alleen kleurcirkels zonder tekst voor compacte weergave
 - 2025-08-11: Email bevestiging toegevoegd aan aanvulverzoek kolom - toont datum en ontvanger na verzending
-- 2025-08-11: Foto weergave probleem geïdentificeerd - iPhone HEIC formaat wordt niet ondersteund door object storage proxy, placeholder weergave geïmplementeerd
+- 2025-08-11: Foto weergave probleem opgelost - gebruikt bestaande /objects/ route voor foto weergave, verwijderd onnodige image proxy, verbeterde error handling met placeholder
