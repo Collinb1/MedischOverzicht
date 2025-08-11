@@ -504,22 +504,32 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
             {/* Photo Section */}
             {item.photoUrl && (
               <div className="flex flex-col items-center space-y-2">
-                <div className="text-sm text-gray-600">
-                  Foto: {item.photoUrl.split('/').pop()}
-                </div>
-                <div className="w-full max-w-xs h-64 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <p className="text-sm">
-                      Foto geüpload maar kan niet worden weergegeven
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      iPhone HEIC formaat wordt mogelijk niet ondersteund
-                    </p>
-                  </div>
-                </div>
+                <img 
+                  src={`/api/images/${item.photoUrl.split('/').pop() || ''}`}
+                  alt={`Foto van ${item.name}`} 
+                  className="max-w-xs max-h-64 object-cover rounded-lg border shadow-sm"
+                  onError={(e) => {
+                    console.error('Image proxy failed for:', item.photoUrl);
+                    // Replace with placeholder when image fails
+                    const target = e.currentTarget;
+                    target.style.display = 'none';
+                    
+                    // Create placeholder
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'w-full max-w-xs h-64 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center';
+                    placeholder.innerHTML = `
+                      <div class="text-center text-gray-500">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                          <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <p class="text-sm mt-2">Foto kan niet worden geladen</p>
+                        <p class="text-xs text-gray-400">${item.photoUrl.split('/').pop()}</p>
+                      </div>
+                    `;
+                    target.parentNode?.appendChild(placeholder);
+                  }}
+                  onLoad={() => console.log('Image loaded successfully via proxy')}
+                />
               </div>
             )}
 

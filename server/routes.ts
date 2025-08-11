@@ -1019,7 +1019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Image proxy route to serve private object storage images
+  // Image proxy route using object path format
   app.get("/api/images/:filename", async (req, res) => {
     try {
       const { filename } = req.params;
@@ -1027,61 +1027,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const objectStorageService = new ObjectStorageService();
       
-      // Construct object path using the filename
+      // Convert filename to proper object path
       const objectPath = `/objects/uploads/${filename}`;
-      console.log(`Trying to get object with path: ${objectPath}`);
+      console.log(`Using object path: ${objectPath}`);
       
       try {
-        // Use the existing getObjectEntityFile method
         const file = await objectStorageService.getObjectEntityFile(objectPath);
+        console.log(`File found, streaming to response`);
         
-        console.log(`Found file, downloading...`);
-        
-        // Use the existing downloadObject method to stream to response
         await objectStorageService.downloadObject(file, res);
+        return;
         
-        console.log(`Successfully served image: ${filename}`);
-        
-      } catch (entityError) {
-        console.log(`Object entity method failed:`, entityError.message);
-        
-        // Fallback: try direct bucket access with various paths
-        const bucket = objectStorageClient.bucket('repl-default-bucket-27aaf1d5-64b6-4b02-b0a5-1f1c5b2375bb');
-        const paths = [`.private/uploads/${filename}`, `uploads/${filename}`];
-        
-        for (const path of paths) {
-          try {
-            console.log(`Fallback: trying path ${path}`);
-            const file = bucket.file(path);
-            const [exists] = await file.exists();
-            
-            if (exists) {
-              console.log(`Found file at ${path}, streaming...`);
-              
-              // Get metadata and stream
-              const [metadata] = await file.getMetadata();
-              res.set({
-                'Content-Type': metadata.contentType || 'image/jpeg',
-                'Cache-Control': 'public, max-age=3600',
-              });
-              
-              const stream = file.createReadStream();
-              stream.pipe(res);
-              return;
-            }
-          } catch (pathError) {
-            console.log(`Path ${path} failed:`, pathError.message);
-            continue;
-          }
-        }
-        
-        throw new Error("Image not found in any location");
+      } catch (error) {
+        console.log(`Object entity failed: ${error.message}`);
+        throw error;
       }
       
     } catch (error) {
-      console.error("Error serving image:", error);
+      console.error("Image serving failed:", error);
       if (!res.headersSent) {
-        res.status(404).json({ message: "Image not found" });
+        res.status(404).json({ message: "Afbeelding niet gevonden" });
       }
     }
   });
