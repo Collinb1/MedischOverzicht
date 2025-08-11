@@ -501,6 +501,9 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
           </div>
 
           <div className="p-6 space-y-6">
+            {/* Debug Photo URL */}
+            {console.log('Item photo URL:', item.photoUrl)}
+            
             {/* Photo Section */}
             {item.photoUrl && (
               <div className="flex justify-center">
@@ -508,7 +511,19 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
                   src={item.photoUrl} 
                   alt={`Foto van ${item.name}`} 
                   className="max-w-xs max-h-64 object-cover rounded-lg border shadow-sm"
+                  onError={(e) => {
+                    console.error('Image failed to load:', item.photoUrl);
+                    console.error('Error event:', e);
+                  }}
+                  onLoad={() => console.log('Image loaded successfully:', item.photoUrl)}
                 />
+              </div>
+            )}
+            
+            {/* Show photo URL for debugging */}
+            {item.photoUrl && (
+              <div className="text-xs text-gray-500 break-all">
+                Debug - Photo URL: {item.photoUrl}
               </div>
             )}
 
