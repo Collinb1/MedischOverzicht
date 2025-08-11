@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import CabinetOverview from "../components/cabinet-overview";
 import InventoryTable from "../components/inventory-table-new";
 import AddItemDialog from "../components/add-item-dialog";
-import CabinetManagement from "../components/cabinet-management";
+import SettingsPanel from "../components/settings-panel";
 import type { MedicalItem, AmbulancePost } from "@shared/schema";
 import ravLogo from "@assets/IMG_0009_1754910857700.png";
 
@@ -256,11 +256,8 @@ export default function Home() {
 
         {/* Settings Dialog */}
         <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Instellingen</DialogTitle>
-            </DialogHeader>
-            <CabinetManagement />
+          <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden p-0">
+            <SettingsPanel onClose={() => setShowSettingsDialog(false)} />
           </DialogContent>
         </Dialog>
       </main>
