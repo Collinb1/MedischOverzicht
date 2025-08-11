@@ -88,6 +88,52 @@ const ItemStatusIndicator = ({ item, selectedPost }: { item: MedicalItem; select
   );
 };
 
+// Component for table row with status-based background color
+const StatusTableRow = ({ item, selectedPost, children }: { 
+  item: MedicalItem; 
+  selectedPost?: string; 
+  children: React.ReactNode;
+}) => {
+  const { data: locations = [] } = useQuery({
+    queryKey: ['/api/item-locations', item.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/item-locations/${item.id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  // Filter locations for selected post if specified
+  const relevantLocations = selectedPost 
+    ? locations.filter((loc: any) => loc.ambulancePostId === selectedPost)
+    : locations;
+
+  const getRowBackgroundClass = () => {
+    if (relevantLocations.length === 0) return "hover:bg-slate-50";
+    
+    const hasUnavailable = relevantLocations.some((loc: any) => loc.stockStatus === "niet-meer-aanwezig");
+    const hasLowStock = relevantLocations.some((loc: any) => loc.stockStatus === "bijna-op");
+
+    if (hasUnavailable) {
+      return "bg-red-50 hover:bg-red-100";
+    }
+    if (hasLowStock) {
+      return "bg-orange-50 hover:bg-orange-100";
+    }
+    
+    return "bg-green-50 hover:bg-green-100";
+  };
+
+  return (
+    <TableRow 
+      className={getRowBackgroundClass()} 
+      data-testid={`row-item-${item.id}`}
+    >
+      {children}
+    </TableRow>
+  );
+};
+
 // Component for supply request functionality only
 const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost?: string }) => {
   const { toast } = useToast();
@@ -287,7 +333,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                   if (!a.photoUrl && b.photoUrl) return 1;
                   return 0;
                 }).map((item) => (
-                  <TableRow key={item.id} className="hover:bg-slate-50" data-testid={`row-item-${item.id}`}>
+                  <StatusTableRow key={item.id} item={item} selectedPost={selectedPost}>
                     <TableCell>
                       <div className="flex items-center">
                         {item.photoUrl ? (
@@ -324,7 +370,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                     <TableCell>
                       <ActionsColumn item={item} selectedPost={selectedPost} onEdit={() => setEditingItem(item)} />
                     </TableCell>
-                  </TableRow>
+                  </StatusTableRow>
                 ))
               )}
             </TableBody>
