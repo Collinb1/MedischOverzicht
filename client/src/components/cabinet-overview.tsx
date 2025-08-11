@@ -13,6 +13,7 @@ interface CabinetSummary {
 
 interface CabinetOverviewProps {
   onCabinetSelect: (cabinet: string) => void;
+  selectedPost: string;
 }
 
 const getCabinetColor = (cabinetId: string) => {
@@ -26,9 +27,20 @@ const getCabinetColor = (cabinetId: string) => {
   return colors[cabinetId as keyof typeof colors] || "bg-slate-500";
 };
 
-export default function CabinetOverview({ onCabinetSelect }: CabinetOverviewProps) {
+export default function CabinetOverview({ onCabinetSelect, selectedPost }: CabinetOverviewProps) {
   const { data: cabinets = [] } = useQuery<CabinetSummary[]>({
-    queryKey: ["/api/cabinets/summary"],
+    queryKey: ["/api/cabinets/summary", selectedPost],
+    queryFn: async () => {
+      if (!selectedPost) return [];
+      
+      const params = new URLSearchParams();
+      params.append("ambulancePost", selectedPost);
+      
+      const response = await fetch(`/api/cabinets/summary?${params}`);
+      if (!response.ok) throw new Error("Failed to fetch cabinet summary");
+      return response.json();
+    },
+    enabled: !!selectedPost,
   });
 
   return (
