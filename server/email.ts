@@ -50,8 +50,8 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
         connectionTimeout: 10000, // 10 seconds
         greetingTimeout: 5000, // 5 seconds  
         socketTimeout: 10000, // 10 seconds
-        debug: true, // Enable debug logging
-        logger: true
+        debug: false, // Disable debug logging to prevent password leaks
+        logger: false
       };
 
       // Force STARTTLS for port 587
@@ -61,11 +61,30 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
 
       // Try different auth methods for Exchange
       if (emailConfig.smtpUser && emailConfig.smtpPassword) {
-        transportConfig.auth = {
-          user: emailConfig.smtpUser,
-          pass: emailConfig.smtpPassword,
-          type: 'login' // Force LOGIN method instead of PLAIN for Exchange
-        };
+        // For Exchange servers, try multiple authentication methods
+        if (emailConfig.smtpHost && emailConfig.smtpHost.toLowerCase().includes('exchange')) {
+          // Exchange specific auth
+          transportConfig.auth = {
+            user: emailConfig.smtpUser,
+            pass: emailConfig.smtpPassword,
+            type: 'login'
+          };
+        } else if (emailConfig.smtpHost && emailConfig.smtpHost.toLowerCase().includes('outlook')) {
+          // Outlook specific auth
+          transportConfig.auth = {
+            user: emailConfig.smtpUser,
+            pass: emailConfig.smtpPassword,
+            type: 'oauth2'
+          };
+        } else {
+          // Generic SMTP with multiple fallback methods
+          transportConfig.auth = {
+            user: emailConfig.smtpUser,
+            pass: emailConfig.smtpPassword
+          };
+          // Try LOGIN first, then PLAIN
+          transportConfig.authMethods = ['LOGIN', 'PLAIN', 'XOAUTH2'];
+        }
       }
 
       const transporter = nodemailer.createTransport(transportConfig);

@@ -439,7 +439,14 @@ export default function EmailSettings() {
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                     <p className="font-medium text-amber-800 mb-1">⚠️ Belangrijk voor Gmail gebruikers:</p>
                     <p className="text-amber-700">Gmail vereist een <strong>App-specifiek wachtwoord</strong> voor SMTP. Gebruik niet je gewone Gmail wachtwoord.</p>
-                    <p className="text-amber-700 mt-1">Instructies: Google Account → Beveiliging → 2-staps verificatie → App-wachtwoorden</p>
+                    <p className="text-amber-700 mt-1">Stappen:</p>
+                    <ol className="text-amber-700 ml-4 list-decimal mt-1 space-y-1">
+                      <li>Ga naar je Google Account instellingen</li>
+                      <li>Klik op "Beveiliging" → "2-staps verificatie"</li>
+                      <li>Scroll naar beneden en klik "App-wachtwoorden"</li>
+                      <li>Kies "Mail" en genereer een nieuw wachtwoord</li>
+                      <li>Kopieer het 16-karakter wachtwoord (bijv: abcd efgh ijkl mnop)</li>
+                    </ol>
                   </div>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <p className="font-medium text-blue-800 mb-1">🏢 Microsoft Exchange servers:</p>
