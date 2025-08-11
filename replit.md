@@ -66,3 +66,4 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-11: SMTP connectiviteitstest toegevoegd voor debugging email server problemen
 - 2025-08-11: Gmail authenticatie succesvol werkend - App-wachtwoord configuratie opgelost, test emails verzenden correct
 - 2025-08-11: Supply request email functionaliteit geïmplementeerd - aanvulverzoeken versturen nu daadwerkelijk emails naar contactpersonen met professionele HTML templates
+- 2025-08-11: Email systeem volledig werkend - zowel test emails als supply request emails worden succesvol verzonden via Gmail SMTP

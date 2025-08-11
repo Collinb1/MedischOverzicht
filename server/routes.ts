@@ -1201,7 +1201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: item.description,
         category: item.category,
         expiryDate: item.expiryDate,
-        drawer: location.drawer,
+        drawer: location.drawer || undefined,
         ambulancePost: ambulancePost?.name
       };
       
@@ -1214,6 +1214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send email to contact person
       const emailSuccess = await sendEmail({
         to: contactPerson.email,
+        from: "inventaris@ziekenhuis.nl",
         subject: `📦 Aanvulverzoek: ${item.name} - ${ambulancePost?.name}`,
         html: emailHTML
       });
