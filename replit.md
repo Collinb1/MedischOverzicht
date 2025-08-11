@@ -59,3 +59,7 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-11: Backup/export functionaliteit geïmplementeerd - gebruikers kunnen volledige JSON backups exporteren en importeren van alle medische items, locaties, posten en instellingen via Instellingen menu
 - 2025-08-11: Edit item dialog volledig verfraaid met professionele Card-based layout, sectie-indeling met iconen, betere focus styling en hover effecten
 - 2025-08-11: Email alert veld verwijderd uit item bewerken formulier - vervaldatum sectie vereenvoudigd naar alleen vervaldatum veld
+- 2025-08-11: Email systeem volledig herwerkt van SendGrid-only naar flexible SMTP ondersteuning met nodemailer - ondersteunt nu Gmail, Outlook, Yahoo en andere SMTP providers
+- 2025-08-11: Test email functionaliteit geïmplementeerd met POST /api/test-email route - gebruikers kunnen email configuratie testen
+- 2025-08-11: Verbeterde error handling voor SMTP authenticatie met specifieke Gmail App-wachtwoord instructies
+- 2025-08-11: Email instellingen pagina uitgebreid met Gmail App-wachtwoord waarschuwingen en SMTP provider richtlijnen

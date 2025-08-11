@@ -908,9 +908,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: `Test email succesvol verzonden naar ${testEmail}` 
         });
       } else {
+        // Check if we have email config to provide specific guidance
+        const emailConfig = await storage.getEmailConfig();
+        let errorMessage = "Fout bij het verzenden van de test email.";
+        
+        if (emailConfig && emailConfig.smtpHost && emailConfig.smtpHost.includes('gmail')) {
+          errorMessage += " Voor Gmail gebruik een App-specifiek wachtwoord in plaats van je gewone wachtwoord. Zie Google Account instellingen → Beveiliging → App-wachtwoorden.";
+        } else if (emailConfig && emailConfig.smtpHost) {
+          errorMessage += " Controleer je SMTP instellingen: gebruikersnaam, wachtwoord, host en poort.";
+        } else {
+          errorMessage += " Geen email configuratie gevonden. Configureer eerst je SMTP instellingen.";
+        }
+        
         res.status(500).json({ 
           success: false, 
-          message: "Fout bij het verzenden van de test email. Controleer je SMTP configuratie." 
+          message: errorMessage
         });
       }
     } catch (error) {

@@ -54,8 +54,19 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       await transporter.sendMail(mailOptions);
       console.log(`Email succesvol verzonden naar ${params.to} via SMTP`);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('SMTP email fout:', error);
+      
+      // Provide specific error messages for common issues
+      if (error.code === 'EAUTH') {
+        console.error('SMTP Authenticatie gefaald. Voor Gmail gebruik een App-specifiek wachtwoord.');
+        console.error('Zie: https://support.google.com/accounts/answer/185833');
+      } else if (error.code === 'ECONNECTION') {
+        console.error('Kan geen verbinding maken met SMTP server. Controleer host en poort.');
+      } else if (error.code === 'ETIMEDOUT') {
+        console.error('SMTP verbinding time-out. Controleer internet verbinding en firewall.');
+      }
+      
       return false;
     }
   }

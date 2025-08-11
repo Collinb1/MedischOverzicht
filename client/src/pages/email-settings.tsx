@@ -397,6 +397,7 @@ export default function EmailSettings() {
                     <h4 className="font-medium">Gmail</h4>
                     <p className="text-slate-600">smtp.gmail.com:587</p>
                     <p className="text-xs text-slate-500">SSL/TLS vereist</p>
+                    <p className="text-xs text-amber-600 font-medium">Gebruik App-wachtwoord!</p>
                   </div>
                   <div>
                     <h4 className="font-medium">Outlook/Hotmail</h4>
@@ -409,8 +410,13 @@ export default function EmailSettings() {
                     <p className="text-xs text-slate-500">SSL/TLS vereist</p>
                   </div>
                 </div>
-                <div className="pt-2 text-xs text-slate-500">
-                  <p>Opmerking: Voor Gmail en andere providers kan het nodig zijn om een app-specifiek wachtwoord te gebruiken in plaats van je gewone wachtwoord.</p>
+                <div className="pt-4 text-xs text-slate-600 space-y-2">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <p className="font-medium text-amber-800 mb-1">⚠️ Belangrijk voor Gmail gebruikers:</p>
+                    <p className="text-amber-700">Gmail vereist een <strong>App-specifiek wachtwoord</strong> voor SMTP. Gebruik niet je gewone Gmail wachtwoord.</p>
+                    <p className="text-amber-700 mt-1">Instructies: Google Account → Beveiliging → 2-staps verificatie → App-wachtwoorden</p>
+                  </div>
+                  <p>Voor andere providers: controleer of SMTP toegang is ingeschakeld in je account instellingen.</p>
                 </div>
               </div>
             </CardContent>
