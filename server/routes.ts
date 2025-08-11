@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema, insertEmailConfigSchema, insertAmbulancePostSchema, insertItemLocationSchema } from "@shared/schema";
+import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema, insertEmailConfigSchema, insertAmbulancePostSchema, insertItemLocationSchema, insertPostContactSchema } from "@shared/schema";
 import { sendEmail, generateRestockEmailHTML } from "./email";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
@@ -817,7 +817,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/post-contacts", async (req, res) => {
     try {
-      const { insertPostContactSchema } = require("@shared/schema");
       const contactData = insertPostContactSchema.parse(req.body);
       const contact = await storage.createPostContact(contactData);
       res.status(201).json(contact);
@@ -829,7 +828,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/post-contacts/:id", async (req, res) => {
     try {
-      const { insertPostContactSchema } = require("@shared/schema");
       const contactData = insertPostContactSchema.partial().parse(req.body);
       const contact = await storage.updatePostContact(req.params.id, contactData);
       if (!contact) {

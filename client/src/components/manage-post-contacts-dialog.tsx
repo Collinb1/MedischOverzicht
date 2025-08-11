@@ -82,8 +82,19 @@ export default function ManagePostContactsDialog({
   });
 
   const createContactMutation = useMutation({
-    mutationFn: async (data: InsertPostContact) => 
-      await apiRequest("/api/post-contacts", { method: "POST", body: data }),
+    mutationFn: async (data: InsertPostContact) => {
+      const response = await fetch("/api/post-contacts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Contactpersoon toegevoegd",
@@ -102,8 +113,19 @@ export default function ManagePostContactsDialog({
   });
 
   const updateContactMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<InsertPostContact> }) =>
-      await apiRequest(`/api/post-contacts/${id}`, { method: "PATCH", body: data }),
+    mutationFn: async ({ id, data }: { id: string; data: Partial<InsertPostContact> }) => {
+      const response = await fetch(`/api/post-contacts/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Contactpersoon bijgewerkt",
@@ -123,8 +145,15 @@ export default function ManagePostContactsDialog({
   });
 
   const deleteContactMutation = useMutation({
-    mutationFn: async (id: string) =>
-      await apiRequest(`/api/post-contacts/${id}`, { method: "DELETE" }),
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/post-contacts/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.status === 204 ? null : response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Contactpersoon verwijderd",
