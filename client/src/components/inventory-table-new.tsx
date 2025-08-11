@@ -688,16 +688,30 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                       <div className="flex items-center">
                         {item.photoUrl ? (
                           <img 
-                            src={item.photoUrl} 
+                            src={`/objects/uploads/${item.photoUrl.split('/').pop()}`}
                             alt={`Foto van ${item.name}`} 
                             className="w-14 h-14 object-cover rounded-lg mr-3 border-2 border-medical-blue"
                             data-testid={`img-item-photo-${item.id}`}
+                            onError={(e) => {
+                              // Fallback to original URL if objects route fails
+                              const target = e.currentTarget;
+                              if (!target.src.includes('storage.googleapis.com')) {
+                                target.src = item.photoUrl;
+                              } else {
+                                // Both failed, hide image and show icon instead
+                                target.style.display = 'none';
+                                const iconDiv = target.nextElementSibling;
+                                if (iconDiv) iconDiv.style.display = 'flex';
+                              }
+                            }}
                           />
-                        ) : (
-                          <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
-                            <span className="text-xl">{getCategoryIcon(item.category)}</span>
-                          </div>
-                        )}
+                        ) : null}
+                        <div 
+                          className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center mr-3"
+                          style={{ display: item.photoUrl ? 'none' : 'flex' }}
+                        >
+                          <span className="text-xl">{getCategoryIcon(item.category)}</span>
+                        </div>
                         <div>
                           <div className="text-sm font-medium text-slate-900" data-testid={`text-item-name-${item.id}`}>
                             {item.name}
