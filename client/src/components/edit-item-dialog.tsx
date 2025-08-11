@@ -35,7 +35,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import AddCabinetDialog from "@/components/add-cabinet-dialog";
 import AddPostDialog from "@/components/add-post-dialog";
@@ -54,8 +53,6 @@ const editItemSchema = z.object({
   photoUrl: z.string().nullable(),
   isLowStock: z.boolean().default(false),
   stockStatus: z.enum(["op-voorraad", "bijna-op", "niet-op-voorraad"]).default("op-voorraad"),
-  isDiscontinued: z.boolean().default(false),
-  replacementItemId: z.string().optional(),
 });
 
 interface EditItemDialogProps {
@@ -110,11 +107,6 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
     return filtered;
   };
 
-  // Query for all medical items (for replacement options)
-  const { data: allItems } = useQuery<MedicalItem[]>({
-    queryKey: ['/api/medical-items'],
-  });
-
   // Initialize form with item data
   const form = useForm({
     resolver: zodResolver(editItemSchema),
@@ -127,8 +119,6 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
       photoUrl: item.photoUrl || null,
       isLowStock: false,
       stockStatus: "op-voorraad",
-      isDiscontinued: item.isDiscontinued || false,
-      replacementItemId: item.replacementItemId || "",
     },
   });
 
@@ -474,62 +464,6 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
                   </FormItem>
                 )}
               />
-            </div>
-
-            {/* Product Status Section */}
-            <div className="space-y-4 border-t pt-4">
-              <h3 className="text-lg font-medium">Product Status</h3>
-              
-              <FormField
-                control={form.control}
-                name="isDiscontinued"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        data-testid="checkbox-discontinued"
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        Niet meer leverbaar
-                      </FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        Dit item is niet meer leverbaar bij de leverancier
-                      </p>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              {form.watch('isDiscontinued') && (
-                <FormField
-                  control={form.control}
-                  name="replacementItemId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Wordt vervangen door</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} data-testid="select-replacement-item">
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecteer vervangend item" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {allItems?.filter(i => i.id !== item.id).map((replacementItem) => (
-                            <SelectItem key={replacementItem.id} value={replacementItem.id}>
-                              {replacementItem.name} ({replacementItem.category})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
             </div>
 
             {/* Location Management Table */}

@@ -4,7 +4,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { EditItemDialog } from "../components/edit-item-dialog";
@@ -72,15 +71,6 @@ const ItemStatusIndicator = ({ item, selectedPost }: { item: MedicalItem; select
       return response.json();
     },
   });
-
-  // Check if item is discontinued first - this overrides all other status
-  if (item.isDiscontinued) {
-    return (
-      <div className="flex justify-center" data-testid={`status-discontinued-${item.id}`} title="Niet meer leverbaar">
-        <div className="w-4 h-4 rounded-full bg-purple-600 border-2 border-purple-800"></div>
-      </div>
-    );
-  }
 
   // Filter locations for selected post if specified
   const relevantLocations = selectedPost 
@@ -250,11 +240,6 @@ const StatusTableRow = ({ item, selectedPost, children, onDoubleClick }: {
     : locations;
 
   const getRowBackgroundClass = () => {
-    // Check if item is discontinued first - this takes priority
-    if (item.isDiscontinued) {
-      return "bg-purple-50 hover:bg-purple-100 border-l-4 border-purple-600";
-    }
-    
     if (relevantLocations.length === 0) return "hover:bg-slate-50";
     
     const hasUnavailable = relevantLocations.some((loc: any) => loc.stockStatus === "niet-meer-aanwezig");
@@ -414,84 +399,6 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
   return null;
 };
 
-// Quick status selector for changing stock status
-const QuickStatusSelector = ({ item, selectedPost }: { 
-  item: MedicalItem; 
-  selectedPost?: string;
-}) => {
-  const queryClient = useQueryClient();
-  
-  const { data: locations = [] } = useQuery({
-    queryKey: ['/api/item-locations', item.id],
-    queryFn: async () => {
-      const response = await fetch(`/api/item-locations/${item.id}`);
-      if (!response.ok) throw new Error("Failed to fetch locations");
-      return response.json();
-    },
-  });
-
-  const relevantLocation = selectedPost 
-    ? locations.find((loc: any) => loc.ambulancePostId === selectedPost)
-    : locations[0]; // Take first location if no specific post selected
-
-  const updateStatusMutation = useMutation({
-    mutationFn: async (newStatus: string) => {
-      if (!relevantLocation) return;
-      
-      const response = await fetch(`/api/item-locations/${relevantLocation.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stockStatus: newStatus }),
-      });
-      
-      if (!response.ok) throw new Error('Failed to update status');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/item-locations'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/item-locations', item.id] });
-    },
-  });
-
-  if (!relevantLocation || item.isDiscontinued) {
-    return null;
-  }
-
-  const currentStatus = relevantLocation.stockStatus;
-
-  return (
-    <Select
-      value={currentStatus}
-      onValueChange={(value) => updateStatusMutation.mutate(value)}
-      disabled={updateStatusMutation.isPending}
-    >
-      <SelectTrigger className="w-[140px] h-8 text-xs">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="op-voorraad">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500"></div>
-            Op voorraad
-          </div>
-        </SelectItem>
-        <SelectItem value="bijna-op">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-            Bijna op
-          </div>
-        </SelectItem>
-        <SelectItem value="niet-meer-aanwezig">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-red-500"></div>
-            Niet meer aanwezig
-          </div>
-        </SelectItem>
-      </SelectContent>
-    </Select>
-  );
-};
-
 // Actions column with status dropdowns (contact info runs in background)
 const ActionsColumn = ({ item, selectedPost, onEdit }: { 
   item: MedicalItem; 
@@ -499,19 +406,17 @@ const ActionsColumn = ({ item, selectedPost, onEdit }: {
   onEdit: () => void;
 }) => {
   return (
-    <div className="flex items-center space-x-2">
-      {/* Quick status selector */}
-      <QuickStatusSelector item={item} selectedPost={selectedPost} />
+    <div className="flex items-center space-x-1">
+      {/* Status dropdowns for each location */}
+      <LocationStockStatus item={item} selectedPost={selectedPost} />
       
-      {/* Supply request button */}
-      <SupplyRequestButton item={item} selectedPost={selectedPost} />
-      
-      {/* Edit button */}
+      {/* Action buttons */}
       <Button
         variant="ghost"
         size="sm"
         onClick={onEdit}
         data-testid={`button-edit-${item.id}`}
+        className="ml-2"
       >
         <Edit className="w-4 h-4" />
       </Button>
@@ -552,15 +457,6 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
     queryKey: ['/api/ambulance-posts'],
     queryFn: async () => {
       const response = await fetch('/api/ambulance-posts');
-      if (!response.ok) return [];
-      return response.json();
-    },
-  });
-
-  const { data: allItems = [] } = useQuery({
-    queryKey: ['/api/medical-items'],
-    queryFn: async () => {
-      const response = await fetch('/api/medical-items');
       if (!response.ok) return [];
       return response.json();
     },
@@ -672,32 +568,6 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
                   {item.description && <div><span className="font-medium">Beschrijving:</span> {item.description}</div>}
                   {item.expiryDate && <div><span className="font-medium">Vervaldatum:</span> {new Date(item.expiryDate).toLocaleDateString('nl-NL')}</div>}
                   {item.alertEmail && <div><span className="font-medium">Alert Email:</span> {item.alertEmail}</div>}
-                </div>
-              </div>
-
-              {/* Product Status Information */}
-              <div>
-                <h3 className="font-semibold text-slate-900 mb-2">Product Status</h3>
-                <div className="space-y-2 text-sm">
-                  {item.isDiscontinued ? (
-                    <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-3 h-3 rounded-full bg-purple-600"></div>
-                        <span className="font-medium text-purple-800">Niet meer leverbaar</span>
-                      </div>
-                      {item.replacementItemId && (
-                        <div className="text-xs text-purple-700">
-                          <span className="font-medium">Vervangen door:</span>{' '}
-                          {allItems?.find(i => i.id === item.replacementItemId)?.name || 'Onbekend item'}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                      <span className="text-green-700">Leverbaar</span>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

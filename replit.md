@@ -57,5 +57,3 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-11: Automatische foto compressie geïmplementeerd - grote bestanden (tot 20MB) worden automatisch gecomprimeerd naar max 5MB, 1200px breed, voor snellere uploads en betere performance
 - 2025-08-11: HEIC naar JPG conversie toegevoegd - iPhone foto's worden automatisch geconverteerd naar JPG formaat voor universele compatibiliteit
 - 2025-08-11: Backup/export functionaliteit geïmplementeerd - gebruikers kunnen volledige JSON backups exporteren en importeren van alle medische items, locaties, posten en instellingen via Instellingen menu
-- 2025-08-11: "Niet meer leverbaar" functionaliteit toegevoegd - gebruikers kunnen items markeren als niet meer leverbaar met vervangingsitem selectie in bewerkingsdialoog
-- 2025-08-11: Visuele indicatoren voor niet-leverbare items - paarse status icoon en achtergrondkleur in inventaris tabel, uitgebreide productstatusweergave in detail popup
