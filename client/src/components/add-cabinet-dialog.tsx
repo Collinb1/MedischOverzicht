@@ -1,11 +1,14 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { insertCabinetSchema, type InsertCabinet } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -16,9 +19,26 @@ interface AddCabinetDialogProps {
   onSuccess: (cabinet: any) => void;
 }
 
+// Extended form data for cabinet with locations
+interface ExtendedCabinetForm extends InsertCabinet {
+  ambulancePosts: string[];
+  specificLocations: Record<string, string>;
+}
+
 export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddCabinetDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
+  const [specificLocations, setSpecificLocations] = useState<Record<string, string>>({});
+
+  // Get ambulance posts
+  const { data: ambulancePosts = [] } = useQuery({
+    queryKey: ["/api/ambulance-posts"],
+    queryFn: async () => {
+      const response = await fetch("/api/ambulance-posts");
+      return response.json();
+    },
+  });
 
   const form = useForm<InsertCabinet>({
     resolver: zodResolver(insertCabinetSchema),
@@ -34,17 +54,31 @@ export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddC
 
   const addCabinetMutation = useMutation({
     mutationFn: async (data: InsertCabinet) => {
-      const response = await apiRequest("POST", "/api/cabinets", data);
-      return response;
+      // First create the cabinet
+      const cabinet = await apiRequest("POST", "/api/cabinets", data);
+      
+      // Then create cabinet locations for selected posts
+      for (const postId of selectedPosts) {
+        await apiRequest("POST", "/api/cabinet-locations", {
+          cabinetId: cabinet.id,
+          ambulancePostId: postId,
+          specificLocation: specificLocations[postId] || null
+        });
+      }
+      
+      return cabinet;
     },
     onSuccess: (cabinet) => {
       toast({
         title: "Kast toegevoegd",
-        description: "De nieuwe kast is succesvol aangemaakt.",
+        description: `De nieuwe kast "${cabinet.name}" is succesvol aangemaakt${selectedPosts.length > 0 ? ` voor ${selectedPosts.length} ambulancepost(en).` : '.'}`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/cabinets"] });
       queryClient.invalidateQueries({ queryKey: ["/api/cabinets/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cabinet-locations"] });
       form.reset();
+      setSelectedPosts([]);
+      setSpecificLocations({});
       onSuccess(cabinet);
       onOpenChange(false);
     },
@@ -56,6 +90,26 @@ export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddC
       });
     },
   });
+
+  const handlePostToggle = (postId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedPosts(prev => [...prev, postId]);
+    } else {
+      setSelectedPosts(prev => prev.filter(id => id !== postId));
+      setSpecificLocations(prev => {
+        const newLocations = { ...prev };
+        delete newLocations[postId];
+        return newLocations;
+      });
+    }
+  };
+
+  const handleSpecificLocationChange = (postId: string, location: string) => {
+    setSpecificLocations(prev => ({
+      ...prev,
+      [postId]: location
+    }));
+  };
 
   const onSubmit = (data: InsertCabinet) => {
     addCabinetMutation.mutate(data);
@@ -214,6 +268,49 @@ export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddC
                 </FormItem>
               )}
             />
+
+            {/* Ambulancepost Selectie */}
+            <div className="space-y-3">
+              <FormLabel className="text-base font-medium">Ambulanceposten waar deze kast aanwezig is</FormLabel>
+              <div className="space-y-3 border rounded-md p-3">
+                {ambulancePosts.length > 0 ? (
+                  ambulancePosts.map((post: any) => (
+                    <div key={post.id} className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`post-${post.id}`}
+                          checked={selectedPosts.includes(post.id)}
+                          onCheckedChange={(checked) => handlePostToggle(post.id, checked as boolean)}
+                          data-testid={`checkbox-post-${post.id}`}
+                        />
+                        <label htmlFor={`post-${post.id}`} className="font-medium cursor-pointer">
+                          {post.name}
+                        </label>
+                      </div>
+                      {selectedPosts.includes(post.id) && (
+                        <div className="ml-6 space-y-1">
+                          <label className="text-sm text-gray-600">Specifieke locatie in ambulance (optioneel):</label>
+                          <Input
+                            placeholder="Bijv. Voor in de ambulance, Achterin bij brancard..."
+                            value={specificLocations[post.id] || ""}
+                            onChange={(e) => handleSpecificLocationChange(post.id, e.target.value)}
+                            data-testid={`input-location-${post.id}`}
+                            className="text-sm"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-2">
+                    Geen ambulanceposten beschikbaar
+                  </p>
+                )}
+              </div>
+              <p className="text-xs text-gray-500">
+                Selecteer op welke ambulancepost(en) deze kast fysiek aanwezig is.
+              </p>
+            </div>
 
             <div className="flex justify-end space-x-3 pt-4">
               <Button 

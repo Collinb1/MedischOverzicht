@@ -1,4 +1,4 @@
-import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser, emailConfigs, type EmailConfig, type InsertEmailConfig, ambulancePosts, type AmbulancePost, type InsertAmbulancePost, itemLocations, type ItemLocation, type InsertItemLocation, postContacts, type PostContact, type InsertPostContact, supplyRequests, type SupplyRequest, type InsertSupplyRequest, postCabinetOrder, type PostCabinetOrder, type InsertPostCabinetOrder, categories, type Category, type InsertCategory } from "@shared/schema";
+import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser, emailConfigs, type EmailConfig, type InsertEmailConfig, ambulancePosts, type AmbulancePost, type InsertAmbulancePost, itemLocations, type ItemLocation, type InsertItemLocation, postContacts, type PostContact, type InsertPostContact, supplyRequests, type SupplyRequest, type InsertSupplyRequest, postCabinetOrder, type PostCabinetOrder, type InsertPostCabinetOrder, categories, type Category, type InsertCategory, cabinetLocations, type CabinetLocation, type InsertCabinetLocation } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
 
@@ -71,6 +71,13 @@ export interface IStorage {
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined>;
   deleteCategory(id: string): Promise<boolean>;
+  
+  getCabinetLocations(): Promise<CabinetLocation[]>;
+  getCabinetLocationsByCabinet(cabinetId: string): Promise<CabinetLocation[]>;
+  getCabinetLocationsByPost(ambulancePostId: string): Promise<CabinetLocation[]>;
+  createCabinetLocation(location: InsertCabinetLocation): Promise<CabinetLocation>;
+  deleteCabinetLocation(id: string): Promise<boolean>;
+  deleteCabinetLocationsByPost(ambulancePostId: string, cabinetId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -448,7 +455,39 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCategory(id: string): Promise<boolean> {
     const result = await db.delete(categories).where(eq(categories.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Cabinet Location operations
+  async getCabinetLocations(): Promise<CabinetLocation[]> {
+    return await db.select().from(cabinetLocations);
+  }
+
+  async getCabinetLocationsByCabinet(cabinetId: string): Promise<CabinetLocation[]> {
+    return await db.select().from(cabinetLocations).where(eq(cabinetLocations.cabinetId, cabinetId));
+  }
+
+  async getCabinetLocationsByPost(ambulancePostId: string): Promise<CabinetLocation[]> {
+    return await db.select().from(cabinetLocations).where(eq(cabinetLocations.ambulancePostId, ambulancePostId));
+  }
+
+  async createCabinetLocation(location: InsertCabinetLocation): Promise<CabinetLocation> {
+    const [newLocation] = await db.insert(cabinetLocations).values(location).returning();
+    return newLocation;
+  }
+
+  async deleteCabinetLocation(id: string): Promise<boolean> {
+    const result = await db.delete(cabinetLocations).where(eq(cabinetLocations.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async deleteCabinetLocationsByPost(ambulancePostId: string, cabinetId: string): Promise<boolean> {
+    const result = await db.delete(cabinetLocations)
+      .where(and(
+        eq(cabinetLocations.ambulancePostId, ambulancePostId),
+        eq(cabinetLocations.cabinetId, cabinetId)
+      ));
+    return (result.rowCount ?? 0) > 0;
   }
 }
 

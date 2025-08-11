@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema, insertEmailConfigSchema, insertAmbulancePostSchema, insertItemLocationSchema, insertPostContactSchema, insertCategorySchema } from "@shared/schema";
+import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema, insertEmailConfigSchema, insertAmbulancePostSchema, insertItemLocationSchema, insertPostContactSchema, insertCategorySchema, insertCabinetLocationSchema } from "@shared/schema";
 import { sendEmail, generateRestockEmailHTML } from "./email";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
@@ -337,6 +337,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ message: "Failed to delete cabinet" });
       }
+    }
+  });
+
+  // Cabinet Location routes
+  app.get("/api/cabinet-locations", async (req, res) => {
+    try {
+      const locations = await storage.getCabinetLocations();
+      res.json(locations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch cabinet locations" });
+    }
+  });
+
+  app.get("/api/cabinets/:cabinetId/locations", async (req, res) => {
+    try {
+      const locations = await storage.getCabinetLocationsByCabinet(req.params.cabinetId);
+      res.json(locations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch cabinet locations" });
+    }
+  });
+
+  app.get("/api/ambulance-posts/:postId/cabinet-locations", async (req, res) => {
+    try {
+      const locations = await storage.getCabinetLocationsByPost(req.params.postId);
+      res.json(locations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch cabinet locations for post" });
+    }
+  });
+
+  app.post("/api/cabinet-locations", async (req, res) => {
+    try {
+      const validatedData = insertCabinetLocationSchema.parse(req.body);
+      const location = await storage.createCabinetLocation(validatedData);
+      res.status(201).json(location);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Failed to create cabinet location" });
+      }
+    }
+  });
+
+  app.delete("/api/cabinet-locations/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteCabinetLocation(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Cabinet location not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete cabinet location" });
     }
   });
 

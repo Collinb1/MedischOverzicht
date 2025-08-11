@@ -65,6 +65,16 @@ export const postCabinetOrder = pgTable("post_cabinet_order", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Cabinet locations - tracks which cabinets are present at which ambulance posts
+export const cabinetLocations = pgTable("cabinet_locations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  cabinetId: varchar("cabinet_id", { length: 10 }).notNull().references(() => cabinets.id, { onDelete: "cascade" }),
+  ambulancePostId: varchar("ambulance_post_id").notNull().references(() => ambulancePosts.id, { onDelete: "cascade" }),
+  specificLocation: text("specific_location"), // e.g. "Voor in de ambulance", "Achterin bij de brancard", etc.
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const emailNotifications = pgTable("email_notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   itemId: varchar("item_id").notNull().references(() => medicalItems.id),
@@ -86,6 +96,12 @@ export const insertItemLocationSchema = createInsertSchema(itemLocations).omit({
 });
 
 export const insertCabinetSchema = createInsertSchema(cabinets);
+
+export const insertCabinetLocationSchema = createInsertSchema(cabinetLocations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
@@ -118,6 +134,8 @@ export type Category = typeof categories.$inferSelect;
 export type PostCabinetOrder = typeof postCabinetOrder.$inferSelect;
 export type InsertPostCabinetOrder = z.infer<typeof insertPostCabinetOrderSchema>;
 export type Cabinet = typeof cabinets.$inferSelect;
+export type InsertCabinetLocation = z.infer<typeof insertCabinetLocationSchema>;
+export type CabinetLocation = typeof cabinetLocations.$inferSelect;
 export type InsertDrawer = z.infer<typeof insertDrawerSchema>;
 export type Drawer = typeof drawers.$inferSelect;
 export type InsertEmailNotification = z.infer<typeof insertEmailNotificationSchema>;
