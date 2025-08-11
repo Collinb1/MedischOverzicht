@@ -280,6 +280,11 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // If item is discontinued, don't show supply request functionality
+  if ((item as any).isDiscontinued) {
+    return null;
+  }
+
   const { data: locations = [] } = useQuery({
     queryKey: ['/api/item-locations', item.id],
     queryFn: async () => {
@@ -414,6 +419,25 @@ const ActionsColumn = ({ item, selectedPost, onEdit }: {
   selectedPost?: string;
   onEdit: () => void;
 }) => {
+  // If item is discontinued, show only text instead of dropdown
+  if ((item as any).isDiscontinued) {
+    return (
+      <div className="flex items-center space-x-2">
+        <div className="text-xs text-gray-600 px-2 py-1 bg-gray-100 rounded">
+          Niet meer leverbaar
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onEdit}
+          data-testid={`button-edit-${item.id}`}
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center space-x-1">
       {/* Status dropdowns for each location */}
