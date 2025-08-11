@@ -53,10 +53,7 @@ const editItemSchema = z.object({
   description: z.string().optional(),
   category: z.string().min(1, "Categorie is verplicht"),
   expiryDate: z.string().nullable(),
-  alertEmail: z.string().email("Ongeldig email adres").optional(),
   photoUrl: z.string().nullable(),
-  isLowStock: z.boolean().default(false),
-  stockStatus: z.enum(["op-voorraad", "bijna-op", "niet-op-voorraad"]).default("op-voorraad"),
   isDiscontinued: z.boolean().default(false),
   replacementItemId: z.string().nullable().optional(),
 });
@@ -126,10 +123,7 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
       description: item.description || "",
       category: item.category,
       expiryDate: item.expiryDate || null,
-      alertEmail: item.alertEmail || "",
       photoUrl: item.photoUrl || null,
-      isLowStock: false,
-      stockStatus: "op-voorraad",
       isDiscontinued: (item as any).isDiscontinued || false,
       replacementItemId: (item as any).replacementItemId || null,
     },
@@ -506,57 +500,19 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
               </CardContent>
             </Card>
 
-            {/* Status & Availability */}
+            {/* Discontinued Status */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5" />
-                  Status & Beschikbaarheid
+                  Artikel Status
                 </CardTitle>
                 <CardDescription>
-                  Voorraadstatus en beschikbaarheid van het medische item
+                  Status en beschikbaarheid van het medische artikel
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="stockStatus"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Voorraad Status</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} data-testid="select-stock-status">
-                          <FormControl>
-                            <SelectTrigger className="focus:ring-2 focus:ring-blue-500">
-                              <SelectValue placeholder="Selecteer status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="op-voorraad">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                Op voorraad
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="bijna-op">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                                Bijna op
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="niet-op-voorraad">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                Niet op voorraad
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
                   <FormField
                     control={form.control}
                     name="isDiscontinued"

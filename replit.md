@@ -68,3 +68,4 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-11: Supply request email functionaliteit geïmplementeerd - aanvulverzoeken versturen nu daadwerkelijk emails naar contactpersonen met professionele HTML templates
 - 2025-08-11: Email systeem volledig werkend - zowel test emails als supply request emails worden succesvol verzonden via Gmail SMTP
 - 2025-08-11: Email template aangepast naar vriendelijke, sobere versie - weggehaald: urgentie, icoontjes, waarschuwingen. Toegevoegd: vriendelijke begroeting, beleefd verzoek, professionele afsluiting
+- 2025-08-11: Item bijwerken knop probleem opgelost - formulier schema opgeschoond en verouderde velden verwijderd, edit dialog werkt nu correct
