@@ -1170,6 +1170,214 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Backup management routes
+  app.get("/api/backup/export", async (req, res) => {
+    try {
+      // Gather all data for backup
+      const [
+        medicalItems,
+        itemLocations,
+        ambulancePosts,
+        cabinets,
+        categories,
+        postContacts,
+        supplyRequests
+      ] = await Promise.all([
+        storage.getMedicalItems(),
+        storage.getItemLocations(),
+        storage.getAmbulancePosts(),
+        storage.getCabinets(),
+        storage.getCategories(),
+        storage.getPostContacts(),
+        storage.getAllSupplyRequests()
+      ]);
+
+      const backupData = {
+        version: "1.0.0",
+        exportedAt: new Date().toISOString(),
+        totalItems: medicalItems.length,
+        medicalItems,
+        itemLocations,
+        ambulancePosts,
+        cabinets,
+        categories,
+        postContacts,
+        supplyRequests
+      };
+
+      res.json(backupData);
+    } catch (error) {
+      console.error("Error creating backup:", error);
+      res.status(500).json({ message: "Failed to create backup" });
+    }
+  });
+
+  app.post("/api/backup/import", async (req, res) => {
+    try {
+      const backupData = req.body;
+      
+      // Validate backup structure
+      if (!backupData.version || !backupData.medicalItems || !Array.isArray(backupData.medicalItems)) {
+        return res.status(400).json({ message: "Invalid backup file format" });
+      }
+
+      let stats = {
+        itemsImported: 0,
+        locationsImported: 0,
+        postsImported: 0,
+        cabinetsImported: 0,
+        categoriesImported: 0,
+        contactsImported: 0
+      };
+
+      // Import ambulance posts first (dependencies)
+      if (backupData.ambulancePosts && Array.isArray(backupData.ambulancePosts)) {
+        for (const post of backupData.ambulancePosts) {
+          try {
+            // Check if post already exists
+            const existingPosts = await storage.getAmbulancePosts();
+            const exists = existingPosts.some(existing => existing.id === post.id);
+            
+            if (!exists) {
+              const postData = {
+                id: post.id,
+                name: post.name,
+                description: post.description,
+                location: post.location,
+                isActive: post.isActive ?? true
+              };
+              await storage.createAmbulancePost(postData);
+              stats.postsImported++;
+            }
+          } catch (error) {
+            console.warn(`Failed to import post ${post.name}:`, error);
+          }
+        }
+      }
+
+      // Import cabinets
+      if (backupData.cabinets && Array.isArray(backupData.cabinets)) {
+        for (const cabinet of backupData.cabinets) {
+          try {
+            const existingCabinets = await storage.getCabinets();
+            const exists = existingCabinets.some(existing => existing.id === cabinet.id);
+            
+            if (!exists) {
+              const cabinetData = {
+                id: cabinet.id,
+                name: cabinet.name,
+                abbreviation: cabinet.abbreviation,
+                description: cabinet.description,
+                location: cabinet.location,
+                color: cabinet.color
+              };
+              await storage.createCabinet(cabinetData);
+              stats.cabinetsImported++;
+            }
+          } catch (error) {
+            console.warn(`Failed to import cabinet ${cabinet.name}:`, error);
+          }
+        }
+      }
+
+      // Import categories
+      if (backupData.categories && Array.isArray(backupData.categories)) {
+        for (const category of backupData.categories) {
+          try {
+            const existingCategories = await storage.getCategories();
+            const exists = existingCategories.some(existing => existing.id === category.id);
+            
+            if (!exists) {
+              const categoryData = {
+                name: category.name,
+                icon: category.icon,
+                color: category.color
+              };
+              await storage.createCategory(categoryData);
+              stats.categoriesImported++;
+            }
+          } catch (error) {
+            console.warn(`Failed to import category ${category.name}:`, error);
+          }
+        }
+      }
+
+      // Import post contacts
+      if (backupData.postContacts && Array.isArray(backupData.postContacts)) {
+        for (const contact of backupData.postContacts) {
+          try {
+            const contactData = {
+              ambulancePostId: contact.ambulancePostId,
+              name: contact.name,
+              email: contact.email,
+              department: contact.department,
+              isActive: contact.isActive ?? true
+            };
+            await storage.createPostContact(contactData);
+            stats.contactsImported++;
+          } catch (error) {
+            console.warn(`Failed to import contact ${contact.name}:`, error);
+          }
+        }
+      }
+
+      // Import medical items
+      for (const item of backupData.medicalItems) {
+        try {
+          const itemData = {
+            name: item.name,
+            description: item.description,
+            category: item.category,
+            expiryDate: item.expiryDate,
+            photoUrl: item.photoUrl,
+            alertEmail: item.alertEmail,
+            locations: [] // Will be handled separately
+          };
+          
+          const createdItem = await storage.createMedicalItem(itemData);
+          stats.itemsImported++;
+
+          // Import item locations if present
+          if (backupData.itemLocations && Array.isArray(backupData.itemLocations)) {
+            const itemLocations = backupData.itemLocations.filter(
+              (loc: any) => loc.itemId === item.id
+            );
+            
+            for (const location of itemLocations) {
+              try {
+                const locationData = {
+                  itemId: createdItem.id,
+                  ambulancePostId: location.ambulancePostId,
+                  cabinet: location.cabinet,
+                  drawer: location.drawer,
+                  contactPersonId: location.contactPersonId,
+                  isLowStock: location.isLowStock ?? false,
+                  stockStatus: location.stockStatus ?? 'op-voorraad'
+                };
+                
+                await storage.createItemLocation(locationData);
+                stats.locationsImported++;
+              } catch (error) {
+                console.warn(`Failed to import location for item ${item.name}:`, error);
+              }
+            }
+          }
+        } catch (error) {
+          console.warn(`Failed to import item ${item.name}:`, error);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: "Backup successfully imported",
+        stats
+      });
+    } catch (error) {
+      console.error("Error importing backup:", error);
+      res.status(500).json({ message: "Failed to import backup" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

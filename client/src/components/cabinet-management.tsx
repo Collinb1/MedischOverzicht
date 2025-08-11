@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import AddCabinetDialog from "./add-cabinet-dialog";
 import EditCabinetDialog from "./edit-cabinet-dialog";
+import { BackupManagement } from "./backup-management";
 import type { Cabinet } from "@shared/schema";
 
 // Convert Tailwind CSS color classes to hex colors
@@ -154,6 +155,11 @@ export default function CabinetManagement() {
           <p className="text-gray-400 text-sm mt-2">Voeg een nieuwe kast toe om te beginnen</p>
         </div>
       )}
+
+      {/* Backup Management Section */}
+      <div className="border-t pt-6 mt-8">
+        <BackupManagement />
+      </div>
 
       <AddCabinetDialog
         open={showAddDialog}
