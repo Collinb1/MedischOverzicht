@@ -295,7 +295,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" data-testid="dialog-add-item">
+      <DialogContent className="sm:max-w-4xl max-h-[95vh] overflow-y-auto" data-testid="dialog-add-item">
         <DialogHeader>
           <DialogTitle>Nieuw Medisch Item Toevoegen</DialogTitle>
         </DialogHeader>
@@ -421,15 +421,15 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
                   </Button>
                 </div>
               </div>
-              <div className="border rounded-md p-4 bg-slate-50 overflow-x-auto">
-                <Table className="min-w-full">
+              <div className="border rounded-md p-4 bg-slate-50">
+                <Table className="w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="min-w-[150px]">Ambulancepost</TableHead>
-                      <TableHead className="min-w-[120px]">Kast</TableHead>
-                      <TableHead className="min-w-[100px]">Lade</TableHead>
-                      <TableHead className="min-w-[150px]">Contactpersoon</TableHead>
-                      <TableHead className="min-w-[80px]">Acties</TableHead>
+                      <TableHead className="w-[200px]">Ambulancepost</TableHead>
+                      <TableHead className="w-[180px]">Kast</TableHead>
+                      <TableHead className="w-[140px]">Lade</TableHead>
+                      <TableHead className="w-[180px]">Contactpersoon</TableHead>
+                      <TableHead className="w-[80px]">Acties</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

@@ -287,7 +287,7 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Medisch Item Bewerken</DialogTitle>
         </DialogHeader>
@@ -482,16 +482,16 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
                 </Button>
               </div>
 
-              <div className="border rounded-lg overflow-x-auto">
-                <Table className="min-w-full">
+              <div className="border rounded-lg">
+                <Table className="w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="min-w-[150px]">Ambulancepost</TableHead>
-                      <TableHead className="min-w-[120px]">Kast</TableHead>
-                      <TableHead className="min-w-[100px]">Lade</TableHead>
-                      <TableHead className="min-w-[150px]">Contactpersoon</TableHead>
-                      <TableHead className="min-w-[140px]">Voorraad Status</TableHead>
-                      <TableHead className="min-w-[80px]">Acties</TableHead>
+                      <TableHead className="w-[180px]">Ambulancepost</TableHead>
+                      <TableHead className="w-[160px]">Kast</TableHead>
+                      <TableHead className="w-[120px]">Lade</TableHead>
+                      <TableHead className="w-[160px]">Contactpersoon</TableHead>
+                      <TableHead className="w-[140px]">Voorraad Status</TableHead>
+                      <TableHead className="w-[80px]">Acties</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

@@ -50,6 +50,15 @@ const tailwindToHex = (tailwindClass: string): string => {
   return colorMap[tailwindClass] || '#6B7280'; // Default gray
 };
 
+// Get cabinet color styling
+const getCabinetColor = (cabinetId: string, cabinets: any[]): string => {
+  const cabinet = cabinets.find((c: any) => c.id === cabinetId);
+  if (cabinet?.color) {
+    return `${cabinet.color} text-white border-2 border-current`;
+  }
+  return "bg-slate-200 text-slate-700 border-2 border-slate-400";
+};
+
 // Component to show overall status indicator for an item
 const ItemStatusIndicator = ({ item, selectedPost }: { item: MedicalItem; selectedPost?: string }) => {
   const { data: locations = [] } = useQuery({

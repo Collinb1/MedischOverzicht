@@ -75,7 +75,7 @@ export default function EditCabinetDialog({ open, onOpenChange, cabinet, onSucce
         color: cabinet.color || "bg-slate-500",
       });
     }
-  }, [cabinet, form]);
+  }, [cabinet?.id, cabinet?.name, cabinet?.abbreviation, cabinet?.description, cabinet?.color, form.reset]);
 
   // Load current cabinet locations
   useEffect(() => {
