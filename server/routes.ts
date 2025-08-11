@@ -147,11 +147,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { locations, ...itemData } = req.body;
       
-      // Update the medical item
-      const partialItemData = insertMedicalItemSchema.partial().parse(itemData);
-      const updatedItem = await storage.updateMedicalItem(req.params.id, partialItemData);
-      if (!updatedItem) {
-        return res.status(404).json({ message: "Medical item not found" });
+      // Update the medical item only if there are fields to update
+      let updatedItem;
+      if (Object.keys(itemData).length > 0) {
+        const partialItemData = insertMedicalItemSchema.partial().parse(itemData);
+        updatedItem = await storage.updateMedicalItem(req.params.id, partialItemData);
+        if (!updatedItem) {
+          return res.status(404).json({ message: "Medical item not found" });
+        }
+      } else {
+        // If no item data to update, just get the existing item
+        updatedItem = await storage.getMedicalItem(req.params.id);
+        if (!updatedItem) {
+          return res.status(404).json({ message: "Medical item not found" });
+        }
       }
       
       // Handle locations update if provided
@@ -784,6 +793,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ message: "Failed to delete ambulance post" });
       }
+    }
+  });
+
+  // Post contact management routes
+  app.get("/api/post-contacts", async (req, res) => {
+    try {
+      const contacts = await storage.getPostContacts();
+      res.json(contacts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch post contacts" });
+    }
+  });
+
+  app.get("/api/post-contacts/:postId", async (req, res) => {
+    try {
+      const contacts = await storage.getPostContactsByPost(req.params.postId);
+      res.json(contacts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch post contacts" });
+    }
+  });
+
+  app.post("/api/post-contacts", async (req, res) => {
+    try {
+      const { insertPostContactSchema } = require("@shared/schema");
+      const contactData = insertPostContactSchema.parse(req.body);
+      const contact = await storage.createPostContact(contactData);
+      res.status(201).json(contact);
+    } catch (error) {
+      console.error("Error creating post contact:", error);
+      res.status(400).json({ message: "Failed to create post contact" });
+    }
+  });
+
+  app.patch("/api/post-contacts/:id", async (req, res) => {
+    try {
+      const { insertPostContactSchema } = require("@shared/schema");
+      const contactData = insertPostContactSchema.partial().parse(req.body);
+      const contact = await storage.updatePostContact(req.params.id, contactData);
+      if (!contact) {
+        return res.status(404).json({ message: "Post contact not found" });
+      }
+      res.json(contact);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to update post contact" });
+    }
+  });
+
+  app.delete("/api/post-contacts/:id", async (req, res) => {
+    try {
+      const success = await storage.deletePostContact(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Post contact not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete post contact" });
     }
   });
 

@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Plus, Pencil, Trash2, Building2 } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, Building2, Users } from "lucide-react";
+import ManagePostContactsDialog from "@/components/manage-post-contacts-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -372,6 +373,11 @@ export default function AmbulancePosts() {
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
+                  <ManagePostContactsDialog postId={post.id} postName={post.name}>
+                    <Button variant="outline" size="icon" data-testid={`button-contacts-${post.id}`}>
+                      <Users className="h-4 w-4" />
+                    </Button>
+                  </ManagePostContactsDialog>
                   <Button
                     variant="outline"
                     size="icon"

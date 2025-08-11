@@ -121,12 +121,31 @@ export const ambulancePosts = pgTable("ambulance_posts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const postContacts = pgTable("post_contacts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ambulancePostId: varchar("ambulance_post_id").notNull().references(() => ambulancePosts.id, { onDelete: 'cascade' }),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  department: text("department"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertAmbulancePostSchema = createInsertSchema(ambulancePosts).omit({
   createdAt: true,
 });
 
+export const insertPostContactSchema = createInsertSchema(postContacts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertAmbulancePost = z.infer<typeof insertAmbulancePostSchema>;
 export type AmbulancePost = typeof ambulancePosts.$inferSelect;
+export type InsertPostContact = z.infer<typeof insertPostContactSchema>;
+export type PostContact = typeof postContacts.$inferSelect;
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,

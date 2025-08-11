@@ -1,4 +1,4 @@
-import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser, emailConfigs, type EmailConfig, type InsertEmailConfig, ambulancePosts, type AmbulancePost, type InsertAmbulancePost, itemLocations, type ItemLocation, type InsertItemLocation } from "@shared/schema";
+import { medicalItems, type MedicalItem, type InsertMedicalItem, type EmailNotification, type InsertEmailNotification, type Cabinet, type InsertCabinet, cabinets, drawers, type Drawer, type InsertDrawer, emailNotifications, users, type User, type InsertUser, emailConfigs, type EmailConfig, type InsertEmailConfig, ambulancePosts, type AmbulancePost, type InsertAmbulancePost, itemLocations, type ItemLocation, type InsertItemLocation, postContacts, type PostContact, type InsertPostContact } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
 
@@ -48,6 +48,12 @@ export interface IStorage {
   createAmbulancePost(post: InsertAmbulancePost): Promise<AmbulancePost>;
   updateAmbulancePost(id: string, post: Partial<InsertAmbulancePost>): Promise<AmbulancePost | undefined>;
   deleteAmbulancePost(id: string): Promise<boolean>;
+  
+  getPostContacts(): Promise<PostContact[]>;
+  getPostContactsByPost(ambulancePostId: string): Promise<PostContact[]>;
+  createPostContact(contact: InsertPostContact): Promise<PostContact>;
+  updatePostContact(id: string, contact: Partial<InsertPostContact>): Promise<PostContact | undefined>;
+  deletePostContact(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -276,6 +282,34 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAmbulancePost(id: string): Promise<boolean> {
     const result = await db.delete(ambulancePosts).where(eq(ambulancePosts.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Post contact operations
+  async getPostContacts(): Promise<PostContact[]> {
+    return await db.select().from(postContacts);
+  }
+
+  async getPostContactsByPost(ambulancePostId: string): Promise<PostContact[]> {
+    return await db.select().from(postContacts).where(eq(postContacts.ambulancePostId, ambulancePostId));
+  }
+
+  async createPostContact(contact: InsertPostContact): Promise<PostContact> {
+    const [newContact] = await db.insert(postContacts).values(contact).returning();
+    return newContact;
+  }
+
+  async updatePostContact(id: string, contact: Partial<InsertPostContact>): Promise<PostContact | undefined> {
+    const [updatedContact] = await db
+      .update(postContacts)
+      .set(contact)
+      .where(eq(postContacts.id, id))
+      .returning();
+    return updatedContact;
+  }
+
+  async deletePostContact(id: string): Promise<boolean> {
+    const result = await db.delete(postContacts).where(eq(postContacts.id, id));
     return (result.rowCount ?? 0) > 0;
   }
 }
