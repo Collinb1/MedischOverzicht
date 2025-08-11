@@ -16,7 +16,7 @@ import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet, type Amb
 import { CategorySelector } from "./category-selector";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, UserPlus, Camera, X, Building2, Pencil, Trash2 } from "lucide-react";
+import { Plus, Camera, X, Building2, Pencil, Trash2 } from "lucide-react";
 import AddCabinetDialog from "../components/add-cabinet-dialog";
 import AddPostDialog from "../components/add-post-dialog";
 import { ObjectUploader } from "../components/ObjectUploader";
@@ -31,15 +31,7 @@ interface AddItemDialogProps {
 
 // Categories are now managed dynamically via the CategorySelector component
 
-const emailOptions = [
-  { value: "spoedhulp@ziekenhuis.nl", label: "Spoedhulp Afdeling" },
-  { value: "apotheek@ziekenhuis.nl", label: "Apotheek" },
-  { value: "chirurgie@ziekenhuis.nl", label: "Chirurgie" },
-  { value: "monitoring@ziekenhuis.nl", label: "Monitoring & Diagnostiek" },
-  { value: "preventie@ziekenhuis.nl", label: "Preventie & PBM" },
-  { value: "verpleging@ziekenhuis.nl", label: "Verpleging" },
-  { value: "magazijn@ziekenhuis.nl", label: "Magazijn & Inkoop" }
-];
+
 
 // Type for item locations
 type ItemLocation = {
@@ -54,7 +46,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
   const queryClient = useQueryClient();
   const [isAddCabinetOpen, setIsAddCabinetOpen] = useState(false);
   const [isAddPostOpen, setIsAddPostOpen] = useState(false);
-  const [isCustomEmail, setIsCustomEmail] = useState(false);
+
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [itemLocations, setItemLocations] = useState<ItemLocation[]>([
@@ -90,19 +82,14 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
 
 
 
-  const form = useForm<InsertMedicalItem & { isLowStock: boolean; stockStatus: string }>({
-    resolver: zodResolver(insertMedicalItemSchema.extend({
-      isLowStock: z.boolean().optional(),
-      stockStatus: z.string().optional(),
-    })),
+  const form = useForm<InsertMedicalItem>({
+    resolver: zodResolver(insertMedicalItemSchema),
     defaultValues: {
       name: "",
       description: "",
-      category: "Spuiten",
-      isLowStock: false,
-      stockStatus: "op-voorraad",
+      category: "",
       expiryDate: null,
-      alertEmail: "spoedhulp@ziekenhuis.nl",
+      alertEmail: null,
       photoUrl: photoUrl,
     },
   });
@@ -243,7 +230,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
     },
   });
 
-  const onSubmit = async (data: InsertMedicalItem & { isLowStock: boolean; stockStatus: string }) => {
+  const onSubmit = async (data: InsertMedicalItem) => {
     console.log("Form submitted with data:", data);
     console.log("Photo URL:", photoUrl);
     console.log("Form errors:", form.formState.errors);
@@ -384,7 +371,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
                     <CategorySelector
                       value={field.value}
                       onValueChange={field.onChange}
-                      placeholder="Selecteer categorie"
+                      placeholder="Maak een keuze"
                     />
                   </FormControl>
                   <FormMessage />
@@ -533,141 +520,11 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
               </div>
             </div>
 
-            {/* Stock Status */}
-            <FormField
-              control={form.control}
-              name="stockStatus"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Voorraad Status</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-stock-status">
-                        <SelectValue placeholder="Selecteer voorraad status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="op-voorraad">Op voorraad</SelectItem>
-                      <SelectItem value="laag">Laag</SelectItem>
-                      <SelectItem value="bijna-op">Bijna op</SelectItem>
-                      <SelectItem value="op">Op</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
-            {/* Low Stock Toggle */}
-            <FormField
-              control={form.control}
-              name="isLowStock"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Bijna op markering</FormLabel>
-                    <div className="text-sm text-muted-foreground">
-                      Markeer dit item als bijna op voor notificaties
-                    </div>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      data-testid="switch-is-low-stock"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
-            <FormField
-              control={form.control}
-              name="isLowStock"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Voorraad Status</FormLabel>
-                    <div className="text-sm text-muted-foreground">
-                      Is dit item bijna op/uitgeput?
-                    </div>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      data-testid="switch-item-low-stock"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
 
-            <FormField
-              control={form.control}
-              name="alertEmail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Waarschuwing Email</FormLabel>
-                  {!isCustomEmail ? (
-                    <div className="space-y-2">
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-alert-email">
-                            <SelectValue placeholder="Selecteer naar wie de melding moet" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {emailOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsCustomEmail(true)}
-                        className="w-full"
-                        data-testid="button-add-custom-email"
-                      >
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        Ander email adres toevoegen
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="naam@afdeling.nl"
-                          value={field.value || ""}
-                          onChange={field.onChange}
-                          data-testid="input-custom-email"
-                        />
-                      </FormControl>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsCustomEmail(false)}
-                        className="w-full"
-                        data-testid="button-use-preset-email"
-                      >
-                        Gebruik voorgedefinieerde opties
-                      </Button>
-                    </div>
-                  )}
-                  <div className="text-sm text-muted-foreground">
-                    Wie moet een email krijgen bij voorraad aanvulling?
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+
 
 
 
