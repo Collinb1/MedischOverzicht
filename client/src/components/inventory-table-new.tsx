@@ -726,10 +726,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                       <DrawerColumn item={item} selectedPost={selectedPost} />
                     </TableCell>
                     <TableCell className="text-base text-slate-600" data-testid={`text-category-${item.id}`}>
-                      <div className="flex items-center space-x-2">
-                        <span>{getCategoryIcon(item.category)}</span>
-                        <span>{item.category}</span>
-                      </div>
+                      {item.category}
                     </TableCell>
                     <TableCell data-testid={`status-column-${item.id}`}>
                       <ItemStatusIndicator item={item} selectedPost={selectedPost} />
