@@ -74,6 +74,7 @@ interface LocationRow {
 export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItemDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   
   const [isAddCabinetOpen, setIsAddCabinetOpen] = useState(false);
   const [isAddPostOpen, setIsAddPostOpen] = useState(false);
@@ -174,6 +175,34 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
       });
     },
   });
+
+  const deleteItemMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("DELETE", `/api/medical-items/${item.id}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Item verwijderd",
+        description: "Het medische item is succesvol verwijderd voor alle posten.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-items"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cabinets/summary"] });
+      onOpenChange(false);
+      onSuccess();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Fout bij verwijderen",
+        description: error.message || "Er is een fout opgetreden bij het verwijderen van het item.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDelete = () => {
+    setShowDeleteConfirmation(false);
+    deleteItemMutation.mutate();
+  };
 
   const addLocation = () => {
     setItemLocations([...itemLocations, { ambulancePostId: "", cabinet: "", drawer: "", contactPersonId: "", stockStatus: "op-voorraad", isLowStock: false }]);
@@ -561,23 +590,67 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                data-testid="button-cancel"
-              >
-                Annuleren
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={updateItemMutation.isPending}
-                className="bg-medical-blue hover:bg-blue-700"
-                data-testid="button-submit"
-              >
-                {updateItemMutation.isPending ? "Bezig..." : "Item Bijwerken"}
-              </Button>
+            <div className="flex justify-between">
+              {/* Delete button section */}
+              <div>
+                {!showDeleteConfirmation ? (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => setShowDeleteConfirmation(true)}
+                    data-testid="button-delete"
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Verwijderen
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-red-600 text-sm font-medium">
+                      Weet je zeker dat je het item voor alle posten wilt verwijderen?
+                    </span>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDelete}
+                      disabled={deleteItemMutation.isPending}
+                      data-testid="button-confirm-delete"
+                    >
+                      {deleteItemMutation.isPending ? "Bezig..." : "Ja, verwijderen"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowDeleteConfirmation(false)}
+                      data-testid="button-cancel-delete"
+                    >
+                      Annuleren
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => onOpenChange(false)}
+                  data-testid="button-cancel"
+                >
+                  Sluiten
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={updateItemMutation.isPending}
+                  className="bg-medical-blue hover:bg-blue-700"
+                  data-testid="button-submit"
+                >
+                  {updateItemMutation.isPending ? "Bezig..." : "Item Bijwerken"}
+                </Button>
+              </div>
             </div>
           </form>
         </Form>

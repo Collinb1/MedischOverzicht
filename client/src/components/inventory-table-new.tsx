@@ -222,12 +222,10 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
 };
 
 // Actions column with status dropdowns (contact info runs in background)
-const ActionsColumn = ({ item, selectedPost, onEdit, onDelete, deleteLoading }: { 
+const ActionsColumn = ({ item, selectedPost, onEdit }: { 
   item: MedicalItem; 
   selectedPost?: string;
   onEdit: () => void;
-  onDelete: () => void;
-  deleteLoading: boolean;
 }) => {
   return (
     <div className="flex items-center space-x-1">
@@ -244,52 +242,12 @@ const ActionsColumn = ({ item, selectedPost, onEdit, onDelete, deleteLoading }: 
       >
         <Edit className="w-4 h-4" />
       </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onDelete}
-        disabled={deleteLoading}
-        data-testid={`button-delete-${item.id}`}
-        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-      >
-        <Trash2 className="w-4 h-4" />
-      </Button>
     </div>
   );
 };
 
 export default function InventoryTable({ items, isLoading, onRefetch, selectedPost }: InventoryTableProps) {
   const [editingItem, setEditingItem] = useState<MedicalItem | null>(null);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const deleteItemMutation = useMutation({
-    mutationFn: async (itemId: string) => {
-      await apiRequest("DELETE", `/api/medical-items/${itemId}`);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Item verwijderd",
-        description: "Het medische item is succesvol verwijderd.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/medical-items"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/cabinets/summary"] });
-      onRefetch();
-    },
-    onError: () => {
-      toast({
-        title: "Fout bij verwijderen",
-        description: "Er is een fout opgetreden bij het verwijderen van het item.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleDelete = (item: MedicalItem) => {
-    if (confirm(`Weet je zeker dat je "${item.name}" wilt verwijderen?`)) {
-      deleteItemMutation.mutate(item.id);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -364,7 +322,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                       <SupplyRequestColumn item={item} selectedPost={selectedPost} />
                     </TableCell>
                     <TableCell>
-                      <ActionsColumn item={item} selectedPost={selectedPost} onEdit={() => setEditingItem(item)} onDelete={() => handleDelete(item)} deleteLoading={deleteItemMutation.isPending} />
+                      <ActionsColumn item={item} selectedPost={selectedPost} onEdit={() => setEditingItem(item)} />
                     </TableCell>
                   </TableRow>
                 ))
