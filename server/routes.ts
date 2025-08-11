@@ -1025,27 +1025,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { filename } = req.params;
       const imageUrl = `https://storage.googleapis.com/replit-objstore-27aaf1d5-64b6-4b02-b0a5-1f1c5b2375bb/.private/uploads/${filename}`;
       
-      // Fetch the image from object storage
-      const response = await fetch(imageUrl);
+      // Use the ObjectStorageService to get the image
+      const objectStorageService = new ObjectStorageService();
       
-      if (!response.ok) {
-        return res.status(404).json({ message: "Image not found" });
-      }
-      
-      // Get the content type from the response
-      const contentType = response.headers.get('content-type') || 'image/jpeg';
-      
-      // Set appropriate headers
-      res.set({
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=86400', // Cache for 1 day
-      });
-      
-      // Stream the image data to the response
-      if (response.body) {
-        response.body.pipe(res);
-      } else {
-        res.status(500).json({ message: "No image data" });
+      try {
+        const imageBuffer = await objectStorageService.getObject(`.private/uploads/${filename}`);
+        
+        // Determine content type based on file extension
+        const ext = filename.toLowerCase().split('.').pop();
+        let contentType = 'image/jpeg';
+        if (ext === 'png') contentType = 'image/png';
+        if (ext === 'gif') contentType = 'image/gif';
+        if (ext === 'webp') contentType = 'image/webp';
+        
+        // Set appropriate headers
+        res.set({
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=86400', // Cache for 1 day
+        });
+        
+        // Send the image buffer
+        res.send(imageBuffer);
+        
+      } catch (storageError) {
+        if (storageError instanceof ObjectNotFoundError) {
+          return res.status(404).json({ message: "Image not found" });
+        }
+        throw storageError;
       }
       
     } catch (error) {

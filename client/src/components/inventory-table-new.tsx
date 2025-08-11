@@ -119,7 +119,7 @@ const CabinetColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost
   }
 
   // Get unique cabinets for this item
-  const uniqueCabinets = [...new Set(relevantLocations.map((loc: any) => loc.cabinet))];
+  const uniqueCabinets = Array.from(new Set(relevantLocations.map((loc: any) => loc.cabinet)));
 
   return (
     <div className="flex flex-wrap gap-1">
@@ -163,7 +163,7 @@ const DrawerColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost?
   }
 
   // Get unique drawers for this item
-  const uniqueDrawers = [...new Set(relevantLocations.map((loc: any) => loc.drawer).filter(Boolean))];
+  const uniqueDrawers = Array.from(new Set(relevantLocations.map((loc: any) => loc.drawer).filter(Boolean)));
 
   if (uniqueDrawers.length === 0) {
     return <div className="text-sm text-slate-400">-</div>;
@@ -505,7 +505,7 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
             {item.photoUrl && (
               <div className="flex justify-center">
                 <img 
-                  src={`/api/images/${item.photoUrl.split('/').pop()}`}
+                  src={`/api/images/${item.photoUrl.split('/').pop() || ''}`}
                   alt={`Foto van ${item.name}`} 
                   className="max-w-xs max-h-64 object-cover rounded-lg border shadow-sm"
                   onError={(e) => {
