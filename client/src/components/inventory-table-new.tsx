@@ -88,6 +88,120 @@ const ItemStatusIndicator = ({ item, selectedPost }: { item: MedicalItem; select
   );
 };
 
+// Component for cabinet information display
+const CabinetColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost?: string }) => {
+  const { data: locations = [] } = useQuery({
+    queryKey: ['/api/item-locations', item.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/item-locations/${item.id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  const { data: cabinets = [] } = useQuery({
+    queryKey: ['/api/cabinets'],
+    queryFn: async () => {
+      const response = await fetch('/api/cabinets');
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  // Filter locations for selected post if specified
+  const relevantLocations = selectedPost 
+    ? locations.filter((loc: any) => loc.ambulancePostId === selectedPost)
+    : locations;
+
+  if (relevantLocations.length === 0) {
+    return <div className="text-sm text-slate-400">-</div>;
+  }
+
+  // Get unique cabinets for this item
+  const uniqueCabinets = [...new Set(relevantLocations.map((loc: any) => loc.cabinet))];
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {uniqueCabinets.map((cabinetId: string) => {
+        const cabinet = cabinets.find((c: any) => c.id === cabinetId);
+        const cabinetColor = cabinet?.abbreviation ? getCabinetColor(cabinet.abbreviation) : '#6B7280';
+        
+        return (
+          <div 
+            key={cabinetId}
+            className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium"
+            style={{ backgroundColor: `${cabinetColor}20`, borderLeft: `3px solid ${cabinetColor}` }}
+            data-testid={`cabinet-${cabinetId}-${item.id}`}
+          >
+            <span>{cabinet?.abbreviation || cabinetId}</span>
+            <span className="text-xs">📦</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// Component for drawer information display
+const DrawerColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost?: string }) => {
+  const { data: locations = [] } = useQuery({
+    queryKey: ['/api/item-locations', item.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/item-locations/${item.id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  // Filter locations for selected post if specified
+  const relevantLocations = selectedPost 
+    ? locations.filter((loc: any) => loc.ambulancePostId === selectedPost)
+    : locations;
+
+  if (relevantLocations.length === 0) {
+    return <div className="text-sm text-slate-400">-</div>;
+  }
+
+  // Get unique drawers for this item
+  const uniqueDrawers = [...new Set(relevantLocations.map((loc: any) => loc.drawer).filter(Boolean))];
+
+  if (uniqueDrawers.length === 0) {
+    return <div className="text-sm text-slate-400">-</div>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {uniqueDrawers.map((drawer: string, index: number) => (
+        <div 
+          key={index}
+          className="px-2 py-1 bg-slate-100 rounded-md text-xs text-slate-700"
+          data-testid={`drawer-${drawer}-${item.id}`}
+        >
+          {drawer}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Helper function to get cabinet colors
+const getCabinetColor = (abbreviation: string): string => {
+  const colors: { [key: string]: string } = {
+    'A': '#EF4444',    // Red
+    'Ab': '#F97316',   // Orange  
+    'B': '#EAB308',    // Yellow
+    'C': '#22C55E',    // Green
+    'D': '#3B82F6',    // Blue
+    'E': '#A855F7',    // Purple
+    'F': '#EC4899',    // Pink
+    'G': '#06B6D4',    // Cyan
+    'H': '#84CC16',    // Lime
+    'I': '#F59E0B',    // Amber
+  };
+  
+  return colors[abbreviation] || '#6B7280'; // Default gray
+};
+
 // Component for table row with status-based background color
 const StatusTableRow = ({ item, selectedPost, children }: { 
   item: MedicalItem; 
@@ -313,6 +427,8 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
             <TableHeader>
               <TableRow className="bg-slate-50">
                 <TableHead>Item</TableHead>
+                <TableHead>Kast</TableHead>
+                <TableHead>Lade</TableHead>
                 <TableHead>Categorie</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Aanvulverzoek</TableHead>
@@ -322,7 +438,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-slate-500">
                     Geen items gevonden
                   </TableCell>
                 </TableRow>
@@ -354,6 +470,12 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                           </div>
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell data-testid={`cabinet-column-${item.id}`}>
+                      <CabinetColumn item={item} selectedPost={selectedPost} />
+                    </TableCell>
+                    <TableCell data-testid={`drawer-column-${item.id}`}>
+                      <DrawerColumn item={item} selectedPost={selectedPost} />
                     </TableCell>
                     <TableCell className="text-sm text-slate-600" data-testid={`text-category-${item.id}`}>
                       <div className="flex items-center space-x-2">
