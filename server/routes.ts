@@ -914,6 +914,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send supply request email for specific location with contact person
+  app.post("/api/supply-request/:locationId", async (req, res) => {
+    try {
+      const locationId = req.params.locationId;
+      
+      // Get the location details
+      const location = await storage.getItemLocation(locationId);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+      
+      // Get the item details
+      const item = await storage.getMedicalItem(location.itemId);
+      if (!item) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      
+      // Get contact person details
+      let contactPerson = null;
+      if (location.contactPersonId) {
+        contactPerson = await storage.getPostContact(location.contactPersonId);
+      }
+      
+      // Get ambulance post details
+      const ambulancePost = await storage.getAmbulancePost(location.ambulancePostId);
+      
+      if (!contactPerson) {
+        return res.status(400).json({ message: "Geen contactpersoon gevonden voor deze locatie" });
+      }
+      
+      console.log(`Supply request sent for item ${item.name} at ${ambulancePost?.name} to ${contactPerson.email}`);
+      
+      res.json({ 
+        message: `Aanvulverzoek verzonden naar ${contactPerson.name} (${contactPerson.email})`,
+        contactPerson: contactPerson.name,
+        email: contactPerson.email,
+        itemName: item.name,
+        location: `${ambulancePost?.name} - Kast ${location.cabinet}`
+      });
+    } catch (error) {
+      console.error("Error sending supply request:", error);
+      res.status(500).json({ message: "Failed to send supply request" });
+    }
+  });
+
+  // Update item location stock status
+  app.patch("/api/item-locations/:locationId/status", async (req, res) => {
+    try {
+      const { stockStatus } = req.body;
+      const isLowStock = stockStatus === 'bijna-op' || stockStatus === 'niet-meer-aanwezig';
+      
+      const updatedLocation = await storage.updateItemLocation(req.params.locationId, {
+        stockStatus,
+        isLowStock
+      });
+      
+      if (!updatedLocation) {
+        return res.status(404).json({ message: "Item location not found" });
+      }
+      
+      res.json(updatedLocation);
+    } catch (error) {
+      console.error("Error updating location status:", error);
+      res.status(500).json({ message: "Failed to update location status" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

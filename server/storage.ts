@@ -115,6 +115,11 @@ export class DatabaseStorage implements IStorage {
 
   async getItemLocation(id: string): Promise<ItemLocation | undefined> {
     const [location] = await db.select().from(itemLocations).where(eq(itemLocations.id, id));
+    return location || undefined;
+  }
+
+  async getItemLocation(id: string): Promise<ItemLocation | undefined> {
+    const [location] = await db.select().from(itemLocations).where(eq(itemLocations.id, id));
     return location;
   }
 
@@ -264,7 +269,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAmbulancePost(id: string): Promise<AmbulancePost | undefined> {
     const [post] = await db.select().from(ambulancePosts).where(eq(ambulancePosts.id, id));
-    return post;
+    return post || undefined;
   }
 
   async createAmbulancePost(post: InsertAmbulancePost): Promise<AmbulancePost> {
@@ -291,6 +296,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(postContacts);
   }
 
+  async getPostContact(id: string): Promise<PostContact | undefined> {
+    const [contact] = await db.select().from(postContacts).where(eq(postContacts.id, id));
+    return contact || undefined;
+  }
+
   async getPostContactsByPost(ambulancePostId: string): Promise<PostContact[]> {
     return await db.select().from(postContacts).where(eq(postContacts.ambulancePostId, ambulancePostId));
   }
@@ -313,6 +323,8 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(postContacts).where(eq(postContacts.id, id));
     return (result.rowCount ?? 0) > 0;
   }
+
+  // Removed duplicate getAmbulancePost method - already exists above
 }
 
 export const storage = new DatabaseStorage();

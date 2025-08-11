@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Edit, Trash2, Mail, Download, Plus, AlertTriangle, Send, CheckCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,13 +8,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { EditItemDialog } from "../components/edit-item-dialog";
-import type { MedicalItem, EmailNotification } from "@shared/schema";
+import { LocationStockStatus } from "../components/location-stock-status";
+import type { MedicalItem, EmailNotification, ItemLocation, PostContact, AmbulancePost } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 interface InventoryTableProps {
   items: MedicalItem[];
   isLoading: boolean;
   onRefetch: () => void;
+}
+
+interface ItemLocationWithDetails extends ItemLocation {
+  item: MedicalItem;
+  contactPerson?: PostContact;
+  ambulancePostName?: string;
 }
 
 // Helper function to get cabinet color from cabinet data
@@ -38,25 +45,7 @@ const getCategoryIcon = (category: string) => {
   return icons[category as keyof typeof icons] || "📦";
 };
 
-const getStockStatusColor = (item: MedicalItem) => {
-  if (item.stockStatus) {
-    switch (item.stockStatus) {
-      case "op-voorraad":
-        return { color: "bg-green-500", tooltip: "Op voorraad" };
-      case "bijna-op":
-        return { color: "bg-orange-500", tooltip: "Bijna op" };
-      case "niet-meer-aanwezig":
-        return { color: "bg-red-500", tooltip: "Niet meer aanwezig" };
-      default:
-        return { color: "bg-green-500", tooltip: "Op voorraad" };
-    }
-  }
-  // Fallback to old logic for items without stockStatus
-  if (item.isLowStock) {
-    return { color: "bg-orange-500", tooltip: "Bijna op" };
-  }
-  return { color: "bg-green-500", tooltip: "Op voorraad" };
-};
+// Removed getStockStatusColor as we now handle this per location
 
 // Component voor Aanvulverzoek knop/status
 const SupplyRequestButton = ({ item, onStockStatusChange }: { 
@@ -416,15 +405,14 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                 <TableHead>Kast</TableHead>
                 <TableHead>Lade</TableHead>
                 <TableHead>Categorie</TableHead>
-                <TableHead>Voorraad Status</TableHead>
-                <TableHead>Aanvulverzoek</TableHead>
+                <TableHead>Locaties & Status</TableHead>
                 <TableHead>Acties</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                     Geen items gevonden
                   </TableCell>
                 </TableRow>
@@ -436,7 +424,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                   if (!a.photoUrl && b.photoUrl) return 1;
                   return 0;
                 }).map((item) => {
-                  const stockStatusColor = getStockStatusColor(item);
+                  // Removed stockStatusColor as we now handle status per location
                   return (
                     <TableRow key={item.id} className="hover:bg-slate-50" data-testid={`row-item-${item.id}`}>
                       <TableCell>
@@ -479,34 +467,11 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                       <TableCell className="text-xs text-slate-900" data-testid={`text-category-${item.id}`}>
                         {item.category}
                       </TableCell>
-                      <TableCell className="text-center">
-                        <div 
-                          className={`w-4 h-4 rounded-full ${stockStatusColor.color} mx-auto`}
-                          title={stockStatusColor.tooltip}
-                          data-testid={`status-indicator-${item.id}`}
-                        />
-                      </TableCell>
-                      <TableCell data-testid={`supply-request-${item.id}`}>
-                        <SupplyRequestButton item={item} onStockStatusChange={handleStockStatusChange} />
+                      <TableCell data-testid={`location-status-${item.id}`}>
+                        <LocationStockStatus item={item} />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-1">
-                          {/* Stock Status Dropdown */}
-                          <Select 
-                            value={item.stockStatus || "op-voorraad"} 
-                            onValueChange={(value) => handleStockStatusChange(item, value)}
-                            disabled={updateStockStatusMutation.isPending}
-                          >
-                            <SelectTrigger className="w-32 h-8 text-xs" data-testid={`select-status-${item.id}`}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="op-voorraad" className="text-xs">Op voorraad</SelectItem>
-                              <SelectItem value="bijna-op" className="text-xs">Bijna op</SelectItem>
-                              <SelectItem value="niet-meer-aanwezig" className="text-xs">Niet meer aanwezig</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          
                           <Button
                             variant="ghost"
                             size="sm"
