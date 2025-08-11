@@ -60,6 +60,7 @@ export interface IStorage {
   getAllSupplyRequests(): Promise<SupplyRequest[]>;
   getSupplyRequestsByItem(itemId: string, ambulancePost?: string): Promise<SupplyRequest[]>;
   createSupplyRequest(request: InsertSupplyRequest): Promise<SupplyRequest>;
+  deleteSupplyRequestsByLocation(locationId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -352,6 +353,11 @@ export class DatabaseStorage implements IStorage {
   async createSupplyRequest(request: InsertSupplyRequest): Promise<SupplyRequest> {
     const [newRequest] = await db.insert(supplyRequests).values(request).returning();
     return newRequest;
+  }
+
+  async deleteSupplyRequestsByLocation(locationId: string): Promise<boolean> {
+    const result = await db.delete(supplyRequests).where(eq(supplyRequests.locationId, locationId));
+    return (result.rowCount ?? 0) > 0;
   }
 }
 

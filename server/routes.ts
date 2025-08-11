@@ -635,6 +635,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isLowStock: false, 
           stockStatus: "op-voorraad" 
         });
+        // Also delete any supply requests for this location
+        await storage.deleteSupplyRequestsByLocation(location.id);
       }
       
       res.json({ 
@@ -1003,6 +1005,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!updatedLocation) {
         return res.status(404).json({ message: "Item location not found" });
+      }
+      
+      // If status is set back to "op-voorraad", delete any supply requests for this location
+      if (stockStatus === 'op-voorraad') {
+        await storage.deleteSupplyRequestsByLocation(req.params.locationId);
       }
       
       res.json(updatedLocation);
