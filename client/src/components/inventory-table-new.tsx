@@ -129,12 +129,11 @@ const CabinetColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost
         return (
           <div 
             key={cabinetId}
-            className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium"
-            style={{ backgroundColor: `${cabinetColor}20`, borderLeft: `3px solid ${cabinetColor}` }}
+            className="flex items-center justify-center px-3 py-2 rounded-md text-sm font-bold text-white min-w-[40px]"
+            style={{ backgroundColor: cabinetColor }}
             data-testid={`cabinet-${cabinetId}-${item.id}`}
           >
             <span>{cabinet?.abbreviation || cabinetId}</span>
-            <span className="text-xs">📦</span>
           </div>
         );
       })}
