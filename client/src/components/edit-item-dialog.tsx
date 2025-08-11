@@ -43,7 +43,7 @@ import { ObjectUploader } from "@/components/ObjectUploader";
 import AddCabinetDialog from "@/components/add-cabinet-dialog";
 import AddPostDialog from "@/components/add-post-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Package2, MapPin, Calendar, Mail, AlertTriangle, Camera, Save, X } from "lucide-react";
+import { Plus, Trash2, Package2, MapPin, Calendar, AlertTriangle, Camera, Save, X } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { MedicalItem, AmbulancePost, Cabinet, ItemLocation, PostContact } from "@shared/schema";
 import { CategorySelector } from "./category-selector";
@@ -474,63 +474,35 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
-                  Vervaldatum & Notificaties
+                  Vervaldatum
                 </CardTitle>
                 <CardDescription>
-                  Vervaldatum en email instellingen voor automatische waarschuwingen
+                  Vervaldatum van het medische item
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="expiryDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-sm font-medium">
-                          <Calendar className="h-4 w-4" />
-                          Vervaldatum
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="date" 
-                            {...field} 
-                            value={field.value || ''}
-                            data-testid="input-expiry-date"
-                            className="focus:ring-2 focus:ring-blue-500"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="alertEmail"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-sm font-medium">
-                          <Mail className="h-4 w-4" />
-                          Alert Email
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="email" 
-                            placeholder="email@voorbeeld.nl"
-                            {...field} 
-                            data-testid="input-alert-email"
-                            className="focus:ring-2 focus:ring-blue-500"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                        <p className="text-xs text-muted-foreground">
-                          Email adres voor automatische vervaldatum waarschuwingen
-                        </p>
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="expiryDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-sm font-medium">
+                        <Calendar className="h-4 w-4" />
+                        Vervaldatum
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="date" 
+                          {...field} 
+                          value={field.value || ''}
+                          data-testid="input-expiry-date"
+                          className="focus:ring-2 focus:ring-blue-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
 

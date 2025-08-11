@@ -57,3 +57,5 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-11: Automatische foto compressie geïmplementeerd - grote bestanden (tot 20MB) worden automatisch gecomprimeerd naar max 5MB, 1200px breed, voor snellere uploads en betere performance
 - 2025-08-11: HEIC naar JPG conversie toegevoegd - iPhone foto's worden automatisch geconverteerd naar JPG formaat voor universele compatibiliteit
 - 2025-08-11: Backup/export functionaliteit geïmplementeerd - gebruikers kunnen volledige JSON backups exporteren en importeren van alle medische items, locaties, posten en instellingen via Instellingen menu
+- 2025-08-11: Edit item dialog volledig verfraaid met professionele Card-based layout, sectie-indeling met iconen, betere focus styling en hover effecten
+- 2025-08-11: Email alert veld verwijderd uit item bewerken formulier - vervaldatum sectie vereenvoudigd naar alleen vervaldatum veld
