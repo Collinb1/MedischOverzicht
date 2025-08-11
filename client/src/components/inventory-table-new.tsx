@@ -505,16 +505,15 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
             {item.photoUrl && (
               <div className="flex justify-center">
                 <img 
-                  src={item.photoUrl.replace('/.private/', '/public/')} 
+                  src={`/api/images/${item.photoUrl.split('/').pop()}`}
                   alt={`Foto van ${item.name}`} 
                   className="max-w-xs max-h-64 object-cover rounded-lg border shadow-sm"
                   onError={(e) => {
-                    console.error('Image failed to load:', item.photoUrl);
-                    console.error('Error event:', e);
+                    console.error('Image failed to load via proxy, trying direct URL:', item.photoUrl);
                     // Try original URL as fallback
                     e.currentTarget.src = item.photoUrl;
                   }}
-                  onLoad={() => console.log('Image loaded successfully:', item.photoUrl)}
+                  onLoad={() => console.log('Image loaded successfully via proxy')}
                 />
               </div>
             )}
