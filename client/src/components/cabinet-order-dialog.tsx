@@ -75,6 +75,7 @@ export function CabinetOrderDialog({
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/cabinets/summary"] });
       queryClient.invalidateQueries({ queryKey: ["/api/ambulance-posts", ambulancePostId, "cabinets", "ordered"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ambulance-posts"] });
       onOpenChange(false);
     },
     onError: (error) => {

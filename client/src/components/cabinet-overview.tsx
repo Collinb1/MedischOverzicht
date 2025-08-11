@@ -39,37 +39,41 @@ export default function CabinetOverview({
 }: CabinetOverviewProps) {
   const [showOrderDialog, setShowOrderDialog] = useState(false);
 
-  // Get ordered cabinets for the selected post, fall back to regular cabinet summary
-  const { data: cabinets = [] } = useQuery<CabinetSummary[]>({
-    queryKey: selectedAmbulancePost 
-      ? ["/api/ambulance-posts", selectedAmbulancePost, "cabinets", "summary"]
-      : ["/api/cabinets/summary"],
+  // Get cabinet summary data
+  const { data: summaryData = [] } = useQuery<CabinetSummary[]>({
+    queryKey: ["/api/cabinets/summary"],
     queryFn: async () => {
-      if (selectedAmbulancePost) {
-        // Get ordered cabinets and their summary data
-        const orderedCabinets = await fetch(`/api/ambulance-posts/${selectedAmbulancePost}/cabinets/ordered`).then(r => r.json());
-        const summaryData = await fetch(`/api/cabinets/summary`).then(r => r.json());
-        
-        // Merge and return in the custom order
-        const orderedSummary = orderedCabinets.map((cabinet: any) => {
-          const summary = summaryData.find((s: CabinetSummary) => s.id === cabinet.id);
-          return summary || {
-            id: cabinet.id,
-            name: cabinet.name,
-            abbreviation: cabinet.abbreviation,
-            totalItems: 0,
-            totalQuantity: 0,
-            lowStockItems: 0,
-            categories: {}
-          };
-        });
-        
-        return orderedSummary;
-      }
-      // Default behavior - fetch regular summary
-      return fetch("/api/cabinets/summary").then(r => r.json());
+      const response = await fetch("/api/cabinets/summary");
+      return response.json();
     }
   });
+
+  // Get ordered cabinets for the selected post
+  const { data: orderedCabinets = [] } = useQuery<any[]>({
+    queryKey: ["/api/ambulance-posts", selectedAmbulancePost, "cabinets", "ordered"],
+    queryFn: async () => {
+      if (!selectedAmbulancePost) return [];
+      const response = await fetch(`/api/ambulance-posts/${selectedAmbulancePost}/cabinets/ordered`);
+      return response.json();
+    },
+    enabled: !!selectedAmbulancePost,
+  });
+
+  // Combine ordered cabinets with their summary data
+  const cabinets = selectedAmbulancePost && orderedCabinets.length > 0
+    ? orderedCabinets.map((cabinet: any) => {
+        const summary = summaryData.find((s: CabinetSummary) => s.id === cabinet.id);
+        return summary || {
+          id: cabinet.id,
+          name: cabinet.name,
+          abbreviation: cabinet.abbreviation,
+          totalItems: 0,
+          totalQuantity: 0,
+          lowStockItems: 0,
+          categories: {}
+        };
+      })
+    : summaryData;
 
   return (
     <div className="mb-8">
