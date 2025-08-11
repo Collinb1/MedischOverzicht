@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin, Archive, Lock } from "lucide-react";
+import { Search, Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin, Archive } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 import CabinetOverview from "../components/cabinet-overview";
 import InventoryTable from "../components/inventory-table-new";
 import AddItemDialog from "../components/add-item-dialog";
@@ -25,54 +22,6 @@ export default function Home() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<string>("");
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [passwordInput, setPasswordInput] = useState("");
-  const [isAdminMode, setIsAdminMode] = useState(false);
-  const { toast } = useToast();
-
-  // Load admin mode from localStorage on component mount
-  useEffect(() => {
-    const savedAdminMode = localStorage.getItem('medInventoryAdminMode');
-    if (savedAdminMode === 'true') {
-      setIsAdminMode(true);
-    }
-  }, []);
-
-  const toggleAdminMode = () => {
-    const newAdminMode = !isAdminMode;
-    setIsAdminMode(newAdminMode);
-    localStorage.setItem('medInventoryAdminMode', newAdminMode.toString());
-    
-    toast({
-      title: newAdminMode ? "Beheerdersmode Ingeschakeld" : "Beheerdersmode Uitgeschakeld",
-      description: newAdminMode 
-        ? "Uitgebreide beheersfuncties zijn nu beschikbaar."
-        : "Basis gebruikersinterface is hersteld.",
-    });
-  };
-
-  const handlePasswordSubmit = () => {
-    if (passwordInput === "63696") {
-      setShowPasswordDialog(false);
-      setPasswordInput("");
-      setShowSettingsDialog(true);
-      toast({
-        title: "Toegang verleend",
-        description: "Instellingen zijn nu toegankelijk.",
-      });
-    } else {
-      toast({
-        title: "Onjuiste wachtwoordcode",
-        description: "Voer de juiste toegangscode in om instellingen te openen.",
-        variant: "destructive",
-      });
-      setPasswordInput("");
-    }
-  };
-
-  const handleAdvancedSettingsClick = () => {
-    setShowPasswordDialog(true);
-  };
 
   const { data: items = [], isLoading, refetch } = useQuery<MedicalItem[]>({
     queryKey: ["/api/medical-items", selectedCabinet, selectedCategory, searchTerm, selectedPost],
@@ -199,25 +148,38 @@ export default function Home() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <div className="px-3 py-2 border-b">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium">Beheerdersmode</Label>
-                      <Switch
-                        checked={isAdminMode}
-                        onCheckedChange={toggleAdminMode}
-                        data-testid="switch-admin-mode"
-                        className="scale-75"
-                      />
-                    </div>
-                  </div>
+                  <DropdownMenuItem asChild>
+                    <Link href="/voorraad-overzicht" data-testid="menu-stock-overview">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4" />
+                        Voorraad Overzicht
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={handleAdvancedSettingsClick}
-                    data-testid="menu-advanced-settings"
+                    onClick={() => setShowSettingsDialog(true)}
+                    data-testid="menu-cabinet-management"
                   >
                     <div className="flex items-center gap-2">
-                      <Settings className="w-4 h-4" />
-                      Uitgebreide Instellingen
+                      <Archive className="w-4 h-4" />
+                      Kasten Beheren
                     </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/email-settings" data-testid="menu-email-settings">
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        Email Instellingen
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/ambulance-posts" data-testid="menu-ambulance-posts">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        Posten Beheer
+                      </div>
+                    </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -299,54 +261,11 @@ export default function Home() {
           selectedPost={selectedPost}
         />
 
-        {/* Password Dialog */}
-        <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Lock className="w-5 h-5" />
-                Toegangscode Vereist
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Voer de toegangscode in om instellingen te openen.
-              </p>
-              <Input
-                type="password"
-                placeholder="Voer toegangscode in"
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
-                data-testid="input-password"
-                className="text-center"
-              />
-              <div className="flex gap-2 justify-end">
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setShowPasswordDialog(false);
-                    setPasswordInput("");
-                  }}
-                >
-                  Annuleren
-                </Button>
-                <Button 
-                  onClick={handlePasswordSubmit}
-                  data-testid="button-submit-password"
-                >
-                  Openen
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
         {/* Settings Dialog */}
         <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Uitgebreide Instellingen</DialogTitle>
+              <DialogTitle>Instellingen</DialogTitle>
             </DialogHeader>
             <CabinetManagement />
           </DialogContent>
