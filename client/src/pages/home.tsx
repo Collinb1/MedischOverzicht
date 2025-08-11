@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin, Archive, Activity } from "lucide-react";
+import { Search, Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin, Archive } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +12,6 @@ import CabinetOverview from "../components/cabinet-overview";
 import InventoryTable from "../components/inventory-table-new";
 import AddItemDialog from "../components/add-item-dialog";
 import CabinetManagement from "../components/cabinet-management";
-import { ProfessionalTableSkeleton, ProfessionalSearchSkeleton } from "../components/professional-loading";
-import { ProfessionalError } from "../components/professional-error";
 import type { MedicalItem, AmbulancePost } from "@shared/schema";
 import ravLogo from "@assets/IMG_0009_1754910857700.png";
 
@@ -94,30 +92,29 @@ export default function Home() {
   const categories = Array.from(new Set(items.map(item => item.category)));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Professional Header */}
-      <header className="medical-header sticky top-0 z-50">
-        <div className="medical-container">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg overflow-hidden">
+    <div className="min-h-screen bg-medical-light">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-20 h-20 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
                 <img 
                   src={ravLogo} 
                   alt="RAV FL&GV Logo" 
-                  className="w-14 h-14 object-contain"
+                  className="w-full h-full object-contain"
                   data-testid="logo-rav"
                 />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">MedInventory</h1>
-                <p className="text-sm text-slate-600 font-medium">RAV FL&GV • Medische Voorraad Beheer</p>
+                <h1 className="text-xl font-semibold text-slate-900">MedInventory</h1>
+                <p className="text-sm text-slate-500">Medische Voorraad Beheer</p>
               </div>
             </div>
-            <div className="flex items-center space-x-6">
-              <div className="hidden sm:flex items-center space-x-3">
-                <span className="text-sm font-medium text-slate-700">Ambulancepost:</span>
+            <div className="flex items-center space-x-4">
+              <div className="hidden sm:flex items-center space-x-2 text-sm text-slate-600">
                 <Select value={selectedPost} onValueChange={setSelectedPost}>
-                  <SelectTrigger className="w-48 h-10 border-slate-300 shadow-sm">
+                  <SelectTrigger className="w-40 h-8 text-xs">
                     <SelectValue placeholder="Selecteer post" />
                   </SelectTrigger>
                   <SelectContent>
@@ -131,27 +128,25 @@ export default function Home() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center space-x-3">
-                <Button 
-                  onClick={() => setIsAddDialogOpen(true)}
-                  className="btn-medical-primary h-10 px-6 shadow-sm"
-                  data-testid="button-add-item"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nieuw Item
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="h-10 px-4 border-slate-300 shadow-sm hover:bg-slate-50"
-                      data-testid="button-settings"
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Instellingen
-                      <ChevronDown className="w-3 h-3 ml-2 text-slate-500" />
-                    </Button>
-                  </DropdownMenuTrigger>
+              <Button 
+                onClick={() => setIsAddDialogOpen(true)}
+                className="bg-medical-blue hover:bg-blue-700"
+                data-testid="button-add-item"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Item Toevoegen
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    data-testid="button-settings"
+                    className="px-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
                     <Link href="/voorraad-overzicht" data-testid="menu-stock-overview">
@@ -188,46 +183,33 @@ export default function Home() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="medical-container py-8">
-        {/* Professional Search and Filters Section */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Search and Filters */}
         <div className="mb-8">
-          {isLoading ? (
-            <ProfessionalSearchSkeleton />
-          ) : (
-            <div className="medical-card medical-fade-in">
-              <div className="medical-card-header">
-                <Search className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-semibold text-slate-900">Zoeken & Filteren</h2>
-                {selectedPost && (
-                  <div className="ml-auto flex items-center gap-2 text-sm text-slate-500">
-                    <Activity className="w-4 h-4" />
-                    <span>{ambulancePosts.find((p: any) => p.id === selectedPost)?.name}</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex-1 max-w-lg">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex-1 max-w-md">
                   <div className="relative">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                     <Input
                       type="text"
-                      placeholder="Zoek op naam, beschrijving of categorie..."
+                      placeholder="Zoek medische voorraad..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-12 h-12 text-base border-slate-300 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="pl-10"
                       data-testid="input-search"
                     />
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2">
                   <Select value={selectedCabinet} onValueChange={setSelectedCabinet}>
-                    <SelectTrigger className="w-44 h-12 border-slate-300 shadow-sm" data-testid="select-cabinet">
+                    <SelectTrigger className="w-40" data-testid="select-cabinet">
                       <SelectValue placeholder="Alle Kasten" />
                     </SelectTrigger>
                     <SelectContent>
@@ -240,7 +222,7 @@ export default function Home() {
                     </SelectContent>
                   </Select>
                   <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-44 h-12 border-slate-300 shadow-sm" data-testid="select-category">
+                    <SelectTrigger className="w-40" data-testid="select-category">
                       <SelectValue placeholder="Alle Categorieën" />
                     </SelectTrigger>
                     <SelectContent>
@@ -252,8 +234,8 @@ export default function Home() {
                   </Select>
                 </div>
               </div>
-            </div>
-          )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Cabinet Overview */}
@@ -263,25 +245,13 @@ export default function Home() {
           ambulancePostName={ambulancePosts.find((p: any) => p.id === selectedPost)?.name}
         />
 
-        {/* Professional Detailed Inventory */}
-        {!selectedPost ? (
-          <ProfessionalError 
-            title="Geen ambulancepost geselecteerd"
-            message="Selecteer een ambulancepost in de header om de medische inventaris te bekijken."
-            showRetry={false}
-          />
-        ) : isLoading ? (
-          <ProfessionalTableSkeleton />
-        ) : (
-          <div className="medical-slide-up">
-            <InventoryTable 
-              items={items} 
-              isLoading={isLoading} 
-              onRefetch={refetch}
-              selectedPost={selectedPost}
-            />
-          </div>
-        )}
+        {/* Detailed Inventory */}
+        <InventoryTable 
+          items={items} 
+          isLoading={isLoading} 
+          onRefetch={refetch}
+          selectedPost={selectedPost}
+        />
 
         {/* Add Item Dialog */}
         <AddItemDialog 

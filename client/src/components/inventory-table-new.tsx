@@ -792,26 +792,10 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
   });
 
   return (
-    <div className="medical-card medical-slide-up">
-      <div className="medical-card-header">
-        <div className="w-5 h-5 rounded bg-blue-100 flex items-center justify-center">
-          <span className="text-blue-600 text-xs font-bold">📋</span>
-        </div>
-        <h2 className="text-lg font-semibold text-slate-900">
-          Medische Inventaris
-        </h2>
-        <div className="ml-auto flex items-center gap-3 text-sm text-slate-500">
-          <span className="font-medium">{items.length} items</span>
-          {items.length > 0 && (
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span>Actief</span>
-            </div>
-          )}
-        </div>
-      </div>
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+      <div className="p-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">Inventaris Overzicht</h2>
         
-      <div className="space-y-6">
         {/* Mobile Layout */}
         {isMobile ? (
           <div className="space-y-3">
@@ -832,31 +816,25 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
             )}
           </div>
         ) : (
-          /* Professional Desktop Layout */
-          <div className="overflow-hidden rounded-lg border border-slate-200">
-            <Table className="medical-table">
-              <TableHeader>
-                <TableRow className="bg-slate-50 hover:bg-slate-50">
-                  <TableHead className="w-20 text-center font-semibold text-slate-700 py-4">Foto</TableHead>
-                  <TableHead className="font-semibold text-slate-700 py-4">Medisch Item</TableHead>
-                  <TableHead className="w-24 text-center font-semibold text-slate-700 py-4">Locatie</TableHead>
-                  <TableHead className="w-32 text-center font-semibold text-slate-700 py-4">Categorie</TableHead>
-                  <TableHead className="w-20 text-center font-semibold text-slate-700 py-4">Status</TableHead>
-                  <TableHead className="w-40 text-center font-semibold text-slate-700 py-4">Aanvulverzoek</TableHead>
-                  <TableHead className="w-32 text-center font-semibold text-slate-700 py-4">Acties</TableHead>
-                </TableRow>
-              </TableHeader>
+          /* Desktop Layout */
+          <div className="overflow-x-auto">
+            <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                <TableHead>Item</TableHead>
+                <TableHead>Kast</TableHead>
+                <TableHead>Lade</TableHead>
+                <TableHead>Categorie</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Aanvulverzoek</TableHead>
+                <TableHead>Acties</TableHead>
+              </TableRow>
+            </TableHeader>
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
-                        <span className="text-slate-400 text-xl">📦</span>
-                      </div>
-                      <div className="text-slate-500 font-medium">Geen items gevonden</div>
-                      <div className="text-slate-400 text-sm">Voeg nieuwe medische items toe om de inventaris te vullen</div>
-                    </div>
+                  <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                    Geen items gevonden
                   </TableCell>
                 </TableRow>
               ) : (
@@ -930,7 +908,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
               )}
             </TableBody>
           </Table>
-          </div>
+        </div>
         )}
       </div>
 
