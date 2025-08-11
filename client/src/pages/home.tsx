@@ -98,7 +98,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
+              <div className="w-16 h-16 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
                 <img 
                   src={ravLogo} 
                   alt="RAV FL&GV Logo" 
