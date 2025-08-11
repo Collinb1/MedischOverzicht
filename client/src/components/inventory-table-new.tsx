@@ -252,42 +252,30 @@ const ActionsColumn = ({ item, selectedPost, onEdit, onDelete, deleteLoading }: 
   const contactInfo = getContactInfo();
 
   return (
-    <div className="flex flex-col space-y-2">
+    <div className="flex items-center space-x-1">
       {/* Status dropdowns for each location */}
-      <div className="flex flex-wrap gap-1">
-        <LocationStockStatus item={item} selectedPost={selectedPost} />
-      </div>
-      
-      {/* Contact info */}
-      {contactInfo && contactInfo.contact && (
-        <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
-          <div className="font-medium">{contactInfo.post?.name}</div>
-          <div>{contactInfo.contact.name}</div>
-          <div>{contactInfo.contact.email}</div>
-        </div>
-      )}
+      <LocationStockStatus item={item} selectedPost={selectedPost} />
       
       {/* Action buttons */}
-      <div className="flex items-center space-x-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onEdit}
-          data-testid={`button-edit-${item.id}`}
-        >
-          <Edit className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onDelete}
-          disabled={deleteLoading}
-          data-testid={`button-delete-${item.id}`}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onEdit}
+        data-testid={`button-edit-${item.id}`}
+        className="ml-2"
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onDelete}
+        disabled={deleteLoading}
+        data-testid={`button-delete-${item.id}`}
+        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
     </div>
   );
 };

@@ -47,3 +47,5 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-01-10: Locatie overzicht verwijderd uit instellingen menu en "Locatie Details" hernoemd naar "Locatie Item per post"
 - 2025-08-11: Contactpersoon kolom toegevoegd aan itemLocations database schema en beide item dialogs (nieuw + bewerken)
 - 2025-08-11: Contactpersoon selectie functionaliteit geïmplementeerd - gebruikers kunnen contactpersonen per ambulancepost selecteren voor voorraadbeheer
+- 2025-08-11: Inventaris tabel herontwerp - beschrijving/vervaldatum kolommen verwijderd, status kolom toont alleen kleurtjes, aanvulverzoek en acties gescheiden
+- 2025-08-11: Status iconen geoptimaliseerd - alleen kleurcirkels zonder tekst voor compacte weergave
