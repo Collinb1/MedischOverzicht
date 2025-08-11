@@ -46,9 +46,8 @@ const ItemStatusIndicator = ({ item, selectedPost }: { item: MedicalItem; select
 
   if (relevantLocations.length === 0) {
     return (
-      <div className="flex items-center space-x-2">
-        <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-        <span className="text-xs text-gray-500">Geen locaties</span>
+      <div className="flex justify-center" title="Geen locaties">
+        <div className="w-4 h-4 rounded-full bg-gray-300"></div>
       </div>
     );
   }
@@ -60,35 +59,31 @@ const ItemStatusIndicator = ({ item, selectedPost }: { item: MedicalItem; select
 
   if (hasUnavailable) {
     return (
-      <div className="flex items-center space-x-2" data-testid={`status-unavailable-${item.id}`}>
-        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-        <span className="text-xs text-red-700 font-medium">Niet beschikbaar</span>
+      <div className="flex justify-center" data-testid={`status-unavailable-${item.id}`} title="Niet beschikbaar">
+        <div className="w-4 h-4 rounded-full bg-red-500"></div>
       </div>
     );
   }
 
   if (hasLowStock) {
     return (
-      <div className="flex items-center space-x-2" data-testid={`status-low-${item.id}`}>
-        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-        <span className="text-xs text-yellow-700 font-medium">Bijna op</span>
+      <div className="flex justify-center" data-testid={`status-low-${item.id}`} title="Bijna op">
+        <div className="w-4 h-4 rounded-full bg-yellow-500"></div>
       </div>
     );
   }
 
   if (allInStock) {
     return (
-      <div className="flex items-center space-x-2" data-testid={`status-available-${item.id}`}>
-        <div className="w-3 h-3 rounded-full bg-green-500"></div>
-        <span className="text-xs text-green-700 font-medium">Op voorraad</span>
+      <div className="flex justify-center" data-testid={`status-available-${item.id}`} title="Op voorraad">
+        <div className="w-4 h-4 rounded-full bg-green-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center space-x-2">
-      <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-      <span className="text-xs text-gray-500">Onbekend</span>
+    <div className="flex justify-center" title="Onbekend">
+      <div className="w-4 h-4 rounded-full bg-gray-300"></div>
     </div>
   );
 };
@@ -203,6 +198,100 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
   return null;
 };
 
+// Actions column with status dropdowns and contact info
+const ActionsColumn = ({ item, selectedPost, onEdit, onDelete, deleteLoading }: { 
+  item: MedicalItem; 
+  selectedPost?: string;
+  onEdit: () => void;
+  onDelete: () => void;
+  deleteLoading: boolean;
+}) => {
+  const { data: locations = [] } = useQuery({
+    queryKey: ['/api/item-locations', item.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/item-locations/${item.id}`);
+      if (!response.ok) throw new Error("Failed to fetch locations");
+      return response.json();
+    },
+  });
+
+  const { data: postContacts = [] } = useQuery({
+    queryKey: ['/api/post-contacts'],
+    queryFn: async () => {
+      const response = await fetch('/api/post-contacts');
+      if (!response.ok) throw new Error("Failed to fetch contacts");
+      return response.json();
+    },
+  });
+
+  const { data: ambulancePosts = [] } = useQuery({
+    queryKey: ['/api/ambulance-posts'],
+    queryFn: async () => {
+      const response = await fetch('/api/ambulance-posts');
+      if (!response.ok) throw new Error("Failed to fetch posts");
+      return response.json();
+    },
+  });
+
+  // Filter locations for selected post
+  const relevantLocations = selectedPost 
+    ? locations.filter((loc: any) => loc.ambulancePostId === selectedPost)
+    : locations;
+
+  // Get contact info for the selected post
+  const getContactInfo = () => {
+    if (!selectedPost || relevantLocations.length === 0) return null;
+    
+    const location = relevantLocations[0];
+    const contact = postContacts.find((c: any) => c.id === location.contactPersonId);
+    const post = ambulancePosts.find((p: any) => p.id === selectedPost);
+    
+    return { contact, post };
+  };
+
+  const contactInfo = getContactInfo();
+
+  return (
+    <div className="flex flex-col space-y-2">
+      {/* Status dropdowns for each location */}
+      <div className="flex flex-wrap gap-1">
+        <LocationStockStatus item={item} selectedPost={selectedPost} />
+      </div>
+      
+      {/* Contact info */}
+      {contactInfo && contactInfo.contact && (
+        <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
+          <div className="font-medium">{contactInfo.post?.name}</div>
+          <div>{contactInfo.contact.name}</div>
+          <div>{contactInfo.contact.email}</div>
+        </div>
+      )}
+      
+      {/* Action buttons */}
+      <div className="flex items-center space-x-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onEdit}
+          data-testid={`button-edit-${item.id}`}
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onDelete}
+          disabled={deleteLoading}
+          data-testid={`button-delete-${item.id}`}
+          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export default function InventoryTable({ items, isLoading, onRefetch, selectedPost }: InventoryTableProps) {
   const [editingItem, setEditingItem] = useState<MedicalItem | null>(null);
   const { toast } = useToast();
@@ -309,28 +398,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                       <SupplyRequestColumn item={item} selectedPost={selectedPost} />
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <LocationStockStatus item={item} selectedPost={selectedPost} />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingItem(item)}
-                          data-testid={`button-edit-${item.id}`}
-                          className="ml-2"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(item)}
-                          disabled={deleteItemMutation.isPending}
-                          data-testid={`button-delete-${item.id}`}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <ActionsColumn item={item} selectedPost={selectedPost} onEdit={() => setEditingItem(item)} onDelete={() => handleDelete(item)} deleteLoading={deleteItemMutation.isPending} />
                     </TableCell>
                   </TableRow>
                 ))
