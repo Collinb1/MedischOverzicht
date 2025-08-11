@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Edit, Trash2, Send, CheckCircle, RotateCcw, X } from "lucide-react";
+import { Edit, Trash2, Send, CheckCircle, RotateCcw, X, Eye } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -649,9 +650,112 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
   );
 };
 
+// Mobile Card Component
+const MobileInventoryCard = ({ item, selectedPost, onEdit, onViewDetail }: {
+  item: MedicalItem;
+  selectedPost?: string;
+  onEdit: () => void;
+  onViewDetail: () => void;
+}) => {
+  return (
+    <div 
+      className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      onClick={onViewDetail}
+      data-testid={`card-item-${item.id}`}
+    >
+      <div className="flex items-start space-x-3">
+        {/* Photo or Icon */}
+        <div className="flex-shrink-0">
+          {item.photoUrl ? (
+            <img 
+              src={`/objects/uploads/${item.photoUrl.split('/').pop()}`}
+              alt={`Foto van ${item.name}`} 
+              className="w-16 h-16 object-cover rounded-lg"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.includes('storage.googleapis.com') && item.photoUrl) {
+                  target.src = item.photoUrl;
+                } else {
+                  target.style.display = 'none';
+                  const iconDiv = target.nextElementSibling as HTMLElement;
+                  if (iconDiv) iconDiv.style.display = 'flex';
+                }
+              }}
+            />
+          ) : null}
+          <div 
+            className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center"
+            style={{ display: item.photoUrl ? 'none' : 'flex' }}
+          >
+            <span className="text-2xl">{getCategoryIcon(item.category)}</span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-gray-900 truncate" data-testid={`text-mobile-name-${item.id}`}>
+                {item.name}
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {item.category}
+              </p>
+            </div>
+
+            {/* Status & Actions */}
+            <div className="flex items-center space-x-2 ml-2">
+              <ItemStatusIndicator item={item} selectedPost={selectedPost} />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
+                className="h-8 w-8 p-0"
+                data-testid={`button-mobile-edit-${item.id}`}
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Location & Supply Info */}
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500">Locatie:</span>
+              <div className="flex items-center space-x-1">
+                <CabinetColumn item={item} selectedPost={selectedPost} />
+                <span className="text-gray-400">•</span>
+                <DrawerColumn item={item} selectedPost={selectedPost} />
+              </div>
+            </div>
+
+            {/* Other Posts Availability */}
+            {selectedPost && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Andere posten:</span>
+                <OtherPostsAvailability item={item} currentPost={selectedPost} />
+              </div>
+            )}
+
+            {/* Supply Request */}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500">Aanvulverzoek:</span>
+              <SupplyRequestColumn item={item} selectedPost={selectedPost} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function InventoryTable({ items, isLoading, onRefetch, selectedPost }: InventoryTableProps) {
   const [editingItem, setEditingItem] = useState<MedicalItem | null>(null);
   const [detailViewItem, setDetailViewItem] = useState<MedicalItem | null>(null);
+  const isMobile = useIsMobile();
 
   if (isLoading) {
     return (
@@ -661,13 +765,40 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
     );
   }
 
+  const sortedItems = [...items].sort((a, b) => {
+    if (a.photoUrl && !b.photoUrl) return -1;
+    if (!a.photoUrl && b.photoUrl) return 1;
+    return 0;
+  });
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-slate-200">
       <div className="p-6">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Inventaris Overzicht</h2>
         
-        <div className="overflow-x-auto">
-          <Table>
+        {/* Mobile Layout */}
+        {isMobile ? (
+          <div className="space-y-3">
+            {items.length === 0 ? (
+              <div className="text-center py-8 text-slate-500">
+                Geen items gevonden
+              </div>
+            ) : (
+              sortedItems.map((item) => (
+                <MobileInventoryCard
+                  key={item.id}
+                  item={item}
+                  selectedPost={selectedPost}
+                  onEdit={() => setEditingItem(item)}
+                  onViewDetail={() => setDetailViewItem(item)}
+                />
+              ))
+            )}
+          </div>
+        ) : (
+          /* Desktop Layout */
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
                 <TableHead>Item</TableHead>
@@ -764,6 +895,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
             </TableBody>
           </Table>
         </div>
+        )}
       </div>
 
       {editingItem && (
