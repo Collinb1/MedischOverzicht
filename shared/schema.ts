@@ -19,6 +19,7 @@ export const itemLocations = pgTable("item_locations", {
   ambulancePostId: varchar("ambulance_post_id").notNull().references(() => ambulancePosts.id),
   cabinet: varchar("cabinet", { length: 10 }).notNull(),
   drawer: text("drawer"),
+  contactPersonId: varchar("contact_person_id").references(() => postContacts.id),
   isLowStock: boolean("is_low_stock").notNull().default(false),
   stockStatus: text("stock_status").notNull().default("op-voorraad"), // "op-voorraad", "bijna-op", "niet-meer-aanwezig"
   createdAt: timestamp("created_at").defaultNow(),

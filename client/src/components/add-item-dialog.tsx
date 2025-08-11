@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet, type AmbulancePost } from "@shared/schema";
+import { insertMedicalItemSchema, type InsertMedicalItem, type Cabinet, type AmbulancePost, type PostContact } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, UserPlus, Camera, X, Building2, Pencil, Trash2 } from "lucide-react";
@@ -52,6 +52,7 @@ type ItemLocation = {
   ambulancePostId: string;
   cabinet: string;
   drawer: string;
+  contactPersonId?: string;
 };
 
 export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedPost }: AddItemDialogProps) {
@@ -63,7 +64,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [itemLocations, setItemLocations] = useState<ItemLocation[]>([
-    { ambulancePostId: selectedPost, cabinet: "", drawer: "" }
+    { ambulancePostId: selectedPost, cabinet: "", drawer: "", contactPersonId: "" }
   ]);
 
   const { data: cabinets = [] } = useQuery<Cabinet[]>({
@@ -80,6 +81,15 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
     queryFn: async () => {
       const response = await fetch("/api/ambulance-posts");
       if (!response.ok) throw new Error("Failed to fetch ambulance posts");
+      return response.json();
+    },
+  });
+
+  const { data: postContacts = [] } = useQuery<PostContact[]>({
+    queryKey: ["/api/post-contacts"],
+    queryFn: async () => {
+      const response = await fetch("/api/post-contacts");
+      if (!response.ok) throw new Error("Failed to fetch post contacts");
       return response.json();
     },
   });
@@ -109,8 +119,8 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
   }, [photoUrl, form]);
 
   const handleAddCabinet = (newCabinet: Cabinet) => {
-    form.setValue("cabinet", newCabinet.id);
-    form.setValue("drawer", ""); // Reset drawer selection
+    queryClient.invalidateQueries({ queryKey: ["/api/cabinets"] });
+    setIsAddCabinetOpen(false);
   };
 
   const handleAddPost = (newPost: AmbulancePost) => {
@@ -119,7 +129,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
   };
 
   const addLocation = () => {
-    setItemLocations([...itemLocations, { ambulancePostId: "", cabinet: "", drawer: "" }]);
+    setItemLocations([...itemLocations, { ambulancePostId: "", cabinet: "", drawer: "", contactPersonId: "" }]);
   };
 
   const removeLocation = (index: number) => {
@@ -132,6 +142,13 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
     const updated = [...itemLocations];
     updated[index] = { ...updated[index], [field]: value };
     setItemLocations(updated);
+  };
+
+  // Get contacts for a specific ambulance post
+  const getContactsForPost = (ambulancePostId: string) => {
+    return postContacts.filter(contact => 
+      contact.ambulancePostId === ambulancePostId && contact.isActive
+    );
   };
 
   // Photo upload functions
@@ -215,7 +232,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
       queryClient.invalidateQueries({ queryKey: ["/api/cabinets/summary"] });
       form.reset();
       setPhotoUrl(null);
-      setItemLocations([{ ambulancePostId: selectedPost, cabinet: "", drawer: "" }]);
+      setItemLocations([{ ambulancePostId: selectedPost, cabinet: "", drawer: "", contactPersonId: "" }]);
       onSuccess();
       onOpenChange(false);
     },
@@ -413,9 +430,10 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[200px]">Ambulancepost</TableHead>
-                      <TableHead className="w-[150px]">Kast</TableHead>
-                      <TableHead>Lade (optioneel)</TableHead>
+                      <TableHead className="w-[180px]">Ambulancepost</TableHead>
+                      <TableHead className="w-[130px]">Kast</TableHead>
+                      <TableHead className="w-[120px]">Lade (optioneel)</TableHead>
+                      <TableHead className="w-[180px]">Contactpersoon</TableHead>
                       <TableHead className="w-[100px]">Acties</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -477,6 +495,24 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
                             onChange={(e) => updateLocation(index, 'drawer', e.target.value)}
                             data-testid={`input-drawer-${index}`}
                           />
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={location.contactPersonId || ""}
+                            onValueChange={(value) => updateLocation(index, 'contactPersonId', value)}
+                          >
+                            <SelectTrigger data-testid={`select-contact-person-${index}`} className="w-full">
+                              <SelectValue placeholder="Contactpersoon" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">Geen contactpersoon</SelectItem>
+                              {getContactsForPost(location.ambulancePostId).map(contact => (
+                                <SelectItem key={contact.id} value={contact.id}>
+                                  {contact.name} - {contact.department || contact.email}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell>
                           <Button
