@@ -9,6 +9,7 @@ import type { MedicalItem } from "@shared/schema";
 interface OtherPostsAvailabilityProps {
   item: MedicalItem;
   currentPost: string;
+  inline?: boolean; // For direct display without dialog
 }
 
 interface ItemLocation {
@@ -29,7 +30,7 @@ interface AmbulancePost {
   description?: string | null;
 }
 
-export function OtherPostsAvailability({ item, currentPost }: OtherPostsAvailabilityProps) {
+export function OtherPostsAvailability({ item, currentPost, inline = false }: OtherPostsAvailabilityProps) {
   const [showDialog, setShowDialog] = useState(false);
 
   // Get all locations for this item
@@ -80,8 +81,16 @@ export function OtherPostsAvailability({ item, currentPost }: OtherPostsAvailabi
   const availablePosts = Object.values(postAvailability).filter(item => item.hasStock);
   const unavailablePosts = Object.values(postAvailability).filter(item => !item.hasStock);
 
-  // If no other posts have this item, don't show anything
+  // If no other posts have this item, show message
   if (otherPostsLocations.length === 0) {
+    if (inline) {
+      return (
+        <div className="text-center py-6 text-gray-500">
+          <Package className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+          <p>Dit item is niet aanwezig op andere posten</p>
+        </div>
+      );
+    }
     return null;
   }
 
@@ -104,6 +113,123 @@ export function OtherPostsAvailability({ item, currentPost }: OtherPostsAvailabi
       return "Niet op voorraad";
     }
   };
+
+  // Render content for inline display (within detail popup)
+  const renderContent = () => (
+    <div className="space-y-6">
+      {/* Available at other posts */}
+      {availablePosts.length > 0 && (
+        <div>
+          <h4 className="font-semibold text-green-700 mb-3 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            Beschikbaar op andere posten ({availablePosts.length})
+          </h4>
+          <div className="space-y-3">
+            {availablePosts.map(({ post, locations }) => (
+              <div key={post.id} className="border rounded-lg p-4 bg-green-50">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-green-600" />
+                    <span className="font-medium text-green-800">{post.name}</span>
+                    {post.location && (
+                      <span className="text-xs text-green-600">({post.location})</span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  {locations.map((location) => (
+                    <div key={location.id} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600">Kast {location.cabinet}</span>
+                        {location.drawer && (
+                          <span className="text-gray-500">- {location.drawer}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {getStatusIcon(location.stockStatus, location.isLowStock)}
+                        <span className={
+                          location.stockStatus === 'op-voorraad' && !location.isLowStock 
+                            ? "text-green-700" 
+                            : location.stockStatus === 'bijna-op' || location.isLowStock
+                            ? "text-orange-600"
+                            : "text-red-600"
+                        }>
+                          {getStatusText(location.stockStatus, location.isLowStock)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Not available at other posts */}
+      {unavailablePosts.length > 0 && (
+        <div>
+          <h4 className="font-semibold text-orange-700 mb-3 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Niet op voorraad op andere posten ({unavailablePosts.length})
+          </h4>
+          <div className="space-y-3">
+            {unavailablePosts.map(({ post, locations }) => (
+              <div key={post.id} className="border rounded-lg p-4 bg-orange-50">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-orange-600" />
+                    <span className="font-medium text-orange-800">{post.name}</span>
+                    {post.location && (
+                      <span className="text-xs text-orange-600">({post.location})</span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  {locations.map((location) => (
+                    <div key={location.id} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600">Kast {location.cabinet}</span>
+                        {location.drawer && (
+                          <span className="text-gray-500">- {location.drawer}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {getStatusIcon(location.stockStatus, location.isLowStock)}
+                        <span className={
+                          location.stockStatus === 'op-voorraad' && !location.isLowStock 
+                            ? "text-green-700" 
+                            : location.stockStatus === 'bijna-op' || location.isLowStock
+                            ? "text-orange-600"
+                            : "text-red-600"
+                        }>
+                          {getStatusText(location.stockStatus, location.isLowStock)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {availablePosts.length === 0 && unavailablePosts.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <Package className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+          <p>Dit item is niet aanwezig op andere posten</p>
+        </div>
+      )}
+    </div>
+  );
+
+  // If inline mode, show content directly
+  if (inline) {
+    return renderContent();
+  }
 
   return (
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -138,114 +264,7 @@ export function OtherPostsAvailability({ item, currentPost }: OtherPostsAvailabi
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Available at other posts */}
-          {availablePosts.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-green-700 mb-3 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />
-                Beschikbaar op andere posten ({availablePosts.length})
-              </h4>
-              <div className="space-y-3">
-                {availablePosts.map(({ post, locations }) => (
-                  <div key={post.id} className="border rounded-lg p-4 bg-green-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-green-600" />
-                        <span className="font-medium text-green-800">{post.name}</span>
-                        {post.location && (
-                          <span className="text-xs text-green-600">({post.location})</span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      {locations.map((location) => (
-                        <div key={location.id} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-600">Kast {location.cabinet}</span>
-                            {location.drawer && (
-                              <span className="text-gray-500">- {location.drawer}</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {getStatusIcon(location.stockStatus, location.isLowStock)}
-                            <span className={
-                              location.stockStatus === 'op-voorraad' && !location.isLowStock 
-                                ? "text-green-700" 
-                                : location.stockStatus === 'bijna-op' || location.isLowStock
-                                ? "text-orange-600"
-                                : "text-red-600"
-                            }>
-                              {getStatusText(location.stockStatus, location.isLowStock)}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Not available at other posts */}
-          {unavailablePosts.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-orange-700 mb-3 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4" />
-                Niet op voorraad op andere posten ({unavailablePosts.length})
-              </h4>
-              <div className="space-y-3">
-                {unavailablePosts.map(({ post, locations }) => (
-                  <div key={post.id} className="border rounded-lg p-4 bg-orange-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-orange-600" />
-                        <span className="font-medium text-orange-800">{post.name}</span>
-                        {post.location && (
-                          <span className="text-xs text-orange-600">({post.location})</span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      {locations.map((location) => (
-                        <div key={location.id} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-600">Kast {location.cabinet}</span>
-                            {location.drawer && (
-                              <span className="text-gray-500">- {location.drawer}</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {getStatusIcon(location.stockStatus, location.isLowStock)}
-                            <span className={
-                              location.stockStatus === 'op-voorraad' && !location.isLowStock 
-                                ? "text-green-700" 
-                                : location.stockStatus === 'bijna-op' || location.isLowStock
-                                ? "text-orange-600"
-                                : "text-red-600"
-                            }>
-                              {getStatusText(location.stockStatus, location.isLowStock)}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {availablePosts.length === 0 && unavailablePosts.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <Package className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-              <p>Dit item is niet aanwezig op andere posten</p>
-            </div>
-          )}
-        </div>
+        {renderContent()}
       </DialogContent>
     </Dialog>
   );

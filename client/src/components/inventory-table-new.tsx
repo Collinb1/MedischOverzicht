@@ -614,6 +614,14 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
               </div>
             </div>
 
+            {/* Other Posts Availability */}
+            {selectedPost && (
+              <div>
+                <h3 className="font-semibold text-slate-900 mb-3">Beschikbaarheid Andere Posten</h3>
+                <OtherPostsAvailability item={item} currentPost={selectedPost} inline={true} />
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button 
@@ -732,14 +740,6 @@ const MobileInventoryCard = ({ item, selectedPost, onEdit, onViewDetail }: {
               </div>
             </div>
 
-            {/* Other Posts Availability */}
-            {selectedPost && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Andere posten:</span>
-                <OtherPostsAvailability item={item} currentPost={selectedPost} />
-              </div>
-            )}
-
             {/* Supply Request */}
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-500">Aanvulverzoek:</span>
@@ -806,7 +806,6 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                 <TableHead>Lade</TableHead>
                 <TableHead>Categorie</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Andere Posten</TableHead>
                 <TableHead>Aanvulverzoek</TableHead>
                 <TableHead>Acties</TableHead>
               </TableRow>
@@ -814,7 +813,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-slate-500">
                     Geen items gevonden
                   </TableCell>
                 </TableRow>
@@ -877,11 +876,6 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                     </TableCell>
                     <TableCell data-testid={`status-column-${item.id}`}>
                       <ItemStatusIndicator item={item} selectedPost={selectedPost} />
-                    </TableCell>
-                    <TableCell data-testid={`other-posts-${item.id}`}>
-                      {selectedPost && (
-                        <OtherPostsAvailability item={item} currentPost={selectedPost} />
-                      )}
                     </TableCell>
                     <TableCell data-testid={`supply-request-${item.id}`}>
                       <SupplyRequestColumn item={item} selectedPost={selectedPost} />
