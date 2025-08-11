@@ -70,7 +70,7 @@ export default function Home() {
     }
   };
 
-  const handleSettingsClick = () => {
+  const handleAdvancedSettingsClick = () => {
     setShowPasswordDialog(true);
   };
 
@@ -187,15 +187,40 @@ export default function Home() {
                 <Plus className="w-4 h-4 mr-2" />
                 Item Toevoegen
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleSettingsClick}
-                data-testid="button-settings"
-                className="px-2"
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    data-testid="button-settings"
+                    className="px-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <div className="px-3 py-2 border-b">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Beheerdersmode</Label>
+                      <Switch
+                        checked={isAdminMode}
+                        onCheckedChange={toggleAdminMode}
+                        data-testid="switch-admin-mode"
+                        className="scale-75"
+                      />
+                    </div>
+                  </div>
+                  <DropdownMenuItem 
+                    onClick={handleAdvancedSettingsClick}
+                    data-testid="menu-advanced-settings"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Settings className="w-4 h-4" />
+                      Uitgebreide Instellingen
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -321,38 +346,8 @@ export default function Home() {
         <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Instellingen</DialogTitle>
+              <DialogTitle>Uitgebreide Instellingen</DialogTitle>
             </DialogHeader>
-            
-            {/* Admin Mode Toggle */}
-            <div className="border-b pb-6 mb-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base font-medium">Beheerdersmode</Label>
-                  <div className="text-sm text-gray-500">
-                    Schakel uitgebreide beheersfuncties in of uit
-                  </div>
-                </div>
-                <Switch
-                  checked={isAdminMode}
-                  onCheckedChange={toggleAdminMode}
-                  data-testid="switch-admin-mode"
-                />
-              </div>
-              
-              {isAdminMode && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center gap-2 text-blue-800">
-                    <Settings className="w-4 h-4" />
-                    <span className="text-sm font-medium">Beheerdersmode Actief</span>
-                  </div>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Uitgebreide functies zoals kastenbeheer, email instellingen en backup opties zijn beschikbaar.
-                  </p>
-                </div>
-              )}
-            </div>
-            
             <CabinetManagement />
           </DialogContent>
         </Dialog>
