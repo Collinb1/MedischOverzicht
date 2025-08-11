@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { MapPin, Package, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import { MapPin, Package, CheckCircle2, AlertCircle, XCircle, ChevronRight } from "lucide-react";
 import type { MedicalItem } from "@shared/schema";
 
 interface OtherPostsAvailabilityProps {
@@ -114,9 +114,12 @@ export function OtherPostsAvailability({ item, currentPost, inline = false }: Ot
     }
   };
 
+  // State for collapsible section
+  const [isExpanded, setIsExpanded] = useState(false);
+
   // Render content for inline display (within detail popup)
   const renderContent = () => (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Available at other posts */}
       {availablePosts.length > 0 && (
         <div>
@@ -226,9 +229,38 @@ export function OtherPostsAvailability({ item, currentPost, inline = false }: Ot
     </div>
   );
 
-  // If inline mode, show content directly
+  // If inline mode, show collapsible content
   if (inline) {
-    return renderContent();
+    return (
+      <div className="space-y-3">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center justify-between w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+          data-testid="button-toggle-other-posts"
+        >
+          <div className="flex items-center gap-2">
+            <Package className="w-4 h-4 text-gray-600" />
+            <span className="font-medium text-gray-900">
+              Beschikbaarheid andere posten
+            </span>
+            {availablePosts.length > 0 && (
+              <span className="text-sm text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                {availablePosts.length} beschikbaar
+              </span>
+            )}
+          </div>
+          <ChevronRight 
+            className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+          />
+        </button>
+        
+        {isExpanded && (
+          <div className="pl-4">
+            {renderContent()}
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
