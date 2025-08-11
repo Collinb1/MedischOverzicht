@@ -115,6 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ambulancePostId: location.ambulancePostId,
             cabinet: location.cabinet,
             drawer: location.drawer || null,
+            contactPersonId: location.contactPersonId || null,
             isLowStock: isLowStock || false,
             stockStatus: stockStatus || "op-voorraad"
           };
@@ -177,6 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ambulancePostId: locationData.ambulancePostId,
               cabinet: locationData.cabinet,
               drawer: locationData.drawer || null,
+              contactPersonId: locationData.contactPersonId || null,
               isLowStock: false,
               stockStatus: itemData.stockStatus || "op-voorraad"
             };
