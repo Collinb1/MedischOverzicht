@@ -834,6 +834,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test email functionality
+  app.post("/api/test-email", async (req, res) => {
+    try {
+      const { testEmail, config } = req.body;
+      
+      if (!testEmail || !testEmail.includes('@')) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Geldig email adres is vereist" 
+        });
+      }
+
+      // Generate test email HTML
+      const testEmailHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; }
+            .success-box { background-color: #f0f9ff; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0; }
+            .footer { background-color: #f1f5f9; padding: 15px; text-align: center; color: #64748b; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>🏥 Test Email - Medische Inventaris</h1>
+          </div>
+          
+          <div class="content">
+            <h2>Email Configuratie Test Succesvol</h2>
+            
+            <div class="success-box">
+              <strong>✅ Gefeliciteerd!</strong> Je email configuratie werkt correct.
+            </div>
+            
+            <p>Deze test email bevestigt dat:</p>
+            <ul>
+              <li>Je SMTP server configuratie correct is</li>
+              <li>Authenticatie gegevens kloppen</li>
+              <li>Email verzending functioneert naar verwachting</li>
+            </ul>
+            
+            <p>Je kunt nu voorraad waarschuwingen en andere automatische emails verwachten van het medische inventaris systeem.</p>
+          </div>
+          
+          <div class="footer">
+            <p>Deze test email is verzonden door het Medische Inventaris Systeem</p>
+            <p>Datum: ${new Date().toLocaleDateString('nl-NL')} om ${new Date().toLocaleTimeString('nl-NL')}</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Send test email using current configuration or config from request
+      const fromEmail = config?.fromEmail || "test@medische-inventaris.nl";
+      const fromName = config?.fromName || "Medische Inventaris Test";
+      
+      const success = await sendEmail({
+        to: testEmail,
+        from: `${fromName} <${fromEmail}>`,
+        subject: `🧪 Test Email - Medische Inventaris Configuratie`,
+        html: testEmailHTML
+      });
+
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: `Test email succesvol verzonden naar ${testEmail}` 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Fout bij het verzenden van de test email. Controleer je SMTP configuratie." 
+        });
+      }
+    } catch (error) {
+      console.error("Test email error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Onverwachte fout bij het verzenden van test email" 
+      });
+    }
+  });
+
   // Ambulance Posts Routes
   app.get("/api/ambulance-posts", async (req, res) => {
     try {
