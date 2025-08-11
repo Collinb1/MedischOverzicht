@@ -690,7 +690,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                           <img 
                             src={`/objects/uploads/${item.photoUrl.split('/').pop()}`}
                             alt={`Foto van ${item.name}`} 
-                            className="w-14 h-14 object-cover rounded-lg mr-3 border-2 border-medical-blue"
+                            className="w-14 h-14 object-cover rounded-lg mr-3"
                             data-testid={`img-item-photo-${item.id}`}
                             onError={(e) => {
                               // Fallback to original URL if objects route fails

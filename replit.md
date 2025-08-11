@@ -51,3 +51,4 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-11: Status iconen geoptimaliseerd - alleen kleurcirkels zonder tekst voor compacte weergave
 - 2025-08-11: Email bevestiging toegevoegd aan aanvulverzoek kolom - toont datum en ontvanger na verzending
 - 2025-08-11: Foto weergave volledig opgelost - gebruikt /objects/ route voor zowel detail view als inventaris tabel, fallback naar categorie icoon bij falen, werkende foto weergave in beide views
+- 2025-08-11: Blauwe rand weggehaald van foto's in inventaris tabel voor schonere weergave
