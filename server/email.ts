@@ -16,20 +16,25 @@ interface EmailParams {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  // Try to get email config from database if not provided
+  // Use provided config or get from database
   let emailConfig = params.config;
   if (!emailConfig) {
     try {
       emailConfig = await storage.getEmailConfig();
+      console.log('Email config opgehaald uit database');
     } catch (error) {
       console.log('Geen email configuratie gevonden in database');
     }
+  } else {
+    console.log('Email config gebruikt uit request parameters');
   }
 
   // Use configured SMTP if available
   if (emailConfig && emailConfig.smtpHost && emailConfig.smtpPort && emailConfig.smtpUser && emailConfig.smtpPassword) {
     try {
       console.log(`Sending email via SMTP: ${emailConfig.smtpHost}:${emailConfig.smtpPort}`);
+      console.log(`Using SMTP user: ${emailConfig.smtpUser}`);
+      console.log(`SMTP secure mode: ${emailConfig.smtpPort === 465 ? 'SSL' : 'STARTTLS'}`);
       
       const transporter = nodemailer.createTransport({
         host: emailConfig.smtpHost,

@@ -890,16 +890,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </html>
       `;
 
-      // Send test email using current configuration or config from request
-      const fromEmail = config?.fromEmail || "test@medische-inventaris.nl";
-      const fromName = config?.fromName || "Medische Inventaris Test";
+      // Get current saved email config if no config provided in request
+      let emailConfig = config;
+      if (!emailConfig || !emailConfig.smtpHost) {
+        try {
+          emailConfig = await storage.getEmailConfig();
+        } catch (error) {
+          return res.status(400).json({
+            success: false,
+            message: "Geen email configuratie gevonden. Sla eerst je SMTP instellingen op."
+          });
+        }
+      }
+
+      // Validate required fields
+      if (!emailConfig || !emailConfig.smtpHost || !emailConfig.smtpUser || !emailConfig.smtpPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Onvolledige email configuratie. Vul alle SMTP velden in."
+        });
+      }
+
+      // Send test email using current configuration
+      const fromEmail = emailConfig.fromEmail || "test@medische-inventaris.nl";
+      const fromName = emailConfig.fromName || "Medische Inventaris Test";
       
       const success = await sendEmail({
         to: testEmail,
         from: `${fromName} <${fromEmail}>`,
         subject: `🧪 Test Email - Medische Inventaris Configuratie`,
         html: testEmailHTML,
-        config: config
+        config: emailConfig
       });
 
       if (success) {
