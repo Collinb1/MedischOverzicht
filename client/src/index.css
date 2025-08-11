@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -68,11 +68,17 @@ textarea::-moz-placeholder {
   
   /* Medical application specific colors */
   --medical-blue: hsl(221.2 83.2% 53.3%);
+  --medical-blue-dark: hsl(221.2 83.2% 43.3%);
   --medical-green: hsl(159.7826 100% 36.0784%);
   --medical-light: hsl(210 40% 98%);
+  --medical-accent: hsl(199.8 88.7% 48.2%);
   --cabinet-a: hsl(0 84.2% 60.2%);
   --cabinet-b: hsl(42.0290 92.8251% 56.2745%);
   --cabinet-c: hsl(159.7826 100% 36.0784%);
+  --medical-status-green: hsl(120 60% 50%);
+  --medical-status-yellow: hsl(45 100% 51%);
+  --medical-status-red: hsl(0 84% 60%);
+  --medical-gradient: linear-gradient(135deg, hsl(221.2 83.2% 53.3%) 0%, hsl(199.8 88.7% 48.2%) 100%);
   --cabinet-d: hsl(221.2 83.2% 53.3%);
   --cabinet-e: hsl(262.1 83.3% 57.8%);
 }
@@ -138,10 +144,194 @@ textarea::-moz-placeholder {
   * {
     @apply border-border;
   }
-
+  
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font-sans);
   }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+}
+
+@layer components {
+  /* Professional Card Components */
+  .medical-card {
+    @apply bg-white rounded-xl shadow-sm border border-slate-200 p-6 transition-all duration-200 hover:shadow-md;
+  }
+  
+  .medical-card-header {
+    @apply flex items-center gap-3 mb-4 pb-3 border-b border-slate-100;
+  }
+  
+  .medical-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .medical-badge-success {
+    @apply bg-green-100 text-green-800 border border-green-200;
+  }
+  
+  .medical-badge-warning {
+    @apply bg-yellow-100 text-yellow-800 border border-yellow-200;
+  }
+  
+  .medical-badge-danger {
+    @apply bg-red-100 text-red-800 border border-red-200;
+  }
+  
+  /* Professional Button Styles */
+  .btn-medical-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-lg shadow-sm transition-all duration-200 border border-transparent;
+  }
+  
+  .btn-medical-secondary {
+    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2.5 rounded-lg shadow-sm transition-all duration-200 border border-gray-300;
+  }
+  
+  /* Professional Status Indicators */
+  .status-indicator {
+    @apply w-3 h-3 rounded-full flex-shrink-0;
+  }
+  
+  .status-available {
+    @apply bg-green-500 shadow-sm;
+  }
+  
+  .status-low {
+    @apply bg-yellow-500 shadow-sm;
+  }
+  
+  .status-out {
+    @apply bg-red-500 shadow-sm;
+  }
+  
+  /* Professional Table Styles */
+  .medical-table {
+    @apply w-full border-collapse bg-white rounded-lg overflow-hidden shadow-sm border border-slate-200;
+  }
+  
+  .medical-table th {
+    @apply bg-slate-50 px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider border-b border-slate-200;
+  }
+  
+  .medical-table td {
+    @apply px-6 py-4 text-sm text-slate-900 border-b border-slate-100;
+  }
+  
+  .medical-table tr:hover {
+    @apply bg-slate-50;
+  }
+  
+  /* Professional Form Elements */
+  .medical-input {
+    @apply block w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
+  }
+  
+  .medical-select {
+    @apply block w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
+  }
+  
+  /* Professional Layout */
+  .medical-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .medical-header {
+    @apply bg-white border-b border-slate-200 shadow-sm;
+  }
+  
+  .medical-sidebar {
+    @apply bg-white border-r border-slate-200 shadow-sm;
+  }
+  
+  /* Professional Loading States */
+  .medical-skeleton {
+    @apply animate-pulse bg-slate-200 rounded;
+  }
+  
+  /* Professional Gradient Backgrounds */
+  .medical-gradient {
+    background: var(--medical-gradient);
+  }
+  
+  /* Professional Animations */
+  .medical-fade-in {
+    @apply animate-in fade-in duration-300;
+  }
+  
+  .medical-slide-up {
+    @apply animate-in slide-in-from-bottom-4 duration-300;
+  }
+}
+
+/* Additional utility classes for enhanced professional look */
+.glass-effect {
+  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* Professional Status Badges */
+.status-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.status-badge-success {
+  @apply bg-green-100 text-green-800;
+}
+
+.status-badge-warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.status-badge-danger {
+  @apply bg-red-100 text-red-800;
+}
+
+.status-badge-info {
+  @apply bg-blue-100 text-blue-800;
+}
+
+/* Professional Hover Effects */
+.hover-lift {
+  @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-1;
+}
+
+.hover-scale {
+  @apply transition-transform duration-200 hover:scale-105;
+}
+
+/* Professional Focus States */
+.focus-visible-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2;
+}
+
+/* Enhanced Medical Table Rows with Status Colors */
+.table-row-success {
+  @apply bg-green-50 border-l-4 border-l-green-500 hover:bg-green-100;
+}
+
+.table-row-warning {
+  @apply bg-yellow-50 border-l-4 border-l-yellow-500 hover:bg-yellow-100;
+}
+
+.table-row-danger {
+  @apply bg-red-50 border-l-4 border-l-red-500 hover:bg-red-100;
+}
+
+.table-row-neutral {
+  @apply bg-gray-50 border-l-4 border-l-gray-400 hover:bg-gray-100;
+}
+
+.shadow-professional {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.shadow-professional-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Medical application utility classes */
