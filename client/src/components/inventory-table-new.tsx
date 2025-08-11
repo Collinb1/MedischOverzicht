@@ -115,7 +115,7 @@ const CabinetColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost
     : locations;
 
   if (relevantLocations.length === 0) {
-    return <div className="text-sm text-slate-400">-</div>;
+    return <div className="text-base text-slate-400">-</div>;
   }
 
   // Get unique cabinets for this item
@@ -130,7 +130,7 @@ const CabinetColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost
         return (
           <div 
             key={cabinetId}
-            className="flex items-center justify-center px-3 py-2 rounded-md text-sm font-bold text-white min-w-[40px]"
+            className="flex items-center justify-center px-3 py-2 rounded-md text-base font-bold text-white min-w-[40px]"
             style={{ backgroundColor: cabinetColor }}
             data-testid={`cabinet-${cabinetId}-${item.id}`}
           >
@@ -159,14 +159,14 @@ const DrawerColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost?
     : locations;
 
   if (relevantLocations.length === 0) {
-    return <div className="text-sm text-slate-400">-</div>;
+    return <div className="text-base text-slate-400">-</div>;
   }
 
   // Get unique drawers for this item - filter out null, undefined, and empty strings
   const uniqueDrawers = Array.from(new Set(relevantLocations.map((loc: any) => loc.drawer).filter((drawer: any) => drawer && drawer.trim() !== "")));
 
   if (uniqueDrawers.length === 0) {
-    return <div className="text-sm text-slate-400">-</div>;
+    return <div className="text-base text-slate-400">-</div>;
   }
 
   return (
@@ -174,7 +174,7 @@ const DrawerColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost?
       {uniqueDrawers.map((drawer: string, index: number) => (
         <div 
           key={index}
-          className="px-2 py-1 bg-slate-100 rounded-md text-xs text-slate-700"
+          className="px-2 py-1 bg-slate-100 rounded-md text-sm text-slate-700"
           data-testid={`drawer-${drawer}-${item.id}`}
         >
           {drawer}
@@ -713,7 +713,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                           <span className="text-xl">{getCategoryIcon(item.category)}</span>
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-slate-900" data-testid={`text-item-name-${item.id}`}>
+                          <div className="text-base font-medium text-slate-900" data-testid={`text-item-name-${item.id}`}>
                             {item.name}
                           </div>
                         </div>
@@ -725,7 +725,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                     <TableCell data-testid={`drawer-column-${item.id}`}>
                       <DrawerColumn item={item} selectedPost={selectedPost} />
                     </TableCell>
-                    <TableCell className="text-sm text-slate-600" data-testid={`text-category-${item.id}`}>
+                    <TableCell className="text-base text-slate-600" data-testid={`text-category-${item.id}`}>
                       <div className="flex items-center space-x-2">
                         <span>{getCategoryIcon(item.category)}</span>
                         <span>{item.category}</span>
