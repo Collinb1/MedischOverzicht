@@ -117,7 +117,7 @@ export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg" data-testid="dialog-add-cabinet">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" data-testid="dialog-add-cabinet">
         <DialogHeader>
           <DialogTitle>Nieuwe Kast/Locatie Toevoegen</DialogTitle>
         </DialogHeader>
