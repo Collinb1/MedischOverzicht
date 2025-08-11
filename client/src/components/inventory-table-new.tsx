@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { EditItemDialog } from "../components/edit-item-dialog";
 import { LocationStockStatus } from "../components/location-stock-status";
+import { OtherPostsAvailability } from "../components/other-posts-availability";
 import type { MedicalItem } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -674,6 +675,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                 <TableHead>Lade</TableHead>
                 <TableHead>Categorie</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Andere Posten</TableHead>
                 <TableHead>Aanvulverzoek</TableHead>
                 <TableHead>Acties</TableHead>
               </TableRow>
@@ -681,7 +683,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                     Geen items gevonden
                   </TableCell>
                 </TableRow>
@@ -744,6 +746,11 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                     </TableCell>
                     <TableCell data-testid={`status-column-${item.id}`}>
                       <ItemStatusIndicator item={item} selectedPost={selectedPost} />
+                    </TableCell>
+                    <TableCell data-testid={`other-posts-${item.id}`}>
+                      {selectedPost && (
+                        <OtherPostsAvailability item={item} currentPost={selectedPost} />
+                      )}
                     </TableCell>
                     <TableCell data-testid={`supply-request-${item.id}`}>
                       <SupplyRequestColumn item={item} selectedPost={selectedPost} />
