@@ -63,3 +63,5 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-11: Test email functionaliteit geïmplementeerd met POST /api/test-email route - gebruikers kunnen email configuratie testen
 - 2025-08-11: Verbeterde error handling voor SMTP authenticatie met specifieke Gmail App-wachtwoord instructies
 - 2025-08-11: Email instellingen pagina uitgebreid met Gmail App-wachtwoord waarschuwingen en SMTP provider richtlijnen
+- 2025-08-11: SMTP connectiviteitstest toegevoegd voor debugging email server problemen
+- 2025-08-11: Gmail authenticatie succesvol werkend - App-wachtwoord configuratie opgelost, test emails verzenden correct
