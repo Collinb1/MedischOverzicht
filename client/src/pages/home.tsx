@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin, Archive } from "lucide-react";
+import { Search, Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin, Archive, Lock } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import CabinetOverview from "../components/cabinet-overview";
 import InventoryTable from "../components/inventory-table-new";
 import AddItemDialog from "../components/add-item-dialog";
@@ -22,6 +23,28 @@ export default function Home() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<string>("");
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const { toast } = useToast();
+
+  const handlePasswordSubmit = () => {
+    if (passwordInput === "63696") {
+      setShowPasswordDialog(false);
+      setPasswordInput("");
+      setShowSettingsDialog(true);
+    } else {
+      toast({
+        title: "Onjuiste wachtwoordcode",
+        description: "Voer de juiste toegangscode in om instellingen te openen.",
+        variant: "destructive",
+      });
+      setPasswordInput("");
+    }
+  };
+
+  const handleSettingsClick = () => {
+    setShowPasswordDialog(true);
+  };
 
   const { data: items = [], isLoading, refetch } = useQuery<MedicalItem[]>({
     queryKey: ["/api/medical-items", selectedCabinet, selectedCategory, searchTerm, selectedPost],
@@ -148,16 +171,17 @@ export default function Home() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href="/voorraad-overzicht" data-testid="menu-stock-overview">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4" />
-                        Voorraad Overzicht
-                      </div>
-                    </Link>
+                  <DropdownMenuItem 
+                    onClick={handleSettingsClick}
+                    data-testid="menu-stock-overview"
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      Voorraad Overzicht
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => setShowSettingsDialog(true)}
+                    onClick={handleSettingsClick}
                     data-testid="menu-cabinet-management"
                   >
                     <div className="flex items-center gap-2">
@@ -165,21 +189,23 @@ export default function Home() {
                       Kasten Beheren
                     </div>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/email-settings" data-testid="menu-email-settings">
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4" />
-                        Email Instellingen
-                      </div>
-                    </Link>
+                  <DropdownMenuItem 
+                    onClick={handleSettingsClick}
+                    data-testid="menu-email-settings"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      Email Instellingen
+                    </div>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/ambulance-posts" data-testid="menu-ambulance-posts">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        Posten Beheer
-                      </div>
-                    </Link>
+                  <DropdownMenuItem 
+                    onClick={handleSettingsClick}
+                    data-testid="menu-ambulance-posts"
+                  >
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      Posten Beheer
+                    </div>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -260,6 +286,49 @@ export default function Home() {
           onSuccess={refetch}
           selectedPost={selectedPost}
         />
+
+        {/* Password Dialog */}
+        <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Lock className="w-5 h-5" />
+                Toegangscode Vereist
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Voer de toegangscode in om instellingen te openen.
+              </p>
+              <Input
+                type="password"
+                placeholder="Voer toegangscode in"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
+                data-testid="input-password"
+                className="text-center"
+              />
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowPasswordDialog(false);
+                    setPasswordInput("");
+                  }}
+                >
+                  Annuleren
+                </Button>
+                <Button 
+                  onClick={handlePasswordSubmit}
+                  data-testid="button-submit-password"
+                >
+                  Openen
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Settings Dialog */}
         <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
