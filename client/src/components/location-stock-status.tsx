@@ -69,6 +69,7 @@ export function LocationStockStatus({ item, selectedPost }: LocationStockStatusP
       });
       queryClient.invalidateQueries({ queryKey: ['/api/item-locations'] });
       queryClient.invalidateQueries({ queryKey: ['/api/medical-items'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/supply-requests'] });
     },
     onError: (error: any) => {
       toast({
@@ -89,6 +90,7 @@ export function LocationStockStatus({ item, selectedPost }: LocationStockStatusP
         title: "Aanvulverzoek verzonden",
         description: data.message,
       });
+      queryClient.invalidateQueries({ queryKey: ['/api/supply-requests'] });
     },
     onError: (error: any) => {
       toast({
