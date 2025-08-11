@@ -21,7 +21,7 @@ export function CategorySelector({ value, onValueChange, placeholder = "Selectee
   const queryClient = useQueryClient();
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [newCategoryIcon, setNewCategoryIcon] = useState("");
+
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -34,16 +34,11 @@ export function CategorySelector({ value, onValueChange, placeholder = "Selectee
 
   const createCategoryMutation = useMutation({
     mutationFn: async (categoryData: { name: string; icon: string }) => {
-      return await apiRequest("/api/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(categoryData),
-      });
+      return await apiRequest("POST", "/api/categories", categoryData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       setNewCategoryName("");
-      setNewCategoryIcon("");
       toast({
         title: "Categorie toegevoegd",
         description: "De nieuwe categorie is succesvol aangemaakt",
@@ -60,9 +55,7 @@ export function CategorySelector({ value, onValueChange, placeholder = "Selectee
 
   const deleteCategoryMutation = useMutation({
     mutationFn: async (categoryId: string) => {
-      return await apiRequest(`/api/categories/${categoryId}`, {
-        method: "DELETE",
-      });
+      return await apiRequest("DELETE", `/api/categories/${categoryId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -84,13 +77,13 @@ export function CategorySelector({ value, onValueChange, placeholder = "Selectee
     if (newCategoryName.trim()) {
       createCategoryMutation.mutate({
         name: newCategoryName.trim(),
-        icon: newCategoryIcon.trim() || "📦",
+        icon: "📦", // Default icon, not displayed
       });
     }
   };
 
   const handleDeleteCategory = (categoryId: string) => {
-    if (confirm("Weet je zeker dat je deze categorie wilt verwijderen?")) {
+    if (confirm("Weet je zeker dat je de categorie voor alle posten wil verwijderen?")) {
       deleteCategoryMutation.mutate(categoryId);
     }
   };
@@ -105,10 +98,7 @@ export function CategorySelector({ value, onValueChange, placeholder = "Selectee
           <SelectContent>
             {categories.map((category) => (
               <SelectItem key={category.id} value={category.name}>
-                <div className="flex items-center gap-2">
-                  <span>{category.icon}</span>
-                  <span>{category.name}</span>
-                </div>
+                {category.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -132,17 +122,12 @@ export function CategorySelector({ value, onValueChange, placeholder = "Selectee
               <h4 className="font-medium">Nieuwe categorie toevoegen</h4>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Naam..."
+                  placeholder="Categorie naam..."
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   className="flex-1"
                 />
-                <Input
-                  placeholder="Icoon..."
-                  value={newCategoryIcon}
-                  onChange={(e) => setNewCategoryIcon(e.target.value)}
-                  className="w-20"
-                />
+
                 <Button 
                   onClick={handleAddCategory}
                   disabled={!newCategoryName.trim() || createCategoryMutation.isPending}
@@ -162,9 +147,8 @@ export function CategorySelector({ value, onValueChange, placeholder = "Selectee
                 ) : (
                   categories.map((category) => (
                     <div key={category.id} className="flex items-center justify-between p-2 border rounded">
-                      <Badge variant="outline" className="flex items-center gap-2">
-                        <span>{category.icon}</span>
-                        <span>{category.name}</span>
+                      <Badge variant="outline">
+                        {category.name}
                       </Badge>
                       <Button
                         variant="ghost"

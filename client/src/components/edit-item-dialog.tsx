@@ -189,7 +189,7 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
       queryClient.invalidateQueries({ queryKey: ["/api/medical-items"] });
       queryClient.invalidateQueries({ queryKey: ["/api/cabinets/summary"] });
       onOpenChange(false);
-      onSuccess();
+      onSuccess?.();
     },
     onError: (error: any) => {
       toast({
