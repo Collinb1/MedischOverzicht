@@ -198,7 +198,7 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
   return null;
 };
 
-// Actions column with status dropdowns and contact info
+// Actions column with status dropdowns (contact info runs in background)
 const ActionsColumn = ({ item, selectedPost, onEdit, onDelete, deleteLoading }: { 
   item: MedicalItem; 
   selectedPost?: string;
@@ -206,51 +206,6 @@ const ActionsColumn = ({ item, selectedPost, onEdit, onDelete, deleteLoading }: 
   onDelete: () => void;
   deleteLoading: boolean;
 }) => {
-  const { data: locations = [] } = useQuery({
-    queryKey: ['/api/item-locations', item.id],
-    queryFn: async () => {
-      const response = await fetch(`/api/item-locations/${item.id}`);
-      if (!response.ok) throw new Error("Failed to fetch locations");
-      return response.json();
-    },
-  });
-
-  const { data: postContacts = [] } = useQuery({
-    queryKey: ['/api/post-contacts'],
-    queryFn: async () => {
-      const response = await fetch('/api/post-contacts');
-      if (!response.ok) throw new Error("Failed to fetch contacts");
-      return response.json();
-    },
-  });
-
-  const { data: ambulancePosts = [] } = useQuery({
-    queryKey: ['/api/ambulance-posts'],
-    queryFn: async () => {
-      const response = await fetch('/api/ambulance-posts');
-      if (!response.ok) throw new Error("Failed to fetch posts");
-      return response.json();
-    },
-  });
-
-  // Filter locations for selected post
-  const relevantLocations = selectedPost 
-    ? locations.filter((loc: any) => loc.ambulancePostId === selectedPost)
-    : locations;
-
-  // Get contact info for the selected post
-  const getContactInfo = () => {
-    if (!selectedPost || relevantLocations.length === 0) return null;
-    
-    const location = relevantLocations[0];
-    const contact = postContacts.find((c: any) => c.id === location.contactPersonId);
-    const post = ambulancePosts.find((p: any) => p.id === selectedPost);
-    
-    return { contact, post };
-  };
-
-  const contactInfo = getContactInfo();
-
   return (
     <div className="flex items-center space-x-1">
       {/* Status dropdowns for each location */}
