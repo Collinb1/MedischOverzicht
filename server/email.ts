@@ -1,5 +1,7 @@
 import sgMail from '@sendgrid/mail';
-import type { MedicalItem } from '@shared/schema';
+import nodemailer from 'nodemailer';
+import type { MedicalItem, EmailConfig } from '@shared/schema';
+import { storage } from './storage';
 
 if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -10,25 +12,83 @@ interface EmailParams {
   from: string;
   subject: string;
   html: string;
+  config?: EmailConfig;
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.log('SendGrid API key niet geconfigureerd - email zou normaal verzonden worden naar:', params.to);
-    console.log('Onderwerp:', params.subject);
-    return true; // Simuleer succes voor ontwikkeling
+  // Try to get email config from database if not provided
+  let emailConfig = params.config;
+  if (!emailConfig) {
+    try {
+      emailConfig = await storage.getEmailConfig();
+    } catch (error) {
+      console.log('Geen email configuratie gevonden in database');
+    }
   }
 
-  try {
-    await sgMail.send(params);
-    return true;
-  } catch (error) {
-    console.error('SendGrid email fout:', error);
-    return false;
+  // Use configured SMTP if available
+  if (emailConfig && emailConfig.smtpHost && emailConfig.smtpPort && emailConfig.smtpUser && emailConfig.smtpPassword) {
+    try {
+      console.log(`Sending email via SMTP: ${emailConfig.smtpHost}:${emailConfig.smtpPort}`);
+      
+      const transporter = nodemailer.createTransport({
+        host: emailConfig.smtpHost,
+        port: emailConfig.smtpPort,
+        secure: emailConfig.smtpPort === 465, // true for 465, false for other ports
+        auth: {
+          user: emailConfig.smtpUser,
+          pass: emailConfig.smtpPassword,
+        },
+      });
+
+      const fromEmail = emailConfig.fromEmail || params.from;
+      const fromName = emailConfig.fromName || 'Medische Inventaris';
+
+      const mailOptions = {
+        from: `${fromName} <${fromEmail}>`,
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log(`Email succesvol verzonden naar ${params.to} via SMTP`);
+      return true;
+    } catch (error) {
+      console.error('SMTP email fout:', error);
+      return false;
+    }
   }
+
+  // Fallback to SendGrid if configured
+  if (process.env.SENDGRID_API_KEY) {
+    try {
+      await sgMail.send(params);
+      console.log(`Email succesvol verzonden naar ${params.to} via SendGrid`);
+      return true;
+    } catch (error) {
+      console.error('SendGrid email fout:', error);
+      return false;
+    }
+  }
+
+  // If no email configuration is available, log the attempt
+  console.log('Geen email configuratie beschikbaar - email zou verzonden worden naar:', params.to);
+  console.log('Onderwerp:', params.subject);
+  console.log('Configureer SMTP instellingen in de Email Instellingen pagina of stel SENDGRID_API_KEY environment variable in');
+  return false; // Return false to indicate email was not actually sent
 }
 
-export function generateRestockEmailHTML(item: MedicalItem, cabinetName: string, status: string = "Bijna op"): string {
+interface EmailItemData {
+  name: string;
+  description?: string | null;
+  category: string;
+  expiryDate?: string | null;
+  drawer?: string;
+  ambulancePost?: string;
+}
+
+export function generateRestockEmailHTML(item: EmailItemData, cabinetName: string, status: string = "Bijna op"): string {
   const isUrgent = status === "OP";
   const backgroundColor = isUrgent ? "#dc2626" : "#2563eb";
   const warningBackground = isUrgent ? "#fee2e2" : "#fef3cd";
@@ -71,7 +131,7 @@ export function generateRestockEmailHTML(item: MedicalItem, cabinetName: string,
           <p><strong>Categorie:</strong> ${item.category}</p>
           <p><strong>Locatie:</strong> ${cabinetName}</p>
           ${item.drawer ? `<p><strong>Lade:</strong> ${item.drawer}</p>` : ''}
-          <p><strong>Ambulancepost:</strong> ${item.ambulancePost}</p>
+          ${item.ambulancePost ? `<p><strong>Ambulancepost:</strong> ${item.ambulancePost}</p>` : ''}
           <p><strong>Vervaldatum:</strong> ${item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('nl-NL') : 'Geen'}</p>
           <p><strong>Status:</strong> <span class="status-badge">${status}</span></p>
         </div>

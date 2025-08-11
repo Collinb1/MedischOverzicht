@@ -898,7 +898,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         to: testEmail,
         from: `${fromName} <${fromEmail}>`,
         subject: `🧪 Test Email - Medische Inventaris Configuratie`,
-        html: testEmailHTML
+        html: testEmailHTML,
+        config: config
       });
 
       if (success) {
