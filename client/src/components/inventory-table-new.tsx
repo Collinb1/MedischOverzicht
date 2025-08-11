@@ -72,6 +72,15 @@ const ItemStatusIndicator = ({ item, selectedPost }: { item: MedicalItem; select
     },
   });
 
+  // Check if item is discontinued first - this overrides all other status
+  if (item.isDiscontinued) {
+    return (
+      <div className="flex justify-center" data-testid={`status-discontinued-${item.id}`} title="Niet meer leverbaar">
+        <div className="w-4 h-4 rounded-full bg-purple-600 border-2 border-purple-800"></div>
+      </div>
+    );
+  }
+
   // Filter locations for selected post if specified
   const relevantLocations = selectedPost 
     ? locations.filter((loc: any) => loc.ambulancePostId === selectedPost)
@@ -240,6 +249,11 @@ const StatusTableRow = ({ item, selectedPost, children, onDoubleClick }: {
     : locations;
 
   const getRowBackgroundClass = () => {
+    // Check if item is discontinued first - this takes priority
+    if (item.isDiscontinued) {
+      return "bg-purple-50 hover:bg-purple-100 border-l-4 border-purple-600";
+    }
+    
     if (relevantLocations.length === 0) return "hover:bg-slate-50";
     
     const hasUnavailable = relevantLocations.some((loc: any) => loc.stockStatus === "niet-meer-aanwezig");
@@ -462,6 +476,15 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
     },
   });
 
+  const { data: allItems = [] } = useQuery({
+    queryKey: ['/api/medical-items'],
+    queryFn: async () => {
+      const response = await fetch('/api/medical-items');
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
   if (!item) return null;
 
   // Filter locations for selected post if specified
@@ -568,6 +591,32 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
                   {item.description && <div><span className="font-medium">Beschrijving:</span> {item.description}</div>}
                   {item.expiryDate && <div><span className="font-medium">Vervaldatum:</span> {new Date(item.expiryDate).toLocaleDateString('nl-NL')}</div>}
                   {item.alertEmail && <div><span className="font-medium">Alert Email:</span> {item.alertEmail}</div>}
+                </div>
+              </div>
+
+              {/* Product Status Information */}
+              <div>
+                <h3 className="font-semibold text-slate-900 mb-2">Product Status</h3>
+                <div className="space-y-2 text-sm">
+                  {item.isDiscontinued ? (
+                    <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 rounded-full bg-purple-600"></div>
+                        <span className="font-medium text-purple-800">Niet meer leverbaar</span>
+                      </div>
+                      {item.replacementItemId && (
+                        <div className="text-xs text-purple-700">
+                          <span className="font-medium">Vervangen door:</span>{' '}
+                          {allItems?.find(i => i.id === item.replacementItemId)?.name || 'Onbekend item'}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <span className="text-green-700">Leverbaar</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
