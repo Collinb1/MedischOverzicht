@@ -34,6 +34,8 @@ export const medicalItems = pgTable("medical_items", {
   expiryDate: date("expiry_date"),
   alertEmail: text("alert_email"),
   photoUrl: text("photo_url"),
+  isDiscontinued: boolean("is_discontinued").notNull().default(false),
+  replacementItemId: varchar("replacement_item_id").references(() => medicalItems.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

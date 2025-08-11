@@ -35,6 +35,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import AddCabinetDialog from "@/components/add-cabinet-dialog";
 import AddPostDialog from "@/components/add-post-dialog";
@@ -53,6 +54,8 @@ const editItemSchema = z.object({
   photoUrl: z.string().nullable(),
   isLowStock: z.boolean().default(false),
   stockStatus: z.enum(["op-voorraad", "bijna-op", "niet-op-voorraad"]).default("op-voorraad"),
+  isDiscontinued: z.boolean().default(false),
+  replacementItemId: z.string().nullable().optional(),
 });
 
 interface EditItemDialogProps {
@@ -98,6 +101,11 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
     },
   });
 
+  // Get all medical items for replacement selection
+  const { data: allMedicalItems = [] } = useQuery<MedicalItem[]>({
+    queryKey: ['/api/medical-items'],
+  });
+
   // Get contacts for a specific ambulance post
   const getContactsForPost = (ambulancePostId: string) => {
     if (!postContacts || postContacts.length === 0) return [];
@@ -119,6 +127,8 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
       photoUrl: item.photoUrl || null,
       isLowStock: false,
       stockStatus: "op-voorraad",
+      isDiscontinued: (item as any).isDiscontinued || false,
+      replacementItemId: (item as any).replacementItemId || null,
     },
   });
 
@@ -464,7 +474,63 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="isDiscontinued"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Niet meer leverbaar</FormLabel>
+                      <div className="text-sm text-muted-foreground">
+                        Item wordt niet meer geproduceerd
+                      </div>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        data-testid="switch-discontinued"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
+
+            {/* Replacement Item Selection - only show if discontinued */}
+            {form.watch('isDiscontinued') && (
+              <FormField
+                control={form.control}
+                name="replacementItemId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Vervangingsproduct</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ""} data-testid="select-replacement-item">
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecteer vervangingsproduct (optioneel)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">Geen vervangingsproduct</SelectItem>
+                        {allMedicalItems
+                          .filter(replacementItem => replacementItem.id !== item.id && !(replacementItem as any).isDiscontinued)
+                          .map((replacementItem) => (
+                            <SelectItem key={replacementItem.id} value={replacementItem.id}>
+                              {replacementItem.name} - {replacementItem.category}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    <div className="text-sm text-muted-foreground">
+                      Kies een product dat dit item kan vervangen
+                    </div>
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Location Management Table */}
             <div className="space-y-4">
