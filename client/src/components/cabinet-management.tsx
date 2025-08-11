@@ -64,7 +64,7 @@ export default function CabinetManagement() {
   });
 
   const handleDeleteCabinet = (cabinet: Cabinet) => {
-    if (confirm(`Weet je zeker dat je kast "${cabinet.name}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
+    if (confirm(`Weet u zeker dat u de kast "${cabinet.name}" wilt verwijderen voor alle posten die daar gebruik van maken?`)) {
       deleteCabinetMutation.mutate(cabinet.id);
     }
   };
