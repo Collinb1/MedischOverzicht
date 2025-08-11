@@ -7,6 +7,29 @@ import "@uppy/dashboard/dist/style.min.css";
 import AwsS3 from "@uppy/aws-s3";
 import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
+import heic2any from "heic2any";
+
+// HEIC to JPG conversion utility
+const convertHeicToJpg = async (file: File): Promise<File> => {
+  try {
+    const convertedBlob = await heic2any({
+      blob: file,
+      toType: "image/jpeg",
+      quality: 0.9,
+    }) as Blob;
+    
+    const convertedFile = new File([convertedBlob], file.name.replace(/\.heic$/i, '.jpg'), {
+      type: "image/jpeg",
+      lastModified: Date.now(),
+    });
+    
+    console.log(`HEIC geconverteerd naar JPG: ${file.name} → ${convertedFile.name}`);
+    return convertedFile;
+  } catch (error) {
+    console.warn("HEIC conversie mislukt:", error);
+    return file; // Return original file if conversion fails
+  }
+};
 
 // Image compression utility
 const compressImage = (file: File, maxWidth: number = 1200, quality: number = 0.8): Promise<File> => {
@@ -61,13 +84,15 @@ interface ObjectUploaderProps {
 
 /**
  * Een foto upload component die een knop toont en een modal interface biedt voor
- * bestandsbeheer met automatische beeldcompressie.
+ * bestandsbeheer met automatische HEIC conversie en beeldcompressie.
  * 
  * Functionaliteiten:
  * - Toont als aanpasbare knop die upload modal opent
+ * - Automatische HEIC naar JPG conversie (iPhone foto's)
  * - Automatische beeldcompressie (max 1200px breedte, 80% kwaliteit)
- * - Accepteert tot 20MB grote bestanden voor compressie
- * - Comprimeert tot max 5MB na verwerking
+ * - Accepteert tot 20MB grote bestanden voor verwerking
+ * - Comprimeert tot max 5MB na conversie en compressie
+ * - Ondersteunt: JPG, PNG, GIF, WebP, HEIC bestanden
  * - Biedt een modal interface voor:
  *   - Bestandsselectie
  *   - Bestandsvoorbeeld
@@ -91,7 +116,7 @@ export function ObjectUploader({
       restrictions: {
         maxNumberOfFiles,
         maxFileSize: 20971520, // Allow 20MB before compression
-        allowedFileTypes: ['image/*'], // Only allow image files
+        allowedFileTypes: ['image/*', '.heic', '.HEIC'], // Allow images and HEIC files
       },
       autoProceed: false,
     })
@@ -100,24 +125,33 @@ export function ObjectUploader({
         getUploadParameters: onGetUploadParameters,
       })
       .on("file-added", async (file) => {
-        // Automatically compress images before upload
+        // Process HEIC and compress images before upload
         try {
           const originalSize = file.size || 0;
           if (originalSize === 0) return; // Skip if no size info
           
-          const compressedFile = await compressImage(file.data as File);
+          let processedFile = file.data as File;
+          
+          // First, convert HEIC to JPG if needed
+          if (file.name && file.name.toLowerCase().endsWith('.heic')) {
+            processedFile = await convertHeicToJpg(processedFile);
+          }
+          
+          // Then compress the image
+          const compressedFile = await compressImage(processedFile);
           const compressionRatio = ((originalSize - compressedFile.size) / originalSize * 100).toFixed(1);
           
-          // Update file with compressed version
+          // Update file with processed version
           uppy.setFileState(file.id, {
             data: compressedFile,
             size: compressedFile.size,
-            name: `${file.name} (gecomprimeerd ${compressionRatio}%)`,
+            name: `${processedFile.name} (gecomprimeerd ${compressionRatio}%)`,
+            type: compressedFile.type,
           });
           
-          console.log(`Foto gecomprimeerd: ${(originalSize / 1024 / 1024).toFixed(1)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(1)}MB (${compressionRatio}% kleiner)`);
+          console.log(`Foto verwerkt: ${(originalSize / 1024 / 1024).toFixed(1)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(1)}MB (${compressionRatio}% kleiner)`);
         } catch (error) {
-          console.warn("Compressie mislukt, origineel bestand wordt gebruikt:", error);
+          console.warn("Foto verwerking mislukt, origineel bestand wordt gebruikt:", error);
         }
       })
       .on("complete", (result) => {

@@ -55,3 +55,4 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-11: RAV FL&GV logo toegevoegd aan dashboard header - officieel logo van de ambulance organisatie naast MedInventory titel
 - 2025-08-11: Nieuw item formulier opgeschoond - voorraad status, bijna op markering en email velden weggehaald, categorie standaard leeg
 - 2025-08-11: Automatische foto compressie geïmplementeerd - grote bestanden (tot 20MB) worden automatisch gecomprimeerd naar max 5MB, 1200px breed, voor snellere uploads en betere performance
+- 2025-08-11: HEIC naar JPG conversie toegevoegd - iPhone foto's worden automatisch geconverteerd naar JPG formaat voor universele compatibiliteit
