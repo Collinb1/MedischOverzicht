@@ -59,11 +59,16 @@ export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddC
       
       // Then create cabinet locations for selected posts
       for (const postId of selectedPosts) {
-        await apiRequest("POST", "/api/cabinet-locations", {
-          cabinetId: cabinet.id,
-          ambulancePostId: postId,
-          specificLocation: specificLocations[postId] || null
-        });
+        try {
+          await apiRequest("POST", "/api/cabinet-locations", {
+            cabinetId: cabinet.id,
+            ambulancePostId: postId,
+            specificLocation: specificLocations[postId] || ""
+          });
+        } catch (error) {
+          console.warn(`Failed to create cabinet location for post ${postId}:`, error);
+          // Continue with other posts even if one fails
+        }
       }
       
       return cabinet;
@@ -82,10 +87,19 @@ export default function AddCabinetDialog({ open, onOpenChange, onSuccess }: AddC
       onSuccess(cabinet);
       onOpenChange(false);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Cabinet creation error:", error);
+      let errorMessage = "Er is een fout opgetreden bij het aanmaken van de kast.";
+      
+      if (error.message?.includes("duplicate key")) {
+        errorMessage = "Een kast met deze ID bestaat al. Kies een andere ID.";
+      } else if (error.message?.includes("invalid input syntax")) {
+        errorMessage = "De invoer bevat ongeldige tekens. Controleer alle velden.";
+      }
+      
       toast({
         title: "Fout bij aanmaken",
-        description: "Er is een fout opgetreden bij het aanmaken van de kast.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
