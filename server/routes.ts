@@ -1191,7 +1191,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Supply request sent for item ${item.name} at ${ambulancePost?.name} to ${contactPerson.email}`);
       
-      // Store the supply request in database
+      // Get cabinet details for email
+      const cabinet = await storage.getCabinet(location.cabinet);
+      const cabinetName = cabinet ? cabinet.name : `Kast ${location.cabinet}`;
+      
+      // Generate email HTML for supply request
+      const emailItemData = {
+        name: item.name,
+        description: item.description,
+        category: item.category,
+        expiryDate: item.expiryDate,
+        drawer: location.drawer,
+        ambulancePost: ambulancePost?.name
+      };
+      
+      const emailHTML = generateRestockEmailHTML(
+        emailItemData, 
+        cabinetName, 
+        location.stockStatus === "niet-meer-aanwezig" ? "OP" : "Bijna op"
+      );
+      
+      // Send email to contact person
+      const emailSuccess = await sendEmail({
+        to: contactPerson.email,
+        subject: `📦 Aanvulverzoek: ${item.name} - ${ambulancePost?.name}`,
+        html: emailHTML
+      });
+      
+      if (!emailSuccess) {
+        console.error(`Failed to send email to ${contactPerson.email} for item ${item.name}`);
+        return res.status(500).json({ 
+          message: "Fout bij het verzenden van email. Controleer email instellingen." 
+        });
+      }
+      
+      // Store the supply request in database only if email was sent successfully
       await storage.createSupplyRequest({
         itemId: item.id,
         locationId: location.id,
@@ -1203,11 +1237,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.json({ 
-        message: `Aanvulverzoek verzonden naar ${contactPerson.name} (${contactPerson.email})`,
+        message: `Email verzonden naar ${contactPerson.name} (${contactPerson.email})`,
         contactPerson: contactPerson.name,
         email: contactPerson.email,
         itemName: item.name,
-        location: `${ambulancePost?.name} - Kast ${location.cabinet}`
+        location: `${ambulancePost?.name} - Kast ${location.cabinet}`,
+        emailSent: true
       });
     } catch (error) {
       console.error("Error sending supply request:", error);
