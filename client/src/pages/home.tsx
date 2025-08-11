@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin, Archive, Lock } from "lucide-react";
 import { Link } from "wouter";
@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import CabinetOverview from "../components/cabinet-overview";
 import InventoryTable from "../components/inventory-table-new";
@@ -25,7 +27,29 @@ export default function Home() {
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
+  const [isAdminMode, setIsAdminMode] = useState(false);
   const { toast } = useToast();
+
+  // Load admin mode from localStorage on component mount
+  useEffect(() => {
+    const savedAdminMode = localStorage.getItem('medInventoryAdminMode');
+    if (savedAdminMode === 'true') {
+      setIsAdminMode(true);
+    }
+  }, []);
+
+  const toggleAdminMode = () => {
+    const newAdminMode = !isAdminMode;
+    setIsAdminMode(newAdminMode);
+    localStorage.setItem('medInventoryAdminMode', newAdminMode.toString());
+    
+    toast({
+      title: newAdminMode ? "Beheerdersmode Ingeschakeld" : "Beheerdersmode Uitgeschakeld",
+      description: newAdminMode 
+        ? "Uitgebreide beheersfuncties zijn nu beschikbaar."
+        : "Basis gebruikersinterface is hersteld.",
+    });
+  };
 
   const handlePasswordSubmit = () => {
     if (passwordInput === "63696") {
@@ -299,6 +323,36 @@ export default function Home() {
             <DialogHeader>
               <DialogTitle>Instellingen</DialogTitle>
             </DialogHeader>
+            
+            {/* Admin Mode Toggle */}
+            <div className="border-b pb-6 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-base font-medium">Beheerdersmode</Label>
+                  <div className="text-sm text-gray-500">
+                    Schakel uitgebreide beheersfuncties in of uit
+                  </div>
+                </div>
+                <Switch
+                  checked={isAdminMode}
+                  onCheckedChange={toggleAdminMode}
+                  data-testid="switch-admin-mode"
+                />
+              </div>
+              
+              {isAdminMode && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-2 text-blue-800">
+                    <Settings className="w-4 h-4" />
+                    <span className="text-sm font-medium">Beheerdersmode Actief</span>
+                  </div>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Uitgebreide functies zoals kastenbeheer, email instellingen en backup opties zijn beschikbaar.
+                  </p>
+                </div>
+              )}
+            </div>
+            
             <CabinetManagement />
           </DialogContent>
         </Dialog>
