@@ -628,47 +628,7 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
               </div>
             </div>
 
-            {/* Location Information */}
-            <div>
-              <h3 className="font-semibold text-slate-900 mb-3">Locatie Informatie</h3>
-              <div className="space-y-3">
-                {relevantLocations.length === 0 ? (
-                  <p className="text-slate-500 text-sm">Geen locaties gevonden</p>
-                ) : (
-                  relevantLocations.map((location: any) => {
-                    const post = ambulancePosts.find((p: any) => p.id === location.ambulancePostId);
-                    const cabinet = cabinets.find((c: any) => c.id === location.cabinet);
-                    const cabinetColor = cabinet?.color ? tailwindToHex(cabinet.color) : '#6B7280';
-                    
-                    return (
-                      <div key={location.id} className="border border-slate-200 rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{post?.name || location.ambulancePostId}</span>
-                            <div 
-                              className="px-2 py-1 rounded text-xs font-bold text-white"
-                              style={{ backgroundColor: cabinetColor }}
-                            >
-                              {cabinet?.abbreviation || location.cabinet}
-                            </div>
-                            {location.drawer && (
-                              <span className="px-2 py-1 bg-slate-100 rounded text-xs">{location.drawer}</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full ${
-                              location.stockStatus === 'niet-meer-aanwezig' ? 'bg-red-500' :
-                              location.stockStatus === 'bijna-op' ? 'bg-orange-500' : 'bg-green-500'
-                            }`}></div>
-                            <span className="text-sm capitalize">{location.stockStatus.replace('-', ' ')}</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
+
 
             {/* Other Posts Availability */}
             {selectedPost && (
