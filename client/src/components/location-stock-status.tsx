@@ -9,6 +9,7 @@ import type { MedicalItem, ItemLocation, PostContact, AmbulancePost } from "@sha
 
 interface LocationStockStatusProps {
   item: MedicalItem;
+  selectedPost?: string;
 }
 
 interface ItemLocationWithDetails extends ItemLocation {
@@ -16,7 +17,7 @@ interface ItemLocationWithDetails extends ItemLocation {
   ambulancePostName?: string;
 }
 
-export function LocationStockStatus({ item }: LocationStockStatusProps) {
+export function LocationStockStatus({ item, selectedPost }: LocationStockStatusProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -30,8 +31,11 @@ export function LocationStockStatus({ item }: LocationStockStatusProps) {
     }
   });
 
-  // Filter locations for this specific item
-  const locations = allLocations.filter(loc => loc.itemId === item.id);
+  // Filter locations for this specific item and selected ambulance post
+  const locations = allLocations.filter(loc => 
+    loc.itemId === item.id && 
+    (!selectedPost || loc.ambulancePostId === selectedPost)
+  );
 
   // Query to get ambulance posts
   const { data: ambulancePosts = [] } = useQuery<AmbulancePost[]>({

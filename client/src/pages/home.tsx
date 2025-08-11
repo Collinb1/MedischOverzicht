@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CabinetOverview from "../components/cabinet-overview";
-import InventoryTable from "../components/inventory-table";
+import InventoryTable from "../components/inventory-table-new";
 import AddItemDialog from "../components/add-item-dialog";
 import CabinetManagement from "../components/cabinet-management";
 import type { MedicalItem, AmbulancePost } from "@shared/schema";
@@ -206,6 +206,7 @@ export default function Home() {
           items={items} 
           isLoading={isLoading} 
           onRefetch={refetch}
+          selectedPost={selectedPost}
         />
 
         {/* Add Item Dialog */}

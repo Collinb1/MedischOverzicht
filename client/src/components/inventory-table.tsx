@@ -16,6 +16,7 @@ interface InventoryTableProps {
   items: MedicalItem[];
   isLoading: boolean;
   onRefetch: () => void;
+  selectedPost?: string;
 }
 
 interface ItemLocationWithDetails extends ItemLocation {
@@ -166,7 +167,7 @@ const SupplyRequestButton = ({ item, onStockStatusChange }: {
   );
 };
 
-export default function InventoryTable({ items, isLoading, onRefetch }: InventoryTableProps) {
+export default function InventoryTable({ items, isLoading, onRefetch, selectedPost }: InventoryTableProps) {
   const [editingItem, setEditingItem] = useState<MedicalItem | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -468,7 +469,7 @@ export default function InventoryTable({ items, isLoading, onRefetch }: Inventor
                         {item.category}
                       </TableCell>
                       <TableCell data-testid={`location-status-${item.id}`}>
-                        <LocationStockStatus item={item} />
+                        <LocationStockStatus item={item} selectedPost={selectedPost} />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-1">
