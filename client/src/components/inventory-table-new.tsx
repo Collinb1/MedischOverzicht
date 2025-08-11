@@ -162,8 +162,8 @@ const DrawerColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost?
     return <div className="text-sm text-slate-400">-</div>;
   }
 
-  // Get unique drawers for this item
-  const uniqueDrawers = Array.from(new Set(relevantLocations.map((loc: any) => loc.drawer).filter(Boolean)));
+  // Get unique drawers for this item - filter out null, undefined, and empty strings
+  const uniqueDrawers = Array.from(new Set(relevantLocations.map((loc: any) => loc.drawer).filter((drawer: any) => drawer && drawer.trim() !== "")));
 
   if (uniqueDrawers.length === 0) {
     return <div className="text-sm text-slate-400">-</div>;

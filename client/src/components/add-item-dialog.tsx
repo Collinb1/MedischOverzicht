@@ -278,7 +278,10 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
     const submitData = { 
       ...data, 
       photoUrl: finalPhotoUrl,
-      locations: itemLocations.filter(loc => loc.ambulancePostId && loc.cabinet)
+      locations: itemLocations.filter(loc => loc.ambulancePostId && loc.cabinet).map(loc => ({
+        ...loc,
+        drawer: loc.drawer && loc.drawer.trim() !== "" ? loc.drawer.trim() : null
+      }))
     };
     
     console.log("Submitting data:", submitData);

@@ -245,6 +245,7 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
       loc.ambulancePostId && loc.cabinet
     ).map(loc => ({
       ...loc,
+      drawer: loc.drawer && loc.drawer.trim() !== "" ? loc.drawer.trim() : null,
       contactPersonId: loc.contactPersonId || null,
       stockStatus: loc.stockStatus || "op-voorraad",
       isLowStock: loc.stockStatus === 'bijna-op' || loc.stockStatus === 'niet-meer-aanwezig'
