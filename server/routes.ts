@@ -936,7 +936,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (emailConfig && emailConfig.smtpHost && emailConfig.smtpHost.includes('gmail')) {
           errorMessage += " Voor Gmail gebruik een App-specifiek wachtwoord in plaats van je gewone wachtwoord. Zie Google Account instellingen → Beveiliging → App-wachtwoorden.";
         } else if (emailConfig && emailConfig.smtpHost) {
-          errorMessage += " Controleer je SMTP instellingen: gebruikersnaam, wachtwoord, host en poort. Voor bedrijfsmail servers zijn TLS certificaat problemen automatisch afgehandeld.";
+          errorMessage += " Controleer je SMTP instellingen. Voor Microsoft Exchange: gebruik je volledige email adres als gebruikersnaam en controleer of SMTP authenticatie is ingeschakeld bij je IT-afdeling.";
         } else {
           errorMessage += " Geen email configuratie gevonden. Configureer eerst je SMTP instellingen.";
         }

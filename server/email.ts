@@ -40,14 +40,20 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
         host: emailConfig.smtpHost,
         port: emailConfig.smtpPort,
         secure: emailConfig.smtpPort === 465, // true for 465, false for other ports
+        requireTLS: emailConfig.smtpPort === 587, // Force STARTTLS for port 587
         auth: {
           user: emailConfig.smtpUser,
           pass: emailConfig.smtpPassword,
         },
         tls: {
-          // Accept self-signed certificates and hostname mismatches
-          rejectUnauthorized: false
-        }
+          // Accept self-signed certificates and hostname mismatches (common for Exchange)
+          rejectUnauthorized: false,
+          ciphers: 'ALL',
+          minVersion: 'TLSv1'
+        },
+        connectionTimeout: 10000, // 10 seconds
+        greetingTimeout: 5000, // 5 seconds  
+        socketTimeout: 10000 // 10 seconds
       });
 
       const fromEmail = emailConfig.fromEmail || params.from;
@@ -68,8 +74,14 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       
       // Provide specific error messages for common issues
       if (error.code === 'EAUTH') {
-        console.error('SMTP Authenticatie gefaald. Voor Gmail gebruik een App-specifiek wachtwoord.');
-        console.error('Zie: https://support.google.com/accounts/answer/185833');
+        if (emailConfig.smtpHost && emailConfig.smtpHost.includes('gmail')) {
+          console.error('SMTP Authenticatie gefaald. Voor Gmail gebruik een App-specifiek wachtwoord.');
+          console.error('Zie: https://support.google.com/accounts/answer/185833');
+        } else {
+          console.error('SMTP Authenticatie gefaald. Controleer gebruikersnaam en wachtwoord.');
+          console.error('Voor Exchange: gebruik je volledige email adres als gebruikersnaam.');
+          console.error('Voor Exchange: controleer of SMTP auth is ingeschakeld.');
+        }
       } else if (error.code === 'ECONNECTION') {
         console.error('Kan geen verbinding maken met SMTP server. Controleer host en poort.');
       } else if (error.code === 'ETIMEDOUT') {

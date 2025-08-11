@@ -405,9 +405,9 @@ export default function EmailSettings() {
                     <p className="text-xs text-slate-500">STARTTLS vereist</p>
                   </div>
                   <div>
-                    <h4 className="font-medium">Yahoo</h4>
-                    <p className="text-slate-600">smtp.mail.yahoo.com:587</p>
-                    <p className="text-xs text-slate-500">SSL/TLS vereist</p>
+                    <h4 className="font-medium">Microsoft Exchange</h4>
+                    <p className="text-slate-600">mail.domain.com:587</p>
+                    <p className="text-xs text-slate-500">STARTTLS aanbevolen</p>
                   </div>
                 </div>
                 <div className="pt-4 text-xs text-slate-600 space-y-2">
@@ -417,9 +417,10 @@ export default function EmailSettings() {
                     <p className="text-amber-700 mt-1">Instructies: Google Account → Beveiliging → 2-staps verificatie → App-wachtwoorden</p>
                   </div>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="font-medium text-blue-800 mb-1">🏢 Bedrijfsmail servers:</p>
-                    <p className="text-blue-700">Voor bedrijfsmail (Exchange, eigen servers) werkt het systeem automatisch met zelfondertekende certificaten.</p>
-                    <p className="text-blue-700 mt-1">TLS certificaat verificatie is flexibel geconfigureerd voor maximale compatibiliteit.</p>
+                    <p className="font-medium text-blue-800 mb-1">🏢 Microsoft Exchange servers:</p>
+                    <p className="text-blue-700">Gebruik je <strong>volledige email adres</strong> als gebruikersnaam (niet alleen je naam).</p>
+                    <p className="text-blue-700 mt-1">Controleer bij je IT-afdeling of SMTP authenticatie is ingeschakeld voor je account.</p>
+                    <p className="text-blue-700 mt-1">Aanbevolen poort: 587 met STARTTLS beveiliging.</p>
                   </div>
                   <p>Voor andere providers: controleer of SMTP toegang is ingeschakeld in je account instellingen.</p>
                 </div>
