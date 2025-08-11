@@ -361,16 +361,41 @@ export default function EmailSettings() {
                   </div>
 
                   <div className="flex items-center justify-between pt-4 border-t">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleTestEmail}
-                      disabled={testEmailMutation.isPending || isTestingEmail}
-                      data-testid="button-test-email"
-                    >
-                      <TestTube className="w-4 h-4 mr-2" />
-                      {isTestingEmail ? "Test email verzenden..." : "Test Email Versturen"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const config = form.getValues();
+                          fetch('/api/test-smtp-connection', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ config })
+                          }).then(res => res.json()).then(data => {
+                            toast({
+                              title: data.success ? "Verbinding OK" : "Verbinding mislukt",
+                              description: data.message,
+                              variant: data.success ? "default" : "destructive"
+                            });
+                          });
+                        }}
+                        disabled={testEmailMutation.isPending || isTestingEmail}
+                      >
+                        Test Verbinding
+                      </Button>
+                      
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleTestEmail}
+                        disabled={testEmailMutation.isPending || isTestingEmail}
+                        data-testid="button-test-email"
+                      >
+                        <TestTube className="w-4 h-4 mr-2" />
+                        {isTestingEmail ? "Test email verzenden..." : "Test Email Versturen"}
+                      </Button>
+                    </div>
 
                     <Button
                       type="submit"

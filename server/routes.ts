@@ -834,6 +834,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test SMTP connection (basic connectivity test)
+  app.post("/api/test-smtp-connection", async (req, res) => {
+    try {
+      const { config } = req.body;
+      
+      let emailConfig = config;
+      if (!emailConfig || !emailConfig.smtpHost) {
+        try {
+          emailConfig = await storage.getEmailConfig();
+        } catch (error) {
+          return res.status(400).json({
+            success: false,
+            message: "Geen email configuratie gevonden."
+          });
+        }
+      }
+
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        host: emailConfig.smtpHost,
+        port: emailConfig.smtpPort,
+        secure: emailConfig.smtpPort === 465,
+        tls: { rejectUnauthorized: false }
+      });
+
+      // Test basic connection without auth
+      try {
+        await transporter.verify();
+        res.json({ 
+          success: true, 
+          message: `SMTP server ${emailConfig.smtpHost}:${emailConfig.smtpPort} is bereikbaar` 
+        });
+      } catch (error: any) {
+        res.status(500).json({ 
+          success: false, 
+          message: `SMTP server niet bereikbaar: ${error.message}` 
+        });
+      }
+    } catch (error) {
+      console.error("SMTP connection test error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Fout bij SMTP connectiviteitstest" 
+      });
+    }
+  });
+
   // Test email functionality
   app.post("/api/test-email", async (req, res) => {
     try {

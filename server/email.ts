@@ -36,15 +36,11 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       console.log(`Using SMTP user: ${emailConfig.smtpUser}`);
       console.log(`SMTP secure mode: ${emailConfig.smtpPort === 465 ? 'SSL' : 'STARTTLS'}`);
       
-      const transporter = nodemailer.createTransport({
+      // Try different authentication methods for Exchange compatibility
+      const transportConfig: any = {
         host: emailConfig.smtpHost,
         port: emailConfig.smtpPort,
         secure: emailConfig.smtpPort === 465, // true for 465, false for other ports
-        requireTLS: emailConfig.smtpPort === 587, // Force STARTTLS for port 587
-        auth: {
-          user: emailConfig.smtpUser,
-          pass: emailConfig.smtpPassword,
-        },
         tls: {
           // Accept self-signed certificates and hostname mismatches (common for Exchange)
           rejectUnauthorized: false,
@@ -53,8 +49,26 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
         },
         connectionTimeout: 10000, // 10 seconds
         greetingTimeout: 5000, // 5 seconds  
-        socketTimeout: 10000 // 10 seconds
-      });
+        socketTimeout: 10000, // 10 seconds
+        debug: true, // Enable debug logging
+        logger: true
+      };
+
+      // Force STARTTLS for port 587
+      if (emailConfig.smtpPort === 587) {
+        transportConfig.requireTLS = true;
+      }
+
+      // Try different auth methods for Exchange
+      if (emailConfig.smtpUser && emailConfig.smtpPassword) {
+        transportConfig.auth = {
+          user: emailConfig.smtpUser,
+          pass: emailConfig.smtpPassword,
+          type: 'login' // Force LOGIN method instead of PLAIN for Exchange
+        };
+      }
+
+      const transporter = nodemailer.createTransport(transportConfig);
 
       const fromEmail = emailConfig.fromEmail || params.from;
       const fromName = emailConfig.fromName || 'Medische Inventaris';
