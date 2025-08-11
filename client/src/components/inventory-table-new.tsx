@@ -285,11 +285,7 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // If item is discontinued, don't show supply request functionality
-  if ((item as any).isDiscontinued) {
-    return null;
-  }
-
+  // Always call hooks (React requirement), then decide what to render
   const { data: locations = [] } = useQuery({
     queryKey: ['/api/item-locations', item.id],
     queryFn: async () => {
@@ -299,17 +295,6 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
     },
   });
 
-  // Filter locations for selected post
-  const relevantLocations = selectedPost 
-    ? locations.filter((loc: any) => loc.ambulancePostId === selectedPost)
-    : locations;
-
-  // Check if any location needs supply request (bijna-op or niet-meer-aanwezig)
-  const needsSupply = relevantLocations.some((loc: any) => 
-    loc.stockStatus === 'bijna-op' || loc.stockStatus === 'niet-meer-aanwezig'
-  );
-
-  // Check if any location has been requested recently
   const { data: notifications = [] } = useQuery({
     queryKey: ['/api/supply-requests', item.id, selectedPost],
     queryFn: async () => {
@@ -320,7 +305,6 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
     enabled: !!selectedPost,
   });
 
-  // Get contact info for display
   const { data: postContacts = [] } = useQuery({
     queryKey: ['/api/post-contacts'],
     queryFn: async () => {
@@ -330,10 +314,13 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
     },
   });
 
-  const hasRecentRequest = notifications.length > 0;
-
   const sendSupplyRequestMutation = useMutation({
     mutationFn: async () => {
+      // Filter locations for selected post
+      const relevantLocations = selectedPost 
+        ? locations.filter((loc: any) => loc.ambulancePostId === selectedPost)
+        : locations;
+      
       // Find a location that needs supply
       const locationNeedingSupply = relevantLocations.find((loc: any) => 
         loc.stockStatus === 'bijna-op' || loc.stockStatus === 'niet-meer-aanwezig'
@@ -359,6 +346,23 @@ const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; select
       });
     },
   });
+
+  // If item is discontinued, don't show supply request functionality
+  if ((item as any).isDiscontinued) {
+    return null;
+  }
+
+  // Filter locations for selected post
+  const relevantLocations = selectedPost 
+    ? locations.filter((loc: any) => loc.ambulancePostId === selectedPost)
+    : locations;
+
+  // Check if any location needs supply request (bijna-op or niet-meer-aanwezig)
+  const needsSupply = relevantLocations.some((loc: any) => 
+    loc.stockStatus === 'bijna-op' || loc.stockStatus === 'niet-meer-aanwezig'
+  );
+
+  const hasRecentRequest = notifications.length > 0;
 
   if (!needsSupply && !hasRecentRequest) {
     return (
