@@ -36,21 +36,46 @@ export default function LowStockOverview() {
     },
   });
 
-  // Filter items die bijna op zijn of niet meer aanwezig
-  const lowStockItems = items.filter((item: MedicalItem) => 
-    item.stockStatus === 'bijna-op' || item.stockStatus === 'niet-meer-aanwezig'
-  );
-
-  const updateStockStatusMutation = useMutation({
-    mutationFn: async ({ id, stockStatus }: { id: string; stockStatus: string }) => {
-      const response = await apiRequest('PATCH', `/api/medical-items/${id}`, { stockStatus });
+  // Get all item locations to determine stock status
+  const { data: locations = [] } = useQuery({
+    queryKey: ['/api/item-locations'],
+    queryFn: async () => {
+      const response = await fetch('/api/item-locations');
+      if (!response.ok) throw new Error("Failed to fetch locations");
       return response.json();
+    },
+  });
+
+  // Filter items die bijna op zijn of niet meer aanwezig based on location status
+  const lowStockItems = items.filter((item: MedicalItem) => {
+    const itemLocations = locations.filter((loc: any) => 
+      loc.itemId === item.id && loc.ambulancePostId === selectedPost
+    );
+    return itemLocations.some((loc: any) => 
+      loc.stockStatus === 'bijna-op' || loc.stockStatus === 'niet-meer-aanwezig'
+    );
+  });
+
+  const updateLocationStatusMutation = useMutation({
+    mutationFn: async ({ itemId, stockStatus }: { itemId: string; stockStatus: string }) => {
+      // Get locations for this item and selected post
+      const itemLocations = locations.filter((loc: any) => 
+        loc.itemId === itemId && loc.ambulancePostId === selectedPost
+      );
+      
+      // Update all locations for this item in the selected post
+      const promises = itemLocations.map((location: any) =>
+        apiRequest('PATCH', `/api/item-locations/${location.id}/status`, { stockStatus })
+      );
+      
+      return await Promise.all(promises);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/medical-items'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/item-locations'] });
       toast({
         title: "Status bijgewerkt",
-        description: "Voorraad status is succesvol aangepast",
+        description: "Voorraad status is succesvol aangepast voor alle locaties",
       });
     },
     onError: (error) => {
@@ -83,23 +108,23 @@ export default function LowStockOverview() {
     },
   });
 
-  const handleSendEmail = (item: MedicalItem) => {
+  const handleSendEmail = (item: MedicalItem, location: any) => {
     const emailData = {
       itemId: item.id,
       itemName: item.name,
-      cabinetId: item.cabinet,
-      drawer: item.drawer,
-      stockStatus: item.stockStatus,
+      cabinetId: location.cabinet,
+      drawer: location.drawer,
+      stockStatus: location.stockStatus,
       department: "Magazijn",
-      ambulancePost: item.ambulancePost
+      ambulancePost: selectedPost
     };
     
     sendEmailMutation.mutate(emailData);
   };
 
   const handleResetStock = (item: MedicalItem) => {
-    updateStockStatusMutation.mutate({
-      id: item.id,
+    updateLocationStatusMutation.mutate({
+      itemId: item.id,
       stockStatus: 'op-voorraad'
     });
   };
@@ -196,8 +221,18 @@ export default function LowStockOverview() {
             <div className="space-y-4">
               <div className="flex items-center gap-4 text-sm text-slate-600">
                 <span>Totaal items: {lowStockItems.length}</span>
-                <span>Bijna op: {lowStockItems.filter(i => i.stockStatus === 'bijna-op').length}</span>
-                <span>Niet meer aanwezig: {lowStockItems.filter(i => i.stockStatus === 'niet-meer-aanwezig').length}</span>
+                <span>Bijna op: {lowStockItems.filter(item => {
+                  const itemLocations = locations.filter((loc: any) => 
+                    loc.itemId === item.id && loc.ambulancePostId === selectedPost
+                  );
+                  return itemLocations.some((loc: any) => loc.stockStatus === 'bijna-op');
+                }).length}</span>
+                <span>Niet meer aanwezig: {lowStockItems.filter(item => {
+                  const itemLocations = locations.filter((loc: any) => 
+                    loc.itemId === item.id && loc.ambulancePostId === selectedPost
+                  );
+                  return itemLocations.some((loc: any) => loc.stockStatus === 'niet-meer-aanwezig');
+                }).length}</span>
               </div>
 
               <Table>
@@ -213,71 +248,80 @@ export default function LowStockOverview() {
                 </TableHeader>
                 <TableBody>
                   {lowStockItems.map((item) => {
-                    const statusInfo = getStockStatusInfo(item.stockStatus);
-                    const StatusIcon = statusInfo.icon;
-                    
-                    return (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">
-                          <div>
-                            <div className="font-medium">{item.name}</div>
-                            {item.description && (
-                              <div className="text-sm text-slate-600">{item.description}</div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            className={`text-xs px-2 py-1 ${getCabinetColor(item.cabinet)}`}
-                          >
-                            {item.cabinet}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-slate-600">
-                          {item.drawer || '-'}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          <Badge variant="outline" className="text-xs">
-                            {item.ambulancePost === 'hilversum' ? 'Hilversum' : 'Blaricum'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className={`w-3 h-3 rounded-full ${statusInfo.color}`}
-                              title={statusInfo.text}
-                            />
-                            <span className="text-sm">{statusInfo.text}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSendEmail(item)}
-                              disabled={sendEmailMutation.isPending}
-                              className="text-xs h-7 px-2"
-                            >
-                              <Send className="w-3 h-3 mr-1" />
-                              Verstuur
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleResetStock(item)}
-                              disabled={updateStockStatusMutation.isPending}
-                              className="h-7 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
-                              title="Markeer als aangevuld"
-                              data-testid={`reset-button-${item.id}`}
-                            >
-                              <RotateCcw className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                    // Get all low stock locations for this item in selected post
+                    const itemLowStockLocations = locations.filter((loc: any) => 
+                      loc.itemId === item.id && 
+                      loc.ambulancePostId === selectedPost &&
+                      (loc.stockStatus === 'bijna-op' || loc.stockStatus === 'niet-meer-aanwezig')
                     );
-                  })}
+
+                    // Create a row for each low stock location
+                    return itemLowStockLocations.map((location: any, index: number) => {
+                      const statusInfo = getStockStatusInfo(location.stockStatus);
+                      
+                      return (
+                        <TableRow key={`${item.id}-${location.id}`}>
+                          <TableCell className="font-medium">
+                            <div>
+                              <div className="font-medium">{item.name}</div>
+                              {item.description && (
+                                <div className="text-sm text-slate-600">{item.description}</div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              className={`text-xs px-2 py-1 ${getCabinetColor(location.cabinet)}`}
+                            >
+                              {location.cabinet}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-slate-600">
+                            {location.drawer || '-'}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            <Badge variant="outline" className="text-xs">
+                              {selectedPost === 'hilversum' ? 'Hilversum' : 'Blaricum'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className={`w-3 h-3 rounded-full ${statusInfo.color}`}
+                                title={statusInfo.text}
+                              />
+                              <span className="text-sm">{statusInfo.text}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSendEmail(item, location)}
+                                disabled={sendEmailMutation.isPending}
+                                className="text-xs h-7 px-2"
+                              >
+                                <Send className="w-3 h-3 mr-1" />
+                                Verstuur
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleResetStock(item)}
+                                disabled={updateLocationStatusMutation.isPending}
+                                className="h-7 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                title="Markeer als aangevuld"
+                                data-testid={`reset-button-${item.id}-${location.id}`}
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    });
+                  }).flat()}
                 </TableBody>
               </Table>
             </div>
