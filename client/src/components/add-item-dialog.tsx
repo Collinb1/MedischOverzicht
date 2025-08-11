@@ -501,20 +501,20 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
                         </TableCell>
                         <TableCell>
                           <Select
-                            value={location.contactPersonId || ""}
-                            onValueChange={(value) => updateLocation(index, 'contactPersonId', value)}
+                            value={location.contactPersonId || "none"}
+                            onValueChange={(value) => updateLocation(index, 'contactPersonId', value === "none" ? undefined : value)}
                           >
                             <SelectTrigger data-testid={`select-contact-person-${index}`} className="w-full">
                               <SelectValue placeholder="Contactpersoon" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">Geen contactpersoon</SelectItem>
+                              <SelectItem value="none">Geen contactpersoon</SelectItem>
                               {location.ambulancePostId ? getContactsForPost(location.ambulancePostId).map(contact => (
                                 <SelectItem key={contact.id} value={contact.id}>
                                   {contact.name} - {contact.department || contact.email}
                                 </SelectItem>
                               )) : (
-                                <SelectItem value="" disabled>
+                                <SelectItem value="select-post" disabled>
                                   Selecteer eerst een ambulancepost
                                 </SelectItem>
                               )}
