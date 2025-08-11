@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Send, CheckCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
@@ -93,6 +93,116 @@ const ItemStatusIndicator = ({ item, selectedPost }: { item: MedicalItem; select
   );
 };
 
+// Component for supply request functionality only
+const SupplyRequestColumn = ({ item, selectedPost }: { item: MedicalItem; selectedPost?: string }) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: locations = [] } = useQuery({
+    queryKey: ['/api/item-locations', item.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/item-locations/${item.id}`);
+      if (!response.ok) throw new Error("Failed to fetch locations");
+      return response.json();
+    },
+  });
+
+  // Filter locations for selected post
+  const relevantLocations = selectedPost 
+    ? locations.filter((loc: any) => loc.ambulancePostId === selectedPost)
+    : locations;
+
+  // Check if any location needs supply request (bijna-op or niet-meer-aanwezig)
+  const needsSupply = relevantLocations.some((loc: any) => 
+    loc.stockStatus === 'bijna-op' || loc.stockStatus === 'niet-meer-aanwezig'
+  );
+
+  // Check if any location has been requested recently
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['/api/supply-requests', item.id, selectedPost],
+    queryFn: async () => {
+      const response = await fetch(`/api/supply-requests?itemId=${item.id}&ambulancePost=${selectedPost}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!selectedPost,
+  });
+
+  const hasRecentRequest = notifications.length > 0;
+
+  const sendSupplyRequestMutation = useMutation({
+    mutationFn: async () => {
+      // Find a location that needs supply
+      const locationNeedingSupply = relevantLocations.find((loc: any) => 
+        loc.stockStatus === 'bijna-op' || loc.stockStatus === 'niet-meer-aanwezig'
+      );
+      
+      if (!locationNeedingSupply) throw new Error("No location needs supply");
+      
+      return apiRequest('POST', `/api/supply-request/${locationNeedingSupply.id}`, {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Aanvulverzoek verzonden",
+        description: "Het aanvulverzoek is succesvol verzonden naar de contactpersoon",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/supply-requests'] });
+    },
+    onError: (error) => {
+      console.error('Supply request error:', error);
+      toast({
+        title: "Fout bij verzenden",
+        description: "Er is een fout opgetreden bij het verzenden van het aanvulverzoek",
+        variant: "destructive",
+      });
+    },
+  });
+
+  if (!needsSupply && !hasRecentRequest) {
+    return (
+      <div className="text-xs text-gray-500">
+        Geen aanvulling nodig
+      </div>
+    );
+  }
+
+  if (hasRecentRequest) {
+    const latestRequest = notifications[0];
+    return (
+      <div className="flex items-center space-x-2 text-xs">
+        <CheckCircle className="w-3 h-3 text-green-500" />
+        <div className="flex-1">
+          <div className="text-slate-900 font-medium">Verzonden</div>
+          <div className="text-slate-500">
+            {new Date(latestRequest.sentAt).toLocaleDateString('nl-NL', {
+              day: '2-digit',
+              month: '2-digit'
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (needsSupply) {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => sendSupplyRequestMutation.mutate()}
+        disabled={sendSupplyRequestMutation.isPending}
+        className="text-xs h-7 px-2"
+        data-testid={`button-supply-request-${item.id}`}
+      >
+        <Send className="w-3 h-3 mr-1" />
+        Aanvragen
+      </Button>
+    );
+  }
+
+  return null;
+};
+
 export default function InventoryTable({ items, isLoading, onRefetch, selectedPost }: InventoryTableProps) {
   const [editingItem, setEditingItem] = useState<MedicalItem | null>(null);
   const { toast } = useToast();
@@ -146,7 +256,7 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                 <TableHead>Item</TableHead>
                 <TableHead>Categorie</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Locaties & Status</TableHead>
+                <TableHead>Aanvulverzoek</TableHead>
                 <TableHead>Acties</TableHead>
               </TableRow>
             </TableHeader>
@@ -195,16 +305,18 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                     <TableCell data-testid={`status-column-${item.id}`}>
                       <ItemStatusIndicator item={item} selectedPost={selectedPost} />
                     </TableCell>
-                    <TableCell data-testid={`location-status-${item.id}`}>
-                      <LocationStockStatus item={item} selectedPost={selectedPost} />
+                    <TableCell data-testid={`supply-request-${item.id}`}>
+                      <SupplyRequestColumn item={item} selectedPost={selectedPost} />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
+                        <LocationStockStatus item={item} selectedPost={selectedPost} />
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setEditingItem(item)}
                           data-testid={`button-edit-${item.id}`}
+                          className="ml-2"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
