@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Edit, Trash2, Send, CheckCircle, RotateCcw } from "lucide-react";
+import { Edit, Trash2, Send, CheckCircle, RotateCcw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { EditItemDialog } from "../components/edit-item-dialog";
@@ -202,10 +203,11 @@ const getCabinetColor = (abbreviation: string): string => {
 };
 
 // Component for table row with status-based background color
-const StatusTableRow = ({ item, selectedPost, children }: { 
+const StatusTableRow = ({ item, selectedPost, children, onDoubleClick }: { 
   item: MedicalItem; 
   selectedPost?: string; 
   children: React.ReactNode;
+  onDoubleClick?: () => void;
 }) => {
   const { data: locations = [] } = useQuery({
     queryKey: ['/api/item-locations', item.id],
@@ -239,8 +241,9 @@ const StatusTableRow = ({ item, selectedPost, children }: {
 
   return (
     <TableRow 
-      className={getRowBackgroundClass()} 
+      className={`${getRowBackgroundClass()} cursor-pointer`} 
       data-testid={`row-item-${item.id}`}
+      onDoubleClick={onDoubleClick}
     >
       {children}
     </TableRow>
@@ -405,8 +408,203 @@ const ActionsColumn = ({ item, selectedPost, onEdit }: {
   );
 };
 
+// Item Detail View Component
+const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
+  item: MedicalItem | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedPost?: string;
+}) => {
+  const [editingItem, setEditingItem] = useState<MedicalItem | null>(null);
+
+  if (!item) return null;
+
+  const { data: locations = [] } = useQuery({
+    queryKey: ['/api/item-locations', item.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/item-locations/${item.id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  const { data: cabinets = [] } = useQuery({
+    queryKey: ['/api/cabinets'],
+    queryFn: async () => {
+      const response = await fetch('/api/cabinets');
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  const { data: ambulancePosts = [] } = useQuery({
+    queryKey: ['/api/ambulance-posts'],
+    queryFn: async () => {
+      const response = await fetch('/api/ambulance-posts');
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  // Filter locations for selected post if specified
+  const relevantLocations = selectedPost 
+    ? locations.filter((loc: any) => loc.ambulancePostId === selectedPost)
+    : locations;
+
+  // Get overall status for header color
+  const getOverallStatus = () => {
+    if (relevantLocations.length === 0) return "op-voorraad";
+    if (relevantLocations.some((loc: any) => loc.stockStatus === "niet-meer-aanwezig")) return "niet-meer-aanwezig";
+    if (relevantLocations.some((loc: any) => loc.stockStatus === "bijna-op")) return "bijna-op";
+    return "op-voorraad";
+  };
+
+  const status = getOverallStatus();
+  const getStatusColor = () => {
+    switch (status) {
+      case "niet-meer-aanwezig": return "bg-red-500";
+      case "bijna-op": return "bg-orange-500";
+      case "op-voorraad": return "bg-green-500";
+      default: return "bg-gray-500";
+    }
+  };
+
+  const getStatusText = () => {
+    switch (status) {
+      case "niet-meer-aanwezig": return "Niet op voorraad";
+      case "bijna-op": return "Bijna op";
+      case "op-voorraad": return "Op voorraad";
+      default: return "Onbekend";
+    }
+  };
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+          {/* Header with status color */}
+          <div className={`${getStatusColor()} text-white p-4 flex items-center justify-between`}>
+            <div>
+              <DialogTitle className="text-white text-xl font-bold">{item.name}</DialogTitle>
+              <p className="text-white/90 text-sm">{getStatusText()}</p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => onOpenChange(false)}
+              className="text-white hover:bg-white/20"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Photo Section */}
+            {item.photoUrl && (
+              <div className="flex justify-center">
+                <img 
+                  src={item.photoUrl} 
+                  alt={`Foto van ${item.name}`} 
+                  className="max-w-xs max-h-64 object-cover rounded-lg border shadow-sm"
+                />
+              </div>
+            )}
+
+            {/* Basic Information */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="font-semibold text-slate-900 mb-2">Basisinformatie</h3>
+                <div className="space-y-2 text-sm">
+                  <div><span className="font-medium">Naam:</span> {item.name}</div>
+                  <div><span className="font-medium">Categorie:</span> {getCategoryIcon(item.category)} {item.category}</div>
+                  {item.description && <div><span className="font-medium">Beschrijving:</span> {item.description}</div>}
+                  {item.expiryDate && <div><span className="font-medium">Vervaldatum:</span> {new Date(item.expiryDate).toLocaleDateString('nl-NL')}</div>}
+                  {item.alertEmail && <div><span className="font-medium">Alert Email:</span> {item.alertEmail}</div>}
+                </div>
+              </div>
+            </div>
+
+            {/* Location Information */}
+            <div>
+              <h3 className="font-semibold text-slate-900 mb-3">Locatie Informatie</h3>
+              <div className="space-y-3">
+                {relevantLocations.length === 0 ? (
+                  <p className="text-slate-500 text-sm">Geen locaties gevonden</p>
+                ) : (
+                  relevantLocations.map((location: any) => {
+                    const post = ambulancePosts.find((p: any) => p.id === location.ambulancePostId);
+                    const cabinet = cabinets.find((c: any) => c.id === location.cabinet);
+                    const cabinetColor = cabinet?.abbreviation ? getCabinetColor(cabinet.abbreviation) : '#6B7280';
+                    
+                    return (
+                      <div key={location.id} className="border border-slate-200 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{post?.name || location.ambulancePostId}</span>
+                            <div 
+                              className="px-2 py-1 rounded text-xs font-bold text-white"
+                              style={{ backgroundColor: cabinetColor }}
+                            >
+                              {cabinet?.abbreviation || location.cabinet}
+                            </div>
+                            {location.drawer && (
+                              <span className="px-2 py-1 bg-slate-100 rounded text-xs">{location.drawer}</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-full ${
+                              location.stockStatus === 'niet-meer-aanwezig' ? 'bg-red-500' :
+                              location.stockStatus === 'bijna-op' ? 'bg-orange-500' : 'bg-green-500'
+                            }`}></div>
+                            <span className="text-sm capitalize">{location.stockStatus.replace('-', ' ')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button 
+                variant="outline" 
+                onClick={() => setEditingItem(item)}
+                className="flex items-center gap-2"
+              >
+                <Edit className="w-4 h-4" />
+                Bewerken
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+              >
+                Sluiten
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {editingItem && (
+        <EditItemDialog
+          item={editingItem}
+          open={!!editingItem}
+          onOpenChange={() => setEditingItem(null)}
+          onSuccess={() => {
+            setEditingItem(null);
+            // Optionally refresh data
+          }}
+        />
+      )}
+    </>
+  );
+};
+
 export default function InventoryTable({ items, isLoading, onRefetch, selectedPost }: InventoryTableProps) {
   const [editingItem, setEditingItem] = useState<MedicalItem | null>(null);
+  const [detailViewItem, setDetailViewItem] = useState<MedicalItem | null>(null);
 
   if (isLoading) {
     return (
@@ -448,7 +646,12 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
                   if (!a.photoUrl && b.photoUrl) return 1;
                   return 0;
                 }).map((item) => (
-                  <StatusTableRow key={item.id} item={item} selectedPost={selectedPost}>
+                  <StatusTableRow 
+                    key={item.id} 
+                    item={item} 
+                    selectedPost={selectedPost}
+                    onDoubleClick={() => setDetailViewItem(item)}
+                  >
                     <TableCell>
                       <div className="flex items-center">
                         {item.photoUrl ? (
@@ -510,6 +713,13 @@ export default function InventoryTable({ items, isLoading, onRefetch, selectedPo
           }}
         />
       )}
+
+      <ItemDetailView
+        item={detailViewItem}
+        open={!!detailViewItem}
+        onOpenChange={() => setDetailViewItem(null)}
+        selectedPost={selectedPost}
+      />
     </div>
   );
 }
