@@ -1023,36 +1023,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/images/:filename", async (req, res) => {
     try {
       const { filename } = req.params;
-      const imageUrl = `https://storage.googleapis.com/replit-objstore-27aaf1d5-64b6-4b02-b0a5-1f1c5b2375bb/.private/uploads/${filename}`;
+      console.log(`Requesting image: ${filename}`);
       
-      // Use the ObjectStorageService to get the image
+      // Try to get the image using the ObjectStorageService
       const objectStorageService = new ObjectStorageService();
       
-      try {
-        const imageBuffer = await objectStorageService.getObject(`.private/uploads/${filename}`);
-        
-        // Determine content type based on file extension
-        const ext = filename.toLowerCase().split('.').pop();
-        let contentType = 'image/jpeg';
-        if (ext === 'png') contentType = 'image/png';
-        if (ext === 'gif') contentType = 'image/gif';
-        if (ext === 'webp') contentType = 'image/webp';
-        
-        // Set appropriate headers
-        res.set({
-          'Content-Type': contentType,
-          'Cache-Control': 'public, max-age=86400', // Cache for 1 day
-        });
-        
-        // Send the image buffer
-        res.send(imageBuffer);
-        
-      } catch (storageError) {
-        if (storageError instanceof ObjectNotFoundError) {
-          return res.status(404).json({ message: "Image not found" });
+      // Try different possible paths for the image
+      const possiblePaths = [
+        `.private/uploads/${filename}`,
+        `uploads/${filename}`,
+        `public/uploads/${filename}`,
+        filename
+      ];
+      
+      for (const path of possiblePaths) {
+        try {
+          console.log(`Trying path: ${path}`);
+          const imageBuffer = await objectStorageService.getObject(path);
+          
+          // Determine content type based on file extension
+          const ext = filename.toLowerCase().split('.').pop();
+          let contentType = 'image/jpeg';
+          if (ext === 'png') contentType = 'image/png';
+          if (ext === 'gif') contentType = 'image/gif';
+          if (ext === 'webp') contentType = 'image/webp';
+          if (ext === 'heic') contentType = 'image/heic';
+          
+          // Set appropriate headers
+          res.set({
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=86400',
+          });
+          
+          console.log(`Successfully found image at path: ${path}`);
+          return res.send(imageBuffer);
+          
+        } catch (pathError) {
+          console.log(`Path ${path} failed:`, pathError.message);
+          continue;
         }
-        throw storageError;
       }
+      
+      // If all paths fail, return 404
+      return res.status(404).json({ message: "Image not found in any location" });
       
     } catch (error) {
       console.error("Error serving image:", error);
