@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 interface CabinetSummary {
   id: string;
   name: string;
+  abbreviation: string;
   totalItems: number;
   totalQuantity: number;
   lowStockItems: number;
@@ -44,7 +45,7 @@ export default function CabinetOverview({ onCabinetSelect }: CabinetOverviewProp
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className={`w-12 h-12 ${getCabinetColor(cabinet.id)} rounded-lg flex items-center justify-center`}>
-                  <span className="text-white font-bold text-xl">{cabinet.id}</span>
+                  <span className="text-white font-bold text-xl">{cabinet.abbreviation}</span>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-slate-900" data-testid={`text-cabinet-count-${cabinet.id}`}>

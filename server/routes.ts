@@ -252,6 +252,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return {
           id: cabinet.id,
           name: cabinet.name,
+          abbreviation: cabinet.abbreviation,
           totalItems,
           lowStockItems: lowStockItems, // Items that are low stock or out of stock
           categories
