@@ -53,3 +53,5 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-11: Foto weergave volledig opgelost - gebruikt /objects/ route voor zowel detail view als inventaris tabel, fallback naar categorie icoon bij falen, werkende foto weergave in beide views
 - 2025-08-11: Blauwe rand weggehaald van foto's in inventaris tabel voor schonere weergave
 - 2025-08-11: RAV FL&GV logo toegevoegd aan dashboard header - officieel logo van de ambulance organisatie naast MedInventory titel
+- 2025-08-11: Nieuw item formulier opgeschoond - voorraad status, bijna op markering en email velden weggehaald, categorie standaard leeg
+- 2025-08-11: Automatische foto compressie geïmplementeerd - grote bestanden (tot 20MB) worden automatisch gecomprimeerd naar max 5MB, 1200px breed, voor snellere uploads en betere performance
