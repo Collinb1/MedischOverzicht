@@ -417,15 +417,15 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
 }) => {
   const [editingItem, setEditingItem] = useState<MedicalItem | null>(null);
 
-  if (!item) return null;
-
   const { data: locations = [] } = useQuery({
-    queryKey: ['/api/item-locations', item.id],
+    queryKey: ['/api/item-locations', item?.id],
     queryFn: async () => {
+      if (!item?.id) return [];
       const response = await fetch(`/api/item-locations/${item.id}`);
       if (!response.ok) return [];
       return response.json();
     },
+    enabled: !!item?.id,
   });
 
   const { data: cabinets = [] } = useQuery({
@@ -445,6 +445,8 @@ const ItemDetailView = ({ item, open, onOpenChange, selectedPost }: {
       return response.json();
     },
   });
+
+  if (!item) return null;
 
   // Filter locations for selected post if specified
   const relevantLocations = selectedPost 
