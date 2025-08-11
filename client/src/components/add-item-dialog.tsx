@@ -146,9 +146,12 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
 
   // Get contacts for a specific ambulance post
   const getContactsForPost = (ambulancePostId: string) => {
-    return postContacts.filter(contact => 
+    if (!postContacts.data) return [];
+    const filtered = postContacts.data.filter(contact => 
       contact.ambulancePostId === ambulancePostId && contact.isActive
     );
+    console.log(`Contactpersonen voor post ${ambulancePostId}:`, filtered);
+    return filtered;
   };
 
   // Photo upload functions
@@ -426,15 +429,15 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
                   </Button>
                 </div>
               </div>
-              <div className="border rounded-md p-4 bg-slate-50">
-                <Table>
+              <div className="border rounded-md p-4 bg-slate-50 overflow-x-auto">
+                <Table className="min-w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[180px]">Ambulancepost</TableHead>
-                      <TableHead className="w-[130px]">Kast</TableHead>
-                      <TableHead className="w-[120px]">Lade (optioneel)</TableHead>
-                      <TableHead className="w-[180px]">Contactpersoon</TableHead>
-                      <TableHead className="w-[100px]">Acties</TableHead>
+                      <TableHead className="min-w-[150px]">Ambulancepost</TableHead>
+                      <TableHead className="min-w-[120px]">Kast</TableHead>
+                      <TableHead className="min-w-[100px]">Lade</TableHead>
+                      <TableHead className="min-w-[150px]">Contactpersoon</TableHead>
+                      <TableHead className="min-w-[80px]">Acties</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -506,11 +509,15 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="">Geen contactpersoon</SelectItem>
-                              {getContactsForPost(location.ambulancePostId).map(contact => (
+                              {location.ambulancePostId ? getContactsForPost(location.ambulancePostId).map(contact => (
                                 <SelectItem key={contact.id} value={contact.id}>
                                   {contact.name} - {contact.department || contact.email}
                                 </SelectItem>
-                              ))}
+                              )) : (
+                                <SelectItem value="" disabled>
+                                  Selecteer eerst een ambulancepost
+                                </SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                         </TableCell>
