@@ -13,6 +13,7 @@ import InventoryTable from "../components/inventory-table-new";
 import AddItemDialog from "../components/add-item-dialog";
 import CabinetManagement from "../components/cabinet-management";
 import type { MedicalItem, AmbulancePost } from "@shared/schema";
+import ravLogo from "@assets/IMG_0009_1754910857700.png";
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -97,43 +98,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-medical-blue rounded-xl flex items-center justify-center shadow-sm">
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="text-white"
-                >
-                  {/* Medical cross */}
-                  <path
-                    d="M8 2V6H2V8H8V14H10V8H16V6H10V2H8Z"
-                    fill="currentColor"
-                  />
-                  {/* Medical kit/box base */}
-                  <path
-                    d="M4 10H20C20.5523 10 21 10.4477 21 11V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V11C3 10.4477 3.44772 10 4 10Z"
-                    fill="currentColor"
-                    fillOpacity="0.8"
-                  />
-                  {/* Handle */}
-                  <path
-                    d="M7 10V9C7 7.34315 8.34315 6 10 6H14C15.6569 6 17 7.34315 17 9V10H15V9C15 8.44772 14.5523 8 14 8H10C9.44772 8 9 8.44772 9 9V10H7Z"
-                    fill="currentColor"
-                  />
-                  {/* Small cross on box */}
-                  <path
-                    d="M11 14H13V16H11V14Z"
-                    fill="white"
-                    fillOpacity="0.9"
-                  />
-                  <path
-                    d="M10 15H14V13H10V15Z"
-                    fill="white"
-                    fillOpacity="0.9"
-                  />
-                </svg>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
+                <img 
+                  src={ravLogo} 
+                  alt="RAV FL&GV Logo" 
+                  className="w-full h-full object-contain"
+                  data-testid="logo-rav"
+                />
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-slate-900">MedInventory</h1>
