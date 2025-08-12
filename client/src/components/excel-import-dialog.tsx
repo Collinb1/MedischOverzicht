@@ -379,9 +379,16 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
                 <p className="text-xs text-blue-600 mt-1">
                   Inclusief: naam, categorie, beschrijving, zoektermen, vervaldatum, foto URL, ambulancepost, kast, lade, contactpersoon, voorraad status en bijna op markering
                 </p>
-                <p className="text-xs text-blue-600">
-                  💡 Tip: Voor foto's gebruik /objects/[bestandsnaam], vervaldatum als YYYY-MM-DD
-                </p>
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-2 mt-2">
+                  <p className="text-xs text-yellow-800 font-medium mb-1">📸 Foto's toevoegen:</p>
+                  <p className="text-xs text-yellow-700">
+                    Excel kan geen echte foto bestanden bevatten. U heeft 2 opties:
+                  </p>
+                  <ul className="text-xs text-yellow-700 ml-3 mt-1 list-disc">
+                    <li>Laat foto URL leeg en voeg foto's handmatig toe na import</li>
+                    <li>Upload foto's eerst naar Object Storage en gebruik URL: /objects/[bestandsnaam]</li>
+                  </ul>
+                </div>
               </div>
               <Button
                 variant="outline"
@@ -396,30 +403,46 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
           </div>
 
           {/* File Upload */}
-          <div className="space-y-2">
-            <Label htmlFor="file-upload">Selecteer bestand</Label>
-            <div className="flex items-center gap-4">
-              <Input
-                id="file-upload"
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                onChange={handleFileSelect}
-                ref={fileInputRef}
-                className="flex-1"
-                data-testid="input-file-upload"
-              />
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                data-testid="button-select-file"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Bestand Kiezen
-              </Button>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="file-upload">Selecteer Excel/CSV bestand</Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="file-upload"
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={handleFileSelect}
+                  ref={fileInputRef}
+                  className="flex-1"
+                  data-testid="input-file-upload"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  data-testid="button-select-file"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Bestand Kiezen
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Ondersteunde formaten: CSV, Excel (.xlsx, .xls)
+              </p>
             </div>
-            <p className="text-xs text-gray-500">
-              Ondersteunde formaten: CSV, Excel (.xlsx, .xls)
-            </p>
+
+            {/* Bulk Photo Upload Info */}
+            <div className="bg-orange-50 border border-orange-200 rounded p-3">
+              <div className="flex items-start gap-2">
+                <span className="text-orange-600 text-lg">📁</span>
+                <div>
+                  <p className="text-sm font-medium text-orange-800">Bulk foto upload tip:</p>
+                  <p className="text-xs text-orange-700 mt-1">
+                    Voor veel foto's tegelijk: Upload eerst alle foto's via Object Storage tool naar de 'public' map. 
+                    Gebruik dan in Excel: /public-objects/[bestandsnaam]
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Import Progress */}
