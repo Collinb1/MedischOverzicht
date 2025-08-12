@@ -1,12 +1,45 @@
 import express, { type Request, Response, NextFunction } from "express";
+import compression from "compression";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
+// Performance optimizations for deployment
+if (process.env.NODE_ENV === 'production') {
+  // Enable gzip compression voor alle responses
+  app.use(compression({
+    level: 6, // Good balance tussen speed en compression
+    threshold: 1024, // Only compress responses > 1KB
+  }));
+  
+  // Trust proxy for correct client IP when deployed
+  app.set('trust proxy', 1);
+  
+  // Disable x-powered-by header for security
+  app.disable('x-powered-by');
+}
+
+app.use(express.json({ limit: '10mb' })); // Increased limit for photo uploads
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+
+// Cache headers for static assets in production
 app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    // Cache static assets for 1 year
+    if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+    // Cache API responses for 5 minutes
+    else if (req.path.startsWith('/api/ambulance-posts') || req.path.startsWith('/api/cabinets')) {
+      res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes
+    }
+    // Cache object storage requests for 1 hour
+    else if (req.path.startsWith('/objects/')) {
+      res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hour
+    }
+  }
+
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
