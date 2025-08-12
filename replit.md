@@ -75,4 +75,5 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-12: Uitgebreide performance optimalisaties toegevoegd - server-side caching, efficient data structures (Map lookups), database query optimalisatie, parallel data fetching
 - 2025-08-12: Auto-complete zoekfunctionaliteit geïmplementeerd - toont suggesties op basis van eerste letters uit item namen, categorieën en zoektermen, met toetsenbord navigatie
 - 2025-08-12: Excel import functionaliteit toegevoegd - gebruikers kunnen nu CSV/Excel bestanden uploaden om meerdere medische items tegelijk te importeren via Instellingen menu
+- 2025-08-12: Excel import uitgebreid met foto's en locatie data - ondersteunt nu foto URLs en ambulancepost/kast/lade/contactpersoon import voor complete item setup
 - 2025-08-11: Item bijwerken knop probleem opgelost - formulier schema opgeschoond en verouderde velden verwijderd, edit dialog werkt nu correct

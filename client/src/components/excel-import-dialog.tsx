@@ -20,6 +20,11 @@ interface ImportPreview {
   category: string;
   description?: string;
   searchTerms?: string;
+  ambulancePostId?: string;
+  cabinet?: string;
+  drawer?: string;
+  contactPerson?: string;
+  photoUrl?: string;
   valid: boolean;
   errors: string[];
 }
@@ -35,10 +40,10 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
   const downloadTemplate = () => {
     // Create a sample Excel template
     const templateData = [
-      ['Naam (verplicht)', 'Categorie (verplicht)', 'Beschrijving', 'Zoektermen'],
-      ['Bandage', 'Wondverzorging', 'Elastische bandage voor gewrichten', 'verband,elastic,joint'],
-      ['Infuus set', 'IV Therapie', 'Standaard infuus set met naald', 'iv,needle,drip'],
-      ['Medicijn X', 'Medicijnen', 'Pijnstiller tabletten', 'pijn,tablet,analgesic']
+      ['Naam (verplicht)', 'Categorie (verplicht)', 'Beschrijving', 'Zoektermen', 'Ambulancepost ID', 'Kast', 'Lade', 'Contactpersoon', 'Foto URL'],
+      ['Bandage', 'Wondverzorging', 'Elastische bandage voor gewrichten', 'verband,elastic,joint', 'hilversum', 'A', '1', 'Test Contactpersoon', ''],
+      ['Infuus set', 'IV Therapie', 'Standaard infuus set met naald', 'iv,needle,drip', 'hilversum', 'B', '2', 'Test Contactpersoon', ''],
+      ['Medicijn X', 'Medicijnen', 'Pijnstiller tabletten', 'pijn,tablet,analgesic', 'hilversum', 'C', '1', 'Test Contactpersoon', '']
     ];
 
     // Convert to CSV for simple download
@@ -81,6 +86,11 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
       const categoryIndex = headers.findIndex(h => h.includes('categorie'));
       const descriptionIndex = headers.findIndex(h => h.includes('beschrijving'));
       const searchTermsIndex = headers.findIndex(h => h.includes('zoekterm'));
+      const ambulancePostIndex = headers.findIndex(h => h.includes('ambulancepost') || h.includes('post'));
+      const cabinetIndex = headers.findIndex(h => h.includes('kast'));
+      const drawerIndex = headers.findIndex(h => h.includes('lade'));
+      const contactPersonIndex = headers.findIndex(h => h.includes('contactpersoon'));
+      const photoUrlIndex = headers.findIndex(h => h.includes('foto'));
 
       if (nameIndex === -1 || categoryIndex === -1) {
         toast({
@@ -99,6 +109,11 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
         const category = values[categoryIndex] || '';
         const description = values[descriptionIndex] || '';
         const searchTerms = values[searchTermsIndex] || '';
+        const ambulancePostId = values[ambulancePostIndex] || '';
+        const cabinet = values[cabinetIndex] || '';
+        const drawer = values[drawerIndex] || '';
+        const contactPerson = values[contactPersonIndex] || '';
+        const photoUrl = values[photoUrlIndex] || '';
 
         const errors: string[] = [];
         if (!name) errors.push('Naam is verplicht');
@@ -109,6 +124,11 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
           category,
           description,
           searchTerms,
+          ambulancePostId,
+          cabinet,
+          drawer,
+          contactPerson,
+          photoUrl,
           valid: errors.length === 0,
           errors
         });
@@ -145,7 +165,8 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
       
       for (const item of validItems) {
         try {
-          await fetch('/api/medical-items', {
+          // First create the medical item
+          const itemResponse = await fetch('/api/medical-items', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -155,9 +176,55 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
               category: item.category,
               description: item.description || '',
               searchTerms: item.searchTerms || '',
-              isLowStock: false
+              isLowStock: false,
+              photoUrl: item.photoUrl || ''
             })
           });
+
+          if (!itemResponse.ok) {
+            throw new Error(`Failed to create item: ${itemResponse.statusText}`);
+          }
+
+          const createdItem = await itemResponse.json();
+
+          // If location data is provided, create item location
+          if (item.ambulancePostId && item.cabinet) {
+            try {
+              // Find contact person ID if provided
+              let contactPersonId = '';
+              if (item.contactPerson) {
+                const contactsResponse = await fetch('/api/post-contacts');
+                if (contactsResponse.ok) {
+                  const contacts = await contactsResponse.json();
+                  const contact = contacts.find((c: any) => 
+                    c.name.toLowerCase().includes(item.contactPerson!.toLowerCase()) &&
+                    c.ambulancePostId === item.ambulancePostId
+                  );
+                  if (contact) {
+                    contactPersonId = contact.id;
+                  }
+                }
+              }
+
+              await fetch('/api/item-locations', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  itemId: createdItem.id,
+                  ambulancePostId: item.ambulancePostId,
+                  cabinet: item.cabinet,
+                  drawer: item.drawer || '1',
+                  contactPersonId: contactPersonId || null,
+                  stockStatus: 'in_stock'
+                })
+              });
+            } catch (locationError) {
+              console.error(`Failed to create location for ${item.name}:`, locationError);
+            }
+          }
+
           imported++;
           setProgress((imported / validItems.length) * 100);
         } catch (error) {
@@ -213,7 +280,10 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
               <div>
                 <h3 className="font-medium text-blue-900">Download Template</h3>
                 <p className="text-sm text-blue-700">
-                  Download een voorbeeld bestand om te zien welke kolommen verwacht worden
+                  Download een voorbeeld bestand met alle kolommen: naam, categorie, beschrijving, zoektermen, ambulancepost, kast, lade, contactpersoon en foto URL
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  💡 Tip: Voor foto's kunt u URLs gebruiken naar object storage: /objects/[bestandsnaam]
                 </p>
               </div>
               <Button
@@ -292,8 +362,9 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
                       <th className="text-left p-2">Status</th>
                       <th className="text-left p-2">Naam</th>
                       <th className="text-left p-2">Categorie</th>
-                      <th className="text-left p-2">Beschrijving</th>
-                      <th className="text-left p-2">Zoektermen</th>
+                      <th className="text-left p-2">Post</th>
+                      <th className="text-left p-2">Locatie</th>
+                      <th className="text-left p-2">Contact</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -308,13 +379,17 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
                         </td>
                         <td className="p-2 font-medium">{item.name}</td>
                         <td className="p-2">{item.category}</td>
-                        <td className="p-2 text-gray-600">{item.description}</td>
-                        <td className="p-2 text-gray-600">{item.searchTerms}</td>
+                        <td className="p-2 text-gray-600">{item.ambulancePostId}</td>
+                        <td className="p-2 text-gray-600">
+                          {item.cabinet && `Kast ${item.cabinet}`}
+                          {item.drawer && `, Lade ${item.drawer}`}
+                        </td>
+                        <td className="p-2 text-gray-600">{item.contactPerson}</td>
                       </tr>
                     ))}
                     {preview.length > 10 && (
                       <tr>
-                        <td colSpan={5} className="p-2 text-center text-gray-500">
+                        <td colSpan={6} className="p-2 text-center text-gray-500">
                           ... en {preview.length - 10} meer items
                         </td>
                       </tr>
