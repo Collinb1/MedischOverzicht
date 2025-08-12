@@ -20,11 +20,14 @@ interface ImportPreview {
   category: string;
   description?: string;
   searchTerms?: string;
+  expiryDate?: string;
+  photoUrl?: string;
   ambulancePostId?: string;
   cabinet?: string;
   drawer?: string;
   contactPerson?: string;
-  photoUrl?: string;
+  stockStatus?: string;
+  isLowStock?: string;
   valid: boolean;
   errors: string[];
 }
@@ -38,12 +41,78 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
   const { toast } = useToast();
 
   const downloadTemplate = () => {
-    // Create a sample Excel template
+    // Create a comprehensive Excel template with all available fields
     const templateData = [
-      ['Naam (verplicht)', 'Categorie (verplicht)', 'Beschrijving', 'Zoektermen', 'Ambulancepost ID', 'Kast', 'Lade', 'Contactpersoon', 'Foto URL'],
-      ['Bandage', 'Wondverzorging', 'Elastische bandage voor gewrichten', 'verband,elastic,joint', 'hilversum', 'A', '1', 'Test Contactpersoon', ''],
-      ['Infuus set', 'IV Therapie', 'Standaard infuus set met naald', 'iv,needle,drip', 'hilversum', 'B', '2', 'Test Contactpersoon', ''],
-      ['Medicijn X', 'Medicijnen', 'Pijnstiller tabletten', 'pijn,tablet,analgesic', 'hilversum', 'C', '1', 'Test Contactpersoon', '']
+      [
+        'Naam (verplicht)', 
+        'Categorie (verplicht)', 
+        'Beschrijving', 
+        'Zoektermen',
+        'Vervaldatum (YYYY-MM-DD)',
+        'Foto URL',
+        'Ambulancepost ID',
+        'Kast',
+        'Lade', 
+        'Contactpersoon',
+        'Voorraad Status (in_stock/low_stock/out_of_stock)',
+        'Bijna Op (true/false)'
+      ],
+      [
+        'Bandage', 
+        'Wondverzorging', 
+        'Elastische bandage voor gewrichten', 
+        'verband,elastic,joint,wrap',
+        '2025-12-31',
+        '/objects/bandage-foto.jpg',
+        'hilversum', 
+        'A', 
+        '1', 
+        'Test Contactpersoon',
+        'in_stock',
+        'false'
+      ],
+      [
+        'Infuus set', 
+        'IV Therapie', 
+        'Standaard infuus set met naald', 
+        'iv,needle,drip,infusion',
+        '2026-06-15',
+        '/objects/infuus-set-foto.jpg',
+        'hilversum', 
+        'B', 
+        '2', 
+        'Test Contactpersoon',
+        'low_stock',
+        'true'
+      ],
+      [
+        'Medicijn X', 
+        'Medicijnen', 
+        'Pijnstiller tabletten 500mg', 
+        'pijn,tablet,analgesic,paracetamol',
+        '2025-03-20',
+        '',
+        'hilversum', 
+        'C', 
+        '1', 
+        'Test Contactpersoon',
+        'in_stock',
+        'false'
+      ],
+      [
+        'Defibrillator Elektroden',
+        'Reanimatie',
+        'Zelfklevende elektroden voor AED',
+        'defib,aed,elektroden,reanimatie',
+        '2026-01-10',
+        '/objects/elektroden-foto.jpg',
+        'hilversum',
+        'D',
+        '3',
+        'Collin Barning',
+        'out_of_stock',
+        'true'
+      ]
     ];
 
     // Convert to CSV for simple download
@@ -86,11 +155,14 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
       const categoryIndex = headers.findIndex(h => h.includes('categorie'));
       const descriptionIndex = headers.findIndex(h => h.includes('beschrijving'));
       const searchTermsIndex = headers.findIndex(h => h.includes('zoekterm'));
+      const expiryDateIndex = headers.findIndex(h => h.includes('vervaldatum'));
+      const photoUrlIndex = headers.findIndex(h => h.includes('foto'));
       const ambulancePostIndex = headers.findIndex(h => h.includes('ambulancepost') || h.includes('post'));
       const cabinetIndex = headers.findIndex(h => h.includes('kast'));
       const drawerIndex = headers.findIndex(h => h.includes('lade'));
       const contactPersonIndex = headers.findIndex(h => h.includes('contactpersoon'));
-      const photoUrlIndex = headers.findIndex(h => h.includes('foto'));
+      const stockStatusIndex = headers.findIndex(h => h.includes('voorraad status'));
+      const isLowStockIndex = headers.findIndex(h => h.includes('bijna op'));
 
       if (nameIndex === -1 || categoryIndex === -1) {
         toast({
@@ -109,26 +181,47 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
         const category = values[categoryIndex] || '';
         const description = values[descriptionIndex] || '';
         const searchTerms = values[searchTermsIndex] || '';
+        const expiryDate = values[expiryDateIndex] || '';
+        const photoUrl = values[photoUrlIndex] || '';
         const ambulancePostId = values[ambulancePostIndex] || '';
         const cabinet = values[cabinetIndex] || '';
         const drawer = values[drawerIndex] || '';
         const contactPerson = values[contactPersonIndex] || '';
-        const photoUrl = values[photoUrlIndex] || '';
+        const stockStatus = values[stockStatusIndex] || '';
+        const isLowStock = values[isLowStockIndex] || '';
 
         const errors: string[] = [];
         if (!name) errors.push('Naam is verplicht');
         if (!category) errors.push('Categorie is verplicht');
+        
+        // Validate expiry date format if provided
+        if (expiryDate && !/^\d{4}-\d{2}-\d{2}$/.test(expiryDate)) {
+          errors.push('Vervaldatum moet formaat YYYY-MM-DD hebben');
+        }
+        
+        // Validate stock status if provided
+        if (stockStatus && !['in_stock', 'low_stock', 'out_of_stock'].includes(stockStatus)) {
+          errors.push('Voorraad status moet in_stock, low_stock of out_of_stock zijn');
+        }
+        
+        // Validate low stock boolean if provided
+        if (isLowStock && !['true', 'false'].includes(isLowStock.toLowerCase())) {
+          errors.push('Bijna Op moet true of false zijn');
+        }
 
         previewData.push({
           name,
           category,
           description,
           searchTerms,
+          expiryDate,
+          photoUrl,
           ambulancePostId,
           cabinet,
           drawer,
           contactPerson,
-          photoUrl,
+          stockStatus,
+          isLowStock,
           valid: errors.length === 0,
           errors
         });
@@ -176,8 +269,9 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
               category: item.category,
               description: item.description || '',
               searchTerms: item.searchTerms || '',
-              isLowStock: false,
-              photoUrl: item.photoUrl || ''
+              expiryDate: item.expiryDate || null,
+              photoUrl: item.photoUrl || '',
+              isLowStock: item.isLowStock === 'true'
             })
           });
 
@@ -217,7 +311,7 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
                   cabinet: item.cabinet,
                   drawer: item.drawer || '1',
                   contactPersonId: contactPersonId || null,
-                  stockStatus: 'in_stock'
+                  stockStatus: item.stockStatus || 'in_stock'
                 })
               });
             } catch (locationError) {
@@ -280,10 +374,13 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
               <div>
                 <h3 className="font-medium text-blue-900">Download Template</h3>
                 <p className="text-sm text-blue-700">
-                  Download een voorbeeld bestand met alle kolommen: naam, categorie, beschrijving, zoektermen, ambulancepost, kast, lade, contactpersoon en foto URL
+                  Download een volledig voorbeeld bestand met alle beschikbare velden
                 </p>
                 <p className="text-xs text-blue-600 mt-1">
-                  💡 Tip: Voor foto's kunt u URLs gebruiken naar object storage: /objects/[bestandsnaam]
+                  Inclusief: naam, categorie, beschrijving, zoektermen, vervaldatum, foto URL, ambulancepost, kast, lade, contactpersoon, voorraad status en bijna op markering
+                </p>
+                <p className="text-xs text-blue-600">
+                  💡 Tip: Voor foto's gebruik /objects/[bestandsnaam], vervaldatum als YYYY-MM-DD
                 </p>
               </div>
               <Button
@@ -362,9 +459,10 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
                       <th className="text-left p-2">Status</th>
                       <th className="text-left p-2">Naam</th>
                       <th className="text-left p-2">Categorie</th>
+                      <th className="text-left p-2">Vervaldatum</th>
                       <th className="text-left p-2">Post</th>
                       <th className="text-left p-2">Locatie</th>
-                      <th className="text-left p-2">Contact</th>
+                      <th className="text-left p-2">Voorraad</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -379,17 +477,29 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
                         </td>
                         <td className="p-2 font-medium">{item.name}</td>
                         <td className="p-2">{item.category}</td>
+                        <td className="p-2 text-gray-600">{item.expiryDate}</td>
                         <td className="p-2 text-gray-600">{item.ambulancePostId}</td>
                         <td className="p-2 text-gray-600">
                           {item.cabinet && `Kast ${item.cabinet}`}
                           {item.drawer && `, Lade ${item.drawer}`}
                         </td>
-                        <td className="p-2 text-gray-600">{item.contactPerson}</td>
+                        <td className="p-2 text-gray-600">
+                          {item.stockStatus && (
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              item.stockStatus === 'in_stock' ? 'bg-green-100 text-green-800' :
+                              item.stockStatus === 'low_stock' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {item.stockStatus === 'in_stock' ? 'Op voorraad' :
+                               item.stockStatus === 'low_stock' ? 'Bijna op' : 'Uitverkocht'}
+                            </span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                     {preview.length > 10 && (
                       <tr>
-                        <td colSpan={6} className="p-2 text-center text-gray-500">
+                        <td colSpan={7} className="p-2 text-center text-gray-500">
                           ... en {preview.length - 10} meer items
                         </td>
                       </tr>
