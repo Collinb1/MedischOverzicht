@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin, Archive } from "lucide-react";
+import { Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin, Archive } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import CabinetOverview from "../components/cabinet-overview";
 import InventoryTable from "../components/inventory-table-new";
 import AddItemDialog from "../components/add-item-dialog";
 import CabinetManagement from "../components/cabinet-management";
+import SearchAutocomplete from "../components/search-autocomplete";
 import type { MedicalItem, AmbulancePost } from "@shared/schema";
 import ravLogo from "@assets/IMG_0009_1754910857700.png";
 
@@ -221,18 +222,13 @@ export default function Home() {
             <CardContent className="p-6">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex-1 max-w-md">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                    <Input
-                      type="text"
-                      placeholder="Zoek medische voorraad..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyDown={handleSearchKeyDown}
-                      className="pl-10"
-                      data-testid="input-search"
-                    />
-                  </div>
+                  <SearchAutocomplete
+                    items={items}
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    onEnterPressed={scrollToInventory}
+                    placeholder="Zoek naar items..."
+                  />
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Select value={selectedCabinet} onValueChange={setSelectedCabinet}>
