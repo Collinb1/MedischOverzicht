@@ -88,6 +88,7 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
       name: "",
       description: "",
       category: "",
+      searchTerms: "",
       expiryDate: null,
       alertEmail: null,
       photoUrl: photoUrl,
@@ -375,6 +376,28 @@ export default function AddItemDialog({ open, onOpenChange, onSuccess, selectedP
                     />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="searchTerms"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Zoektermen (Optioneel)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Alternatieve benamingen, zoektermen (bijv. inject, injectie, naald)"
+                      {...field} 
+                      value={field.value || ""}
+                      data-testid="input-search-terms"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                  <p className="text-xs text-gray-500">
+                    Voeg alternatieve benamingen toe om dit item gemakkelijker te vinden
+                  </p>
                 </FormItem>
               )}
             />

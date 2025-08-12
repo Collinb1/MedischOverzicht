@@ -18,6 +18,7 @@ export const medicalItems = pgTable("medical_items", {
   name: text("name").notNull(),
   description: text("description"),
   category: text("category").notNull(),
+  searchTerms: text("search_terms"), // Zoektermen voor alternatieve benamingen
   expiryDate: date("expiry_date"),
   alertEmail: text("alert_email"),
   photoUrl: text("photo_url"),

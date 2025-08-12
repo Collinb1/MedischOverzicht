@@ -52,6 +52,7 @@ const editItemSchema = z.object({
   name: z.string().min(1, "Naam is verplicht"),
   description: z.string().optional(),
   category: z.string().min(1, "Categorie is verplicht"),
+  searchTerms: z.string().optional(),
   expiryDate: z.string().nullable(),
   photoUrl: z.string().nullable(),
   isDiscontinued: z.boolean().default(false),
@@ -122,6 +123,7 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
       name: item.name,
       description: item.description || "",
       category: item.category,
+      searchTerms: (item as any).searchTerms || "",
       expiryDate: item.expiryDate || null,
       photoUrl: item.photoUrl || null,
       isDiscontinued: (item as any).isDiscontinued || false,
@@ -457,6 +459,29 @@ export function EditItemDialog({ item, open, onOpenChange, onSuccess }: EditItem
                         />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="searchTerms"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Zoektermen</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Alternatieve benamingen, zoektermen (bijv. inject, injectie, naald)"
+                          className="focus:ring-2 focus:ring-blue-500"
+                          {...field} 
+                          value={field.value || ""}
+                          data-testid="input-search-terms"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <p className="text-xs text-muted-foreground">
+                        Voeg alternatieve benamingen toe om dit item gemakkelijker te vinden
+                      </p>
                     </FormItem>
                   )}
                 />
