@@ -2,8 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { MedicalItem } from "@shared/schema";
 
 interface SearchAutocompleteProps {
@@ -21,60 +19,49 @@ export default function SearchAutocomplete({
   onEnterPressed,
   placeholder = "Zoek naar items..." 
 }: SearchAutocompleteProps) {
-  const [open, setOpen] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Generate suggestions based on search value
   useEffect(() => {
     if (!value || value.length < 2) {
       setSuggestions([]);
-      setOpen(false);
+      setShowSuggestions(false);
       return;
     }
 
     const searchLower = value.toLowerCase();
     const uniqueSuggestions = new Set<string>();
 
-    // Collect suggestions from item names, descriptions, categories, and search terms
+    // Collect suggestions from item names, categories, and search terms
     items.forEach(item => {
       // Item name suggestions
-      if (item.name.toLowerCase().includes(searchLower)) {
+      if (item.name.toLowerCase().includes(searchLower) && item.name.toLowerCase() !== searchLower) {
         uniqueSuggestions.add(item.name);
       }
 
       // Category suggestions
-      if (item.category.toLowerCase().includes(searchLower)) {
+      if (item.category.toLowerCase().includes(searchLower) && item.category.toLowerCase() !== searchLower) {
         uniqueSuggestions.add(item.category);
-      }
-
-      // Description suggestions (if exists)
-      if (item.description && item.description.toLowerCase().includes(searchLower)) {
-        // Add relevant words from description
-        const words = item.description.split(' ').filter(word => 
-          word.length > 3 && word.toLowerCase().includes(searchLower)
-        );
-        words.forEach(word => uniqueSuggestions.add(word));
       }
 
       // Search terms suggestions (if exists)
       if ((item as any).searchTerms) {
         const searchTerms = (item as any).searchTerms.toLowerCase();
-        if (searchTerms.includes(searchLower)) {
-          // Split search terms and add matching ones
-          const terms = searchTerms.split(',').map((term: string) => term.trim());
-          terms.forEach((term: string) => {
-            if (term.includes(searchLower)) {
-              uniqueSuggestions.add(term);
-            }
-          });
-        }
+        const terms = searchTerms.split(',').map((term: string) => term.trim());
+        terms.forEach((term: string) => {
+          if (term.includes(searchLower) && term !== searchLower && term.length > 1) {
+            uniqueSuggestions.add(term);
+          }
+        });
       }
     });
 
-    // Convert to array and limit to 8 suggestions
+    // Convert to array and limit to 6 suggestions
     const suggestionArray = Array.from(uniqueSuggestions)
-      .filter(suggestion => suggestion.toLowerCase() !== searchLower)
       .sort((a, b) => {
         // Prioritize exact matches at the beginning
         const aStartsWith = a.toLowerCase().startsWith(searchLower);
@@ -83,92 +70,105 @@ export default function SearchAutocomplete({
         if (!aStartsWith && bStartsWith) return 1;
         return a.localeCompare(b);
       })
-      .slice(0, 8);
+      .slice(0, 6);
 
     setSuggestions(suggestionArray);
-    setOpen(suggestionArray.length > 0);
+    setShowSuggestions(suggestionArray.length > 0);
+    setSelectedIndex(-1);
   }, [value, items]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      setOpen(false);
-      onEnterPressed?.();
+      e.preventDefault();
+      if (selectedIndex >= 0 && suggestions[selectedIndex]) {
+        onChange(suggestions[selectedIndex]);
+        setShowSuggestions(false);
+      } else {
+        setShowSuggestions(false);
+        onEnterPressed?.();
+      }
     } else if (e.key === 'Escape') {
-      setOpen(false);
+      setShowSuggestions(false);
+      setSelectedIndex(-1);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => prev < suggestions.length - 1 ? prev + 1 : prev);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
     }
   };
 
-  const handleSuggestionSelect = (suggestion: string) => {
+  const handleSuggestionClick = (suggestion: string) => {
     onChange(suggestion);
-    setOpen(false);
+    setShowSuggestions(false);
     inputRef.current?.focus();
   };
 
   const clearSearch = () => {
     onChange('');
-    setOpen(false);
+    setShowSuggestions(false);
     inputRef.current?.focus();
+  };
+
+  const handleFocus = () => {
+    if (suggestions.length > 0) {
+      setShowSuggestions(true);
+    }
+  };
+
+  const handleBlur = () => {
+    // Delay hiding suggestions to allow for clicks
+    setTimeout(() => setShowSuggestions(false), 200);
   };
 
   return (
     <div className="relative w-full">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              ref={inputRef}
-              type="text"
-              placeholder={placeholder}
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="pl-10 pr-10"
-              data-testid="input-search"
-            />
-            {value && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearSearch}
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100"
-                data-testid="button-clear-search"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-        </PopoverTrigger>
-        <PopoverContent 
-          className="w-[var(--radix-popover-trigger-width)] p-0" 
-          align="start"
-          side="bottom"
-          sideOffset={4}
-        >
-          <Command>
-            <CommandList>
-              {suggestions.length === 0 ? (
-                <CommandEmpty>Geen suggesties gevonden</CommandEmpty>
-              ) : (
-                <CommandGroup>
-                  {suggestions.map((suggestion, index) => (
-                    <CommandItem
-                      key={index}
-                      value={suggestion}
-                      onSelect={() => handleSuggestionSelect(suggestion)}
-                      className="cursor-pointer hover:bg-gray-50"
-                      data-testid={`suggestion-${index}`}
-                    >
-                      <Search className="mr-2 h-3 w-3 text-gray-400" />
-                      <span className="flex-1">{suggestion}</span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Input
+          ref={inputRef}
+          type="text"
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          className="pl-10 pr-10"
+          data-testid="input-search"
+        />
+        {value && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearSearch}
+            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100"
+            data-testid="button-clear-search"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        )}
+      </div>
+      
+      {showSuggestions && suggestions.length > 0 && (
+        <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg mt-1 max-h-60 overflow-y-auto">
+          {suggestions.map((suggestion, index) => (
+            <div
+              key={index}
+              ref={el => suggestionRefs.current[index] = el}
+              onClick={() => handleSuggestionClick(suggestion)}
+              className={`px-3 py-2 cursor-pointer hover:bg-gray-50 flex items-center ${
+                selectedIndex === index ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+              }`}
+              data-testid={`suggestion-${index}`}
+            >
+              <Search className="mr-2 h-3 w-3 text-gray-400" />
+              <span className="flex-1 text-sm">{suggestion}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

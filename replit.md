@@ -73,4 +73,5 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-12: Zoekfunctionaliteit uitgebreid om ook door zoektermen te filteren - items worden nu gevonden via naam, beschrijving, categorie EN zoektermen
 - 2025-08-12: Deployment performance optimalisaties geïmplementeerd - gzip compressie, database connection pooling, HTTP caching, React Query caching voor snellere production performance
 - 2025-08-12: Uitgebreide performance optimalisaties toegevoegd - server-side caching, efficient data structures (Map lookups), database query optimalisatie, parallel data fetching
+- 2025-08-12: Auto-complete zoekfunctionaliteit geïmplementeerd - toont suggesties op basis van eerste letters uit item namen, categorieën en zoektermen, met toetsenbord navigatie
 - 2025-08-11: Item bijwerken knop probleem opgelost - formulier schema opgeschoond en verouderde velden verwijderd, edit dialog werkt nu correct
