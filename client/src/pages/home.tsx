@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin, Archive } from "lucide-react";
 import { Link } from "wouter";
@@ -22,6 +22,9 @@ export default function Home() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<string>("");
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  
+  // Ref for scrolling to inventory section
+  const inventoryRef = useRef<HTMLDivElement>(null);
 
   const { data: items = [], isLoading, refetch } = useQuery<MedicalItem[]>({
     queryKey: ["/api/medical-items", selectedCabinet, selectedCategory, searchTerm, selectedPost],
@@ -65,7 +68,8 @@ export default function Home() {
         filteredItems = filteredItems.filter((item: MedicalItem) => 
           item.name.toLowerCase().includes(searchLower) ||
           item.description?.toLowerCase().includes(searchLower) ||
-          item.category.toLowerCase().includes(searchLower)
+          item.category.toLowerCase().includes(searchLower) ||
+          (item as any).searchTerms?.toLowerCase().includes(searchLower)
         );
       }
       
@@ -90,6 +94,24 @@ export default function Home() {
   }
 
   const categories = Array.from(new Set(items.map(item => item.category)));
+
+  // Function to scroll to inventory section
+  const scrollToInventory = () => {
+    if (inventoryRef.current) {
+      inventoryRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }
+  };
+
+  // Handle Enter key press in search input
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      scrollToInventory();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-medical-light">
@@ -202,6 +224,7 @@ export default function Home() {
                       placeholder="Zoek medische voorraad..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyDown={handleSearchKeyDown}
                       className="pl-10"
                       data-testid="input-search"
                     />
@@ -246,12 +269,14 @@ export default function Home() {
         />
 
         {/* Detailed Inventory */}
-        <InventoryTable 
-          items={items} 
-          isLoading={isLoading} 
-          onRefetch={refetch}
-          selectedPost={selectedPost}
-        />
+        <div ref={inventoryRef}>
+          <InventoryTable 
+            items={items} 
+            isLoading={isLoading} 
+            onRefetch={refetch}
+            selectedPost={selectedPost}
+          />
+        </div>
 
         {/* Add Item Dialog */}
         <AddItemDialog 
