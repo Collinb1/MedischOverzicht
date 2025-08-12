@@ -4,44 +4,51 @@ import { storage } from "./storage";
 import { insertMedicalItemSchema, insertEmailNotificationSchema, insertCabinetSchema, insertEmailConfigSchema, insertAmbulancePostSchema, insertItemLocationSchema, insertPostContactSchema, insertCategorySchema, insertCabinetLocationSchema } from "@shared/schema";
 import { sendEmail, generateRestockEmailHTML } from "./email";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { getCachedAmbulancePosts, getCachedCabinets, getCachedPostContacts, getCachedCabinetOrderByPost, clearPerformanceCache } from "./performance";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Get all medical items with locations
+  // Get all medical items with locations - optimized for performance
   app.get("/api/medical-items", async (req, res) => {
     try {
       const { cabinet, category, search, ambulancePost } = req.query;
       
-      // Get all medical items
-      const allItems = await storage.getMedicalItems();
-      
       if (ambulancePost && typeof ambulancePost === 'string') {
-        // Filter items for specific ambulance post
-        const itemLocations = await storage.getItemLocationsByPost(ambulancePost);
+        // Optimized: Get items and locations in parallel for specific post
+        const [allItems, itemLocations] = await Promise.all([
+          storage.getMedicalItems(),
+          storage.getItemLocationsByPost(ambulancePost)
+        ]);
         
-        const itemsWithLocations = itemLocations.map(location => {
-          const item = allItems.find(item => item.id === location.itemId);
-          if (!item) return null;
-          
-          return {
-            ...item,
-            locationId: location.id,
-            cabinet: location.cabinet,
-            drawer: location.drawer,
-            isLowStock: location.isLowStock,
-            stockStatus: location.stockStatus,
-            ambulancePost: location.ambulancePostId
-          };
-        }).filter((item): item is NonNullable<typeof item> => item !== null);
+        // Create a Map for O(1) lookups instead of O(n) array.find()
+        const itemsMap = new Map(allItems.map(item => [item.id, item]));
+        
+        const itemsWithLocations = itemLocations
+          .map(location => {
+            const item = itemsMap.get(location.itemId);
+            if (!item) return null;
+            
+            return {
+              ...item,
+              locationId: location.id,
+              cabinet: location.cabinet,
+              drawer: location.drawer,
+              isLowStock: location.isLowStock,
+              stockStatus: location.stockStatus,
+              ambulancePost: location.ambulancePostId
+            };
+          })
+          .filter((item): item is NonNullable<typeof item> => item !== null);
         
         let filteredItems = itemsWithLocations;
         
-        // Apply filters
+        // Apply filters efficiently
         if (cabinet && typeof cabinet === 'string') {
           filteredItems = filteredItems.filter(item => item.cabinet === cabinet);
         }
         
         if (category && typeof category === 'string') {
-          filteredItems = filteredItems.filter(item => item.category.toLowerCase() === category.toLowerCase());
+          const categoryLower = category.toLowerCase();
+          filteredItems = filteredItems.filter(item => item.category.toLowerCase() === categoryLower);
         }
         
         if (search && typeof search === 'string') {
@@ -49,19 +56,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           filteredItems = filteredItems.filter(item => 
             item.name.toLowerCase().includes(searchLower) ||
             item.description?.toLowerCase().includes(searchLower) ||
-            item.category.toLowerCase().includes(searchLower)
+            item.category.toLowerCase().includes(searchLower) ||
+            (item as any).searchTerms?.toLowerCase().includes(searchLower)
           );
         }
         
         res.json(filteredItems);
       } else {
-        // Return all items with all their locations
-        const itemsWithAllLocations = await Promise.all(
-          allItems.map(async (item) => {
-            const locations = await storage.getItemLocationsByItem(item.id);
-            return { ...item, locations };
-          })
-        );
+        // Optimized: Get all items and locations in parallel
+        const [allItems, allLocations] = await Promise.all([
+          storage.getMedicalItems(),
+          storage.getItemLocations()
+        ]);
+        
+        // Group locations by itemId for efficient lookup
+        const locationsByItem = allLocations.reduce((acc, location) => {
+          if (!acc[location.itemId]) acc[location.itemId] = [];
+          acc[location.itemId].push(location);
+          return acc;
+        }, {} as Record<string, typeof allLocations>);
+        
+        const itemsWithAllLocations = allItems.map(item => ({
+          ...item,
+          locations: locationsByItem[item.id] || []
+        }));
         
         res.json(itemsWithAllLocations);
       }
@@ -271,10 +289,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Cabinet management routes
+  // Cabinet management routes - cached for performance
   app.get("/api/cabinets", async (req, res) => {
     try {
-      const cabinets = await storage.getCabinets();
+      const cabinets = await getCachedCabinets();
       res.json(cabinets);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch cabinets" });
@@ -297,6 +315,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertCabinetSchema.parse(req.body);
       const cabinet = await storage.createCabinet(validatedData);
+      // Clear cache when data is modified
+      clearPerformanceCache();
       res.status(201).json(cabinet);
     } catch (error) {
       if (error instanceof Error) {
@@ -999,7 +1019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Ambulance Posts Routes
   app.get("/api/ambulance-posts", async (req, res) => {
     try {
-      const posts = await storage.getAmbulancePosts();
+      const posts = await getCachedAmbulancePosts();
       res.json(posts);
     } catch (error) {
       console.error("Error fetching ambulance posts:", error);
@@ -1074,10 +1094,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Post contact management routes
+  // Post contact management routes - cached for performance
   app.get("/api/post-contacts", async (req, res) => {
     try {
-      const contacts = await storage.getPostContacts();
+      const contacts = await getCachedPostContacts();
       res.json(contacts);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch post contacts" });

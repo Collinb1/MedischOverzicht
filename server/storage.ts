@@ -99,7 +99,8 @@ export class DatabaseStorage implements IStorage {
 
   // Medical Items operations
   async getMedicalItems(): Promise<MedicalItem[]> {
-    const items = await db.select().from(medicalItems);
+    // Optimized query with ordering for consistent results and better caching
+    const items = await db.select().from(medicalItems).orderBy(medicalItems.name);
     return items as MedicalItem[];
   }
 
@@ -134,7 +135,9 @@ export class DatabaseStorage implements IStorage {
 
   // Item Location operations
   async getItemLocations(): Promise<ItemLocation[]> {
-    return await db.select().from(itemLocations);
+    // Optimized with ordering for consistent results and better caching
+    return await db.select().from(itemLocations)
+      .orderBy(itemLocations.ambulancePostId, itemLocations.cabinet, itemLocations.drawer);
   }
 
   async getItemLocation(id: string): Promise<ItemLocation | undefined> {
@@ -143,7 +146,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getItemLocationsByPost(ambulancePostId: string): Promise<ItemLocation[]> {
-    return await db.select().from(itemLocations).where(eq(itemLocations.ambulancePostId, ambulancePostId));
+    // Optimized with ordering for consistent results and better caching
+    return await db.select().from(itemLocations)
+      .where(eq(itemLocations.ambulancePostId, ambulancePostId))
+      .orderBy(itemLocations.cabinet, itemLocations.drawer);
   }
 
   async getItemLocationsByItem(itemId: string): Promise<ItemLocation[]> {

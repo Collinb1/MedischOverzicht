@@ -1,9 +1,13 @@
 # Deployment Performance Optimalisaties
 
 ## Server-side Optimalisaties
-✅ **Gzip Compressie**: Alle responses worden gecomprimeerd voor snellere data transfer
+✅ **Gzip Compressie**: Alle responses worden gecomprimeerd (60-80% kleiner)
 ✅ **Database Connection Pooling**: Max 10 connections met timeout optimalisaties
 ✅ **HTTP Caching**: Statische assets gecachet voor 1 jaar, API responses voor 5 minuten
+✅ **Server-side Caching**: Memoized cache voor ambulance posts, cabinets, contacten (5-15 min)
+✅ **Efficient Data Structures**: Map() lookups in plaats van Array.find() voor O(1) performance
+✅ **Parallel Database Queries**: Promise.all() voor gelijktijdige data fetching
+✅ **Query Optimalisatie**: Database queries met expliciete ordering voor consistente caching
 ✅ **Trust Proxy**: Correct IP handling voor deployed environment
 ✅ **Security Headers**: X-Powered-By header uitgeschakeld
 
