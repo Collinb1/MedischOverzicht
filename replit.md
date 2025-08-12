@@ -79,3 +79,4 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-12: Excel template volledig uitgebreid met alle beschikbare velden - bevat nu vervaldatum, voorraad status, bijna op markering en validatie voor alle velden
 - 2025-08-12: Intelligente bestandsnaam parsing geïmplementeerd - extraheert automatisch item naam, kast, lade, ambulancepost en categorie uit gestructureerde foto bestandsnamen zoals "Tourniquet_B_3de_la_van_boven_Blaricum.jpg"
 - 2025-08-11: Item bijwerken knop probleem opgelost - formulier schema opgeschoond en verouderde velden verwijderd, edit dialog werkt nu correct
+- 2025-08-12: XSS beveiligingsprobleem opgelost in inventory-table-new.tsx - vervangen van onveilige innerHTML met veilige DOM methoden (createElement + textContent) om script injectie te voorkomen
