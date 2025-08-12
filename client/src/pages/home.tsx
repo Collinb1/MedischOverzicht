@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin, Archive } from "lucide-react";
+import { Plus, Settings, ChevronDown, AlertTriangle, Mail, MapPin, Archive, FileSpreadsheet } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import InventoryTable from "../components/inventory-table-new";
 import AddItemDialog from "../components/add-item-dialog";
 import CabinetManagement from "../components/cabinet-management";
 import SearchAutocomplete from "../components/search-autocomplete";
+import ExcelImportDialog from "../components/excel-import-dialog";
 import type { MedicalItem, AmbulancePost } from "@shared/schema";
 import ravLogo from "@assets/IMG_0009_1754910857700.png";
 
@@ -23,6 +24,7 @@ export default function Home() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<string>("");
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [showExcelImportDialog, setShowExcelImportDialog] = useState(false);
   
   // Ref for scrolling to inventory section
   const inventoryRef = useRef<HTMLDivElement>(null);
@@ -192,6 +194,15 @@ export default function Home() {
                       Kasten Beheren
                     </div>
                   </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setShowExcelImportDialog(true)}
+                    data-testid="menu-excel-import"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet className="w-4 h-4" />
+                      Excel Import
+                    </div>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/email-settings" data-testid="menu-email-settings">
                       <div className="flex items-center gap-2">
@@ -295,6 +306,12 @@ export default function Home() {
             <CabinetManagement />
           </DialogContent>
         </Dialog>
+
+        {/* Excel Import Dialog */}
+        <ExcelImportDialog 
+          open={showExcelImportDialog} 
+          onOpenChange={setShowExcelImportDialog} 
+        />
       </main>
     </div>
   );
