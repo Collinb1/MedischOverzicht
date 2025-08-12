@@ -77,4 +77,5 @@ Een Nederlandse medische inventarisatie applicatie die medische materialen en me
 - 2025-08-12: Excel import functionaliteit toegevoegd - gebruikers kunnen nu CSV/Excel bestanden uploaden om meerdere medische items tegelijk te importeren via Instellingen menu
 - 2025-08-12: Excel import uitgebreid met foto's en locatie data - ondersteunt nu foto URLs en ambulancepost/kast/lade/contactpersoon import voor complete item setup
 - 2025-08-12: Excel template volledig uitgebreid met alle beschikbare velden - bevat nu vervaldatum, voorraad status, bijna op markering en validatie voor alle velden
+- 2025-08-12: Intelligente bestandsnaam parsing geïmplementeerd - extraheert automatisch item naam, kast, lade, ambulancepost en categorie uit gestructureerde foto bestandsnamen zoals "Tourniquet_B_3de_la_van_boven_Blaricum.jpg"
 - 2025-08-11: Item bijwerken knop probleem opgelost - formulier schema opgeschoond en verouderde velden verwijderd, edit dialog werkt nu correct

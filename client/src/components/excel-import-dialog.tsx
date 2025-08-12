@@ -37,8 +37,71 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
   const [preview, setPreview] = useState<ImportPreview[]>([]);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [enableSmartParsing, setEnableSmartParsing] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Smart filename parsing function
+  const parseFilename = (filename: string) => {
+    if (!enableSmartParsing || !filename) return {};
+    
+    // Remove file extension
+    const nameWithoutExt = filename.replace(/\.(jpg|jpeg|png|gif|bmp|webp)$/i, '');
+    
+    // Split by underscore or dash
+    const parts = nameWithoutExt.split(/[_-]/);
+    
+    const parsed: any = {};
+    
+    // Common parsing patterns
+    if (parts.length >= 2) {
+      // First part is usually the item name
+      parsed.name = parts[0].replace(/([A-Z])/g, ' $1').trim();
+      
+      // Look for cabinet identifiers (single letters A-Z)
+      const cabinetPart = parts.find(part => /^[A-Z]$/.test(part));
+      if (cabinetPart) {
+        parsed.cabinet = cabinetPart;
+      }
+      
+      // Look for location/position indicators
+      const locationParts = parts.filter(part => 
+        /^(boven|onder|links|rechts|midden|top|bottom|left|right|middle)$/i.test(part) ||
+        /^\d+(st|nd|rd|th|e)\s*(la|lade|drawer|shelf)/.test(part.toLowerCase())
+      );
+      if (locationParts.length > 0) {
+        parsed.drawer = locationParts.join(' ');
+      }
+      
+      // Look for ambulance post names
+      const postPart = parts.find(part => 
+        /^(hilversum|blaricum|post|station)$/i.test(part)
+      );
+      if (postPart && postPart.toLowerCase() !== 'post' && postPart.toLowerCase() !== 'station') {
+        parsed.ambulancePostId = postPart.toLowerCase();
+      }
+      
+      // Look for category indicators
+      const categoryPart = parts.find(part => 
+        /^(medicijn|bandage|infuus|defib|reanimatie|wond|iv|emergency)$/i.test(part)
+      );
+      if (categoryPart) {
+        const categoryMap: { [key: string]: string } = {
+          'medicijn': 'Medicijnen',
+          'bandage': 'Wondverzorging', 
+          'infuus': 'IV Therapie',
+          'iv': 'IV Therapie',
+          'defib': 'Reanimatie',
+          'reanimatie': 'Reanimatie',
+          'wond': 'Wondverzorging',
+          'emergency': 'Spoedhulp'
+        };
+        parsed.category = categoryMap[categoryPart.toLowerCase()] || categoryPart;
+      }
+    }
+    
+    return parsed;
+  };
 
   const downloadTemplate = () => {
     // Create a comprehensive Excel template with all available fields
@@ -177,18 +240,31 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
       
       for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
-        const name = values[nameIndex] || '';
-        const category = values[categoryIndex] || '';
+        let name = values[nameIndex] || '';
+        let category = values[categoryIndex] || '';
         const description = values[descriptionIndex] || '';
-        const searchTerms = values[searchTermsIndex] || '';
-        const expiryDate = values[expiryDateIndex] || '';
-        const photoUrl = values[photoUrlIndex] || '';
-        const ambulancePostId = values[ambulancePostIndex] || '';
-        const cabinet = values[cabinetIndex] || '';
-        const drawer = values[drawerIndex] || '';
-        const contactPerson = values[contactPersonIndex] || '';
-        const stockStatus = values[stockStatusIndex] || '';
-        const isLowStock = values[isLowStockIndex] || '';
+        let searchTerms = values[searchTermsIndex] || '';
+        let expiryDate = values[expiryDateIndex] || '';
+        let photoUrl = values[photoUrlIndex] || '';
+        let ambulancePostId = values[ambulancePostIndex] || '';
+        let cabinet = values[cabinetIndex] || '';
+        let drawer = values[drawerIndex] || '';
+        let contactPerson = values[contactPersonIndex] || '';
+        let stockStatus = values[stockStatusIndex] || '';
+        let isLowStock = values[isLowStockIndex] || '';
+
+        // Smart parsing from photo URL filename if enabled
+        if (enableSmartParsing && photoUrl) {
+          const filename = photoUrl.split('/').pop() || '';
+          const parsed = parseFilename(filename);
+          
+          // Only use parsed values if the original fields are empty
+          if (!name && parsed.name) name = parsed.name;
+          if (!category && parsed.category) category = parsed.category;
+          if (!ambulancePostId && parsed.ambulancePostId) ambulancePostId = parsed.ambulancePostId;
+          if (!cabinet && parsed.cabinet) cabinet = parsed.cabinet;
+          if (!drawer && parsed.drawer) drawer = parsed.drawer;
+        }
 
         const errors: string[] = [];
         if (!name) errors.push('Naam is verplicht');
@@ -429,6 +505,38 @@ export default function ExcelImportDialog({ open, onOpenChange }: ExcelImportDia
                 Ondersteunde formaten: CSV, Excel (.xlsx, .xls)
               </p>
             </div>
+
+            {/* Smart Parsing Toggle */}
+            <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="smart-parsing"
+                  checked={enableSmartParsing}
+                  onChange={(e) => setEnableSmartParsing(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="smart-parsing" className="text-sm font-medium text-blue-900">
+                  Slimme bestandsnaam parsing
+                </label>
+              </div>
+              <span className="text-xs text-blue-600">🧠</span>
+            </div>
+            
+            {enableSmartParsing && (
+              <div className="bg-green-50 border border-green-200 rounded p-3">
+                <p className="text-sm font-medium text-green-800 mb-1">Automatische data extractie:</p>
+                <p className="text-xs text-green-700 mb-2">
+                  Haalt automatisch gegevens uit foto bestandsnamen zoals: "Tourniquet_B_3de_la_van_boven_Blaricum.jpg"
+                </p>
+                <div className="text-xs text-green-600 space-y-1">
+                  <div>• <strong>Naam:</strong> Tourniquet → "Tourniquet"</div>
+                  <div>• <strong>Kast:</strong> B → "B"</div>  
+                  <div>• <strong>Lade:</strong> "3de la van boven" → "3de la van boven"</div>
+                  <div>• <strong>Post:</strong> Blaricum → "blaricum"</div>
+                </div>
+              </div>
+            )}
 
             {/* Bulk Photo Upload Info */}
             <div className="bg-orange-50 border border-orange-200 rounded p-3">
